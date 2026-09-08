@@ -1,0 +1,188 @@
+﻿{
+	"info": {
+		"_postman_id": "8bbc54a1-patologia-app-collection",
+		"name": "PathoLab API - Informes de Patología",
+		"description": "Colección de endpoints para demostración en clase del proyecto PathoLab.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Autenticación - Login (Patólogo)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"if (jsonData.access) {",
+							"    pm.collectionVariables.set('access_token', jsonData.access);",
+							"    console.log('Token guardado automáticamente en {{access_token}}');",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"patologo1\",\n  \"password\": \"patologo1234\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/auth/login/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"login",
+						""
+					]
+				},
+				"description": "Inicia sesión con el usuario patólogo y almacena automáticamente el token JWT para los demás endpoints."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Informes - Crear Informe (Biopsia de Piel)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"numero_caso\": \"PAT-2026-EXP-01\",\n  \"patologia\": 1,\n  \"tipo_muestra\": \"Biopsia escisional\",\n  \"datos_ingresados\": {\n    \"localizacion\": \"Espalda región escapular derecha\",\n    \"tipo_muestra\": \"Escisional\",\n    \"dimensiones\": \"2.5 x 1.8 x 0.6 cm\",\n    \"color\": \"Pigmentado\",\n    \"bordes\": \"Irregulares\",\n    \"superficie\": \"Rugosa con ulceración central\",\n    \"hallazgos_adicionales\": \"Lesión nodular hiperpigmentada sin sangrado activo\"\n  },\n  \"notas\": \"Muestra fijada en formol al 10% remitida por Dermatología\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/informes/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"informes",
+						""
+					]
+				},
+				"description": "Crea un informe histopatológico. El backend autogenera la descripción macroscópica en texto_generado."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Informes - Listar Informes (Filtros)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/informes/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"informes",
+						""
+					]
+				},
+				"description": "Lista los informes creados con soporte para filtros de búsqueda."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Informes - Descargar PDF Clínico",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/informes/1/pdf/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"informes",
+						"1",
+						"pdf",
+						""
+					]
+				},
+				"description": "Genera y descarga el reporte en formato PDF médico con ReportLab."
+			},
+			"response": []
+		},
+		{
+			"name": "5. Catálogo - Listar Patologías Activas",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/patologias/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"patologias",
+						""
+					]
+				},
+				"description": "Consulta las 14 patologías clínicas preconfiguradas."
+			},
+			"response": []
+		}
+	]
+}
