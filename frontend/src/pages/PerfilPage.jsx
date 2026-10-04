@@ -62,10 +62,14 @@ export default function PerfilPage() {
     }
     setCambiandoPassword(true);
     try {
-      await client.post('/auth/cambiar-password/', {
+      const { data } = await client.post('/auth/cambiar-password/', {
         old_password: passwords.old_password,
         new_password: passwords.new_password,
       });
+      // Cambiar la contraseña cierra las demás sesiones (decisión D-6); esta sigue
+      // abierta con los tokens nuevos que devuelve el backend.
+      if (data.access) localStorage.setItem('access_token', data.access);
+      if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
       setPasswordMsg('Contraseña actualizada correctamente.');
       setPasswords({ old_password: '', new_password: '', confirmar: '' });
     } catch (err) {

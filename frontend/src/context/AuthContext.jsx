@@ -30,6 +30,10 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    // Pide al backend que invalide el token de renovación (decisión D-6). Si falla
+    // (por ejemplo, sin conexión), la sesión se cierra igual en este navegador.
+    const refresh = localStorage.getItem('refresh_token');
+    if (refresh) client.post('/auth/logout/', { refresh }).catch(() => {});
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_data');

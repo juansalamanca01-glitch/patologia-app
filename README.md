@@ -336,9 +336,10 @@ Todas las rutas exigen la cabecera `Authorization: Bearer <token>`, excepto el l
 | Método | Endpoint | Descripción | Acceso |
 |---|---|---|---|
 | POST | `/api/auth/login/` | Iniciar sesión. Devuelve `access`, `refresh` y los datos del usuario | Público (máx. 10 intentos/min) |
-| POST | `/api/auth/refresh/` | Renovar el token de acceso | Público |
+| POST | `/api/auth/refresh/` | Renovar el token de acceso. Devuelve también un `refresh` nuevo; el anterior queda invalidado | Público |
+| POST | `/api/auth/logout/` | Cerrar sesión: invalida el `refresh` enviado (`{"refresh": "..."}`) | Público (con el token de renovación) |
 | GET / PATCH | `/api/auth/perfil/` | Ver o editar el perfil propio (nombre, email, teléfono, especialidad). El rol y el usuario no se pueden cambiar | Autenticado |
-| POST | `/api/auth/cambiar-password/` | Cambiar la contraseña (`old_password`, `new_password`) | Autenticado |
+| POST | `/api/auth/cambiar-password/` | Cambiar la contraseña (`old_password`, `new_password`). Cierra las demás sesiones y devuelve tokens nuevos | Autenticado |
 | POST | `/api/auth/registro/` | Crear un usuario con su rol | Admin |
 | GET | `/api/auth/usuarios/` | Listar usuarios | Admin |
 
@@ -407,6 +408,7 @@ graph TD
 ## 🛡️ Seguridad
 
 - **Autenticación JWT** con renovación automática. El token viaja siempre en la cabecera `Authorization`, nunca en la URL.
+- **Cierre de sesión real**: al salir, al cambiar la contraseña y al renovar, el token de renovación anterior pasa a una lista negra y deja de servir. El token de acceso sigue siendo válido hasta que vence (máximo 8 horas), algo normal en JWT.
 - **Permisos por rol y por autor** en el backend (ver [Roles y Permisos](#-roles-y-permisos)). El frontend solo oculta botones; la regla real la aplica la API.
 - **Límites de peticiones**:
 

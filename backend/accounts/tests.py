@@ -115,3 +115,61 @@ class ValidacionContrasenasTests(APITestCase):
         respuesta = self.registrar('Histologia-Segura-2026')
         self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
         self.assertTrue(Usuario.objects.get(username='nuevo_patologo').check_password('Histologia-Segura-2026'))
+
+
+class CierreDeSesionTests(APITestCase):
+    """
+    Decisión D-6 (auditoría M-11): al cerrar sesión o cambiar la contraseña, el
+    token de renovación (refresh) deja de servir. Antes seguía valiendo 7 días.
+    """
+
+    CLAVE = 'ClaveSegura-2026'
+
+    def setUp(self):
+        self.usuario = Usuario.objects.create_user(
+            username='sesiones', password=self.CLAVE, rol=Usuario.Rol.PATOLOGO,
+        )
+
+    def login(self):
+        respuesta = self.client.post('/api/auth/login/', {'username': 'sesiones', 'password': self.CLAVE}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        return respuesta.data
+
+    def renovar(self, refresh):
+        return self.client.post('/api/auth/refresh/', {'refresh': refresh}, format='json')
+
+    def test_logout_invalida_el_token_de_renovacion(self):
+        tokens = self.login()
+        respuesta = self.client.post('/api/auth/logout/', {'refresh': tokens['refresh']}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.renovar(tokens['refresh']).status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_logout_funciona_aunque_el_token_de_acceso_haya_vencido(self):
+        tokens = self.login()
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer token-de-acceso-vencido')
+        respuesta = self.client.post('/api/auth/logout/', {'refresh': tokens['refresh']}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+
+    def test_logout_con_token_invalido_responde_400(self):
+        respuesta = self.client.post('/api/auth/logout/', {'refresh': 'no-es-un-token'}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_un_token_ya_renovado_no_se_puede_reutilizar(self):
+        tokens = self.login()
+        self.assertEqual(self.renovar(tokens['refresh']).status_code, status.HTTP_200_OK)
+        self.assertEqual(self.renovar(tokens['refresh']).status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_cambiar_contrasena_invalida_las_sesiones_anteriores(self):
+        sesion_1 = self.login()
+        sesion_2 = self.login()  # por ejemplo, otro computador
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {sesion_1['access']}")
+        respuesta = self.client.post(
+            '/api/auth/cambiar-password/',
+            {'old_password': self.CLAVE, 'new_password': 'Histologia-Segura-2026'}, format='json',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.client.credentials()
+        self.assertEqual(self.renovar(sesion_1['refresh']).status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(self.renovar(sesion_2['refresh']).status_code, status.HTTP_401_UNAUTHORIZED)
+        # La sesión desde la que se cambió la contraseña sigue abierta con tokens nuevos.
+        self.assertEqual(self.renovar(respuesta.data['refresh']).status_code, status.HTTP_200_OK)

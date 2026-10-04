@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import client from '../api/client';
 import { AuthProvider, useAuth } from './AuthContext';
 
 vi.mock('../api/client', () => ({ default: { post: vi.fn() } }));
@@ -35,5 +36,32 @@ describe('AuthContext: permisos según el rol', () => {
   it('el auditor solo puede leer', () => {
     renderConRol('auditor');
     expect(screen.getByText('auditor: isAdmin=false canWrite=false')).toBeInTheDocument();
+  });
+});
+
+function BotonSalir() {
+  const { logout } = useAuth();
+  return <button onClick={logout}>Salir</button>;
+}
+
+// Decisión D-6 (auditoría M-11): al salir se avisa al backend para que invalide
+// el token de renovación; antes solo se borraban los tokens del navegador.
+describe('AuthContext: cerrar sesión', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    client.post.mockResolvedValue({ data: {} });
+  });
+
+  it('invalida el token en el backend y borra los datos del navegador', () => {
+    localStorage.setItem('access_token', 'access');
+    localStorage.setItem('refresh_token', 'refresh-de-la-sesion');
+    localStorage.setItem('user_data', JSON.stringify({ id: 1, rol: 'patologo' }));
+    render(<AuthProvider><BotonSalir /></AuthProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Salir' }));
+    expect(client.post).toHaveBeenCalledWith('/auth/logout/', { refresh: 'refresh-de-la-sesion' });
+    expect(localStorage.getItem('access_token')).toBeNull();
+    expect(localStorage.getItem('refresh_token')).toBeNull();
+    expect(localStorage.getItem('user_data')).toBeNull();
   });
 });

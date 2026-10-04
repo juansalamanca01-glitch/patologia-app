@@ -30,3 +30,34 @@ describe('client.js: dirección de la API', () => {
     expect((await cargarCliente()).defaults.baseURL).toBe('https://api.patolab.com/api');
   });
 });
+
+// Decisión D-6: al renovar el token, el backend devuelve también un token de
+// renovación nuevo e invalida el anterior. El interceptor debe guardar los dos.
+describe('client.js: renovación automática del token', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+  });
+
+  it('ante un 401 renueva el token, guarda el refresh nuevo y repite la petición', async () => {
+    vi.stubEnv('VITE_API_URL', '');
+    const axios = (await import('axios')).default;
+    const client = await cargarCliente();
+    localStorage.setItem('access_token', 'access-vencido');
+    localStorage.setItem('refresh_token', 'refresh-viejo');
+    const renovar = vi.spyOn(axios, 'post').mockResolvedValue({ data: { access: 'access-nuevo', refresh: 'refresh-nuevo' } });
+    let intentos = 0;
+    client.defaults.adapter = (config) => {
+      intentos += 1;
+      if (intentos === 1) return Promise.reject({ config, response: { status: 401 } });
+      return Promise.resolve({ data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config });
+    };
+
+    const respuesta = await client.get('/informes/');
+
+    expect(renovar).toHaveBeenCalledWith('/api/auth/refresh/', { refresh: 'refresh-viejo' });
+    expect(localStorage.getItem('access_token')).toBe('access-nuevo');
+    expect(localStorage.getItem('refresh_token')).toBe('refresh-nuevo');
+    expect(respuesta.data).toEqual({ ok: true });
+  });
+});

@@ -33,6 +33,8 @@ client.interceptors.response.use(
         try {
           const { data } = await axios.post(`${API_URL}/auth/refresh/`, { refresh });
           localStorage.setItem('access_token', data.access);
+          // El backend rota el token de renovación e invalida el anterior (decisión D-6).
+          if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
           original.headers.Authorization = `Bearer ${data.access}`;
           return client(original);
         } catch {

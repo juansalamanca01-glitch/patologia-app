@@ -316,6 +316,8 @@ Si el backend está apagado, el usuario no ve ningún mensaje.
 
 ### M-11. Cerrar sesión no invalida los tokens
 
+> **Estado: corregido el 2026-10-04** (rama `seguridad-critica`) según la decisión D-6. Ver `CHANGELOG.md`.
+
 `logout()` solo borra los tokens del navegador. Un token robado sigue sirviendo hasta 8 horas (el token de acceso) o 7 días (el de refresco). Lo mismo pasa después de cambiar la contraseña. Para este proyecto es aceptable, pero se puede mejorar activando `rest_framework_simplejwt.token_blacklist`.
 
 ### M-12. Las imágenes del foro solo se ven en modo desarrollo

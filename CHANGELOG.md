@@ -5,6 +5,28 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Seguridad: cerrar sesión y cambiar la contraseña invalidan el token de renovación (M-11, decisión D-6)
+
+**Qué se cambió**
+- `backend/config/settings.py`:
+  - Se instaló `rest_framework_simplejwt.token_blacklist`, que añade 12 migraciones con sus tablas.
+  - `BLACKLIST_AFTER_ROTATION = True`: al renovar, el token de renovación anterior queda invalidado.
+- `backend/accounts/views.py` y `urls.py`:
+  - Nuevo `POST /api/auth/logout/` (`LogoutView`), que invalida el `refresh` recibido. No procesa la autenticación (`authentication_classes = []`), para que funcione aunque el token de acceso haya vencido.
+  - `CambiarPasswordView` invalida todos los tokens de renovación del usuario y devuelve un par nuevo (`access`, `refresh`), para que la sesión actual siga abierta.
+- `frontend/src/api/client.js`: al renovar el token, el interceptor guarda también el `refresh` nuevo. Sin esto, la lista negra habría cerrado la sesión en la segunda renovación.
+- `frontend/src/context/AuthContext.jsx`: `logout()` avisa al backend antes de borrar los tokens del navegador.
+- `frontend/src/pages/PerfilPage.jsx`: guarda los tokens nuevos al cambiar la contraseña.
+- Pruebas:
+  - Backend: `CierreDeSesionTests`, 5 pruebas (logout, token inválido, token de acceso vencido, reutilizar un token renovado y cambio de contraseña con dos sesiones abiertas).
+  - Frontend: 3 pruebas (interceptor, `logout` y perfil).
+- Documentación: tabla de la API y sección de Seguridad del `README.md`, y el frontend en `CLAUDE.md`.
+
+**Por qué**
+- Antes, cerrar sesión solo borraba los tokens del navegador. Un token de renovación robado seguía sirviendo hasta 7 días, incluso después de cambiar la contraseña.
+- Verificado de punta a punta a través del proxy de Vite. Login; renovar devuelve un `refresh` nuevo; reutilizar el viejo da 401; `logout` con un token de acceso vencido da 200; usar el `refresh` después del logout da 401.
+- **En otros computadores** hay que ejecutar `python manage.py migrate`. En el del autor ya se aplicó, después de guardar una copia de seguridad de `db.sqlite3`.
+
 ### La hora del pie del PDF usa la zona horaria configurada (M-10)
 
 **Qué se cambió**

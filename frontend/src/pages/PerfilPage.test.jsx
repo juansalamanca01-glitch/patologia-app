@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import client from '../api/client';
 import PerfilPage from './PerfilPage';
@@ -45,5 +45,29 @@ describe('PerfilPage', () => {
     render(<PerfilPage />);
     expect(await screen.findByDisplayValue('Dr. Carlos Méndez')).toBeInTheDocument();
     expect(screen.getByText(/@patologo1/)).toBeInTheDocument();
+  });
+});
+
+// Decisión D-6: al cambiar la contraseña se invalidan las sesiones anteriores y el
+// backend devuelve tokens nuevos; la página los guarda para que la sesión siga abierta.
+describe('PerfilPage: cambiar contraseña', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    client.get.mockResolvedValue({ data: PERFIL });
+  });
+
+  it('guarda los tokens nuevos que devuelve el backend', async () => {
+    client.post.mockResolvedValue({ data: { detail: 'ok', access: 'access-nuevo', refresh: 'refresh-nuevo' } });
+    const { container } = render(<PerfilPage />);
+    await screen.findByDisplayValue('Dr. Carlos Méndez');
+    const [actual, nueva, confirmar] = container.querySelectorAll('input[type="password"]');
+    fireEvent.change(actual, { target: { value: 'ClaveVieja-2026' } });
+    fireEvent.change(nueva, { target: { value: 'Histologia-Segura-2026' } });
+    fireEvent.change(confirmar, { target: { value: 'Histologia-Segura-2026' } });
+    fireEvent.submit(nueva.closest('form'));
+    expect(await screen.findByText('Contraseña actualizada correctamente.')).toBeInTheDocument();
+    expect(localStorage.getItem('access_token')).toBe('access-nuevo');
+    expect(localStorage.getItem('refresh_token')).toBe('refresh-nuevo');
   });
 });

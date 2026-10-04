@@ -19,7 +19,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` a `seguridad-critica` después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 72 del backend (`cd backend` y luego `python manage.py test`) y 28 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 77 del backend (`cd backend` y luego `python manage.py test`) y 31 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -52,7 +52,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | M-6 / D-5 | `seed_data` crea 4 temas del foro; botón "+ Tema" para patólogos y admin | `91cea02` |
 | M-7 | El auditor ya no ve el formulario de comentarios del foro | `563fb85` |
 | M-9 | Errores de carga y borrado visibles en el Dashboard y en InformePage | `1c28a66` |
-| M-10 | El pie del PDF usa la hora de Bogotá (`timezone.localtime()`) | ver `git log` |
+| M-10 | El pie del PDF usa la hora de Bogotá (`timezone.localtime()`) | `df4ab5f` |
+| M-11 / D-6 | Lista negra de tokens, `POST /api/auth/logout/`, cambio de contraseña cierra otras sesiones, el interceptor guarda el `refresh` rotado | ver `git log` |
 
 ## Siguiente paso
 
@@ -68,7 +69,7 @@ Seguir el orden sugerido en la sección 7 de la auditoría:
      - [x] M-7: ocultar el formulario de comentarios si el usuario no puede escribir.
      - [x] M-9: mostrar en pantalla los errores de Dashboard (carga y borrado) e InformePage (patologías y plantillas).
      - [x] M-10: hora del PDF en la zona horaria configurada.
-     - [ ] M-11 / D-6: lista negra de tokens, `POST /api/auth/logout/` y token invalidado al cambiar la contraseña.
+     - [x] M-11 / D-6: lista negra de tokens, `POST /api/auth/logout/` y token invalidado al cambiar la contraseña.
      - [ ] M-12: marcar como resuelto con documentación (ya está en la sección Seguridad del README).
 2. **Opcional, al final (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal que obliga a revisar la navegación de todas las páginas.
 
