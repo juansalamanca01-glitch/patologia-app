@@ -3,7 +3,7 @@
 [![Django](https://img.shields.io/badge/Django-4.2+-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![Django REST Framework](https://img.shields.io/badge/DRF-3.14+-red?style=for-the-badge&logo=django&logoColor=white)](https://www.django-rest-framework.org/)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![JWT](https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 
 **PathoLab** es una plataforma web moderna diseñada para la captura, generación automatizada, gestión y auditoría de informes histopatológicos clínicos. El sistema acelera el flujo de trabajo de los patólogos transformando entradas estructuradas de laboratorio en descripciones macroscópicas en lenguaje natural y generando informes en PDF de calidad médica listos para impresión.
@@ -80,7 +80,7 @@
   - ReportLab 4.1+ (Generación de PDF)
 - **Frontend**:
   - React 18
-  - Vite 5.4
+  - Vite 6.4 (pruebas con Vitest 5)
   - React Router DOM 6
   - Axios (con interceptores para adjuntar automáticamente el token JWT)
   - CSS modular responsive

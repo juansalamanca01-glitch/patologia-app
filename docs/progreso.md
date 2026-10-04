@@ -39,17 +39,16 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | I-6 | Límite real de 10 MB y validación de que el archivo sea una imagen (backend); revisión previa y sin publicaciones duplicadas (frontend) | `2bf50e6` |
 | I-8 | Foro: solo un admin fija publicaciones; un comentario no se puede mover a otra publicación | `8c8dac3` |
 | I-11 | El registro y el cambio de contraseña aplican los validadores de Django | `3d5e5cf` |
-| I-9a | `npm audit fix`: producción pasa de 6 vulnerabilidades (2 altas) a 2 moderadas que no afectan a la app | ver `git log` |
+| I-9a | `npm audit fix`: producción pasa de 6 vulnerabilidades (2 altas) a 2 moderadas que no afectan a la app | `ee92a38` |
+| I-9b | Vite 5 → 6.4 y Vitest 3 → 5: quedan solo las 2 vulnerabilidades moderadas de react-router | ver `git log` |
 
 ## Siguiente paso
 
 Seguir el orden sugerido en la sección 7 de la auditoría:
-1. **Seguridad restante (I-9):**
-   - (b) subir Vite 5 → 6+ y Vitest 3 → 5 para las vulnerabilidades de desarrollo (esbuild, Vite, Vitest). Es un cambio de versión principal: revisar qué cambia y proponerlo antes.
-   - (c) opcional: React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan en producción. Hoy no afectan a la app (ver CHANGELOG). Es un cambio de versión principal.
-2. **I-10:** URL de la API fija en `frontend/src/api/client.js`. Desde I-5 nada usa el proxy `/api` de `vite.config.js`: decidir si `client.js` lo usa (recomendado) o si se elimina.
-3. **Documentación:** I-12 (reescribir el README, incluida la corrección por D-1), actualizar la colección de Postman.
-4. **Limpieza:** hallazgos menores M-1 a M-13 (M-5 ampliado, ver abajo).
+1. **I-10:** URL de la API fija en `frontend/src/api/client.js`. Desde I-5 nada usa el proxy `/api` de `vite.config.js`: decidir si `client.js` lo usa (recomendado) o si se elimina.
+2. **Documentación:** I-12 (reescribir el README, incluida la corrección por D-1), actualizar la colección de Postman.
+3. **Limpieza:** hallazgos menores M-1 a M-13 (M-5 ampliado, ver abajo).
+4. **Opcional, al final (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal que obliga a revisar la navegación de todas las páginas.
 
 Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejecutar `git switch main`, luego `git merge --ff-only seguridad-critica` y `git push origin main`, y volver con `git switch seguridad-critica`. Siempre preguntar antes al usuario.
 
@@ -59,7 +58,6 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 
 ## Pendiente de hacer (anotado para no olvidarlo)
 
-- **I-9 (ampliado):** al actualizar dependencias, pasar también a Vitest 5 (exige Vite 6+) para cerrar la vulnerabilidad moderada GHSA-82fw-gwwq-j7x9 de Vitest 3. Solo afecta a las pruebas locales.
 - **README:** corregir que el administrador no es el único que gestiona el catálogo (decisión D-1). Se hará junto con I-12 (reescribir el README, que tiene 15 líneas con caracteres de control dañados).
 - **M-5 (ampliado):** además de filtrar las patologías inactivas en "Nuevo informe", añadir el campo "activa" al formulario de patologías de `PatologiasPage.jsx`. Así se puede desactivar una patología con informes en lugar de borrarla (relacionado con I-1).
 - **Producción:** al publicar la app, configurar en el servidor web un límite de tamaño de petición (por ejemplo, `client_max_body_size 60m;` en Nginx). Ver la nota de I-6 en `settings.py`.

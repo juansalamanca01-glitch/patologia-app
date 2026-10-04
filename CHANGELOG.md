@@ -5,6 +5,17 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Seguridad: Vite 5 → 6.4 y Vitest 3 → 5 (I-9, parte b)
+
+**Qué se cambió**
+- `frontend/package.json` y `package-lock.json`: `vite` ^5.4.0 → ^6.4.3 y `vitest` ^3.2.7 → ^5.0.3. `@vitejs/plugin-react` 4.7 ya era compatible con Vite 6 y no cambió. `vite.config.js` no necesitó cambios.
+- `README.md` (insignia y lista de tecnologías) y `CLAUDE.md`: versión de Vite actualizada.
+
+**Por qué**
+- Las vulnerabilidades de las herramientas de desarrollo (Vite, esbuild ≤ 0.24.2 y la de Vitest 3, GHSA-82fw-gwwq-j7x9) solo se corregían con versiones principales nuevas. `npm audit` (todo) pasa de 6 vulnerabilidades (1 alta) a **2 moderadas**, que son las de `react-router` ya analizadas en I-9a.
+- Se eligió Vite 6.4 en lugar de 7: es el salto más pequeño que cierra todas las vulnerabilidades de desarrollo. Ninguno de los cambios incompatibles de Vite 6 (Sass, `resolve.conditions`, `json.stringify`, modo librería) afecta a la configuración de PathoLab.
+- Verificado con las 8 pruebas del frontend, `vite build` y arrancando el servidor de desarrollo, que sirvió la página y transformó `main.jsx` y `App.jsx` sin errores.
+
 ### Seguridad: actualización de dependencias del frontend sin cambiar de versión principal (I-9, parte a)
 
 **Qué se cambió**

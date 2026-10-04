@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-PathoLab: app web para crear, gestionar y exportar a PDF informes histopatológicos. Backend Django 4.2 + DRF + SimpleJWT en `backend/`, frontend React 18 + Vite en `frontend/`. Todo el dominio (modelos, campos, mensajes, UI) está en español; mantener esa convención.
+PathoLab: app web para crear, gestionar y exportar a PDF informes histopatológicos. Backend Django 4.2 + DRF + SimpleJWT en `backend/`, frontend React 18 + Vite 6 en `frontend/`. Todo el dominio (modelos, campos, mensajes, UI) está en español; mantener esa convención.
 
 ## Reglas de trabajo (obligatorias)
 
