@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Categoria, Patologia, Plantilla, Informe
+from .models import Categoria, ConsecutivoPeticion, Patologia, Plantilla, Informe
 
 
 class PlantillaInline(admin.TabularInline):
@@ -24,10 +24,26 @@ class PatologiaAdmin(admin.ModelAdmin):
 
 @admin.register(Informe)
 class InformeAdmin(admin.ModelAdmin):
-    list_display = ['numero_caso', 'patologia', 'autor', 'fecha', 'estado']
+    list_display = ['numero_peticion', 'numero_orden_externa', 'patologia', 'autor', 'fecha', 'estado']
     list_filter = ['estado', 'patologia', 'fecha']
-    search_fields = ['numero_caso', 'tipo_muestra']
-    readonly_fields = ['texto_generado', 'fecha_creacion', 'fecha_actualizacion']
+    search_fields = ['numero_peticion', 'numero_orden_externa', 'tipo_muestra']
+    # numero_peticion no es editable (D-7): se muestra pero no se puede cambiar.
+    readonly_fields = ['numero_peticion', 'texto_generado', 'fecha_creacion', 'fecha_actualizacion']
+
+
+@admin.register(ConsecutivoPeticion)
+class ConsecutivoPeticionAdmin(admin.ModelAdmin):
+    """Solo consulta: cambiar el contador a mano podría repetir números de petición."""
+    list_display = ['anio', 'ultimo']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Plantilla)

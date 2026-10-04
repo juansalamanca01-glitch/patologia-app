@@ -1,7 +1,7 @@
 # Propuesta: informe de anatomía patológica v2
 
 **Fecha:** 2026-10-04
-**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); la etapa 1 (número de petición) está en curso.
+**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); la etapa 1 (número de petición) se terminó el 2026-10-04.
 
 **Objetivo:** que el informe tenga los datos y el orden de un informe real de laboratorio:
 
@@ -444,7 +444,7 @@ Se actualiza en cada etapa, según las reglas 2, 3 y 6 de `CLAUDE.md`:
 
 | Etapa | Contenido | Toca |
 |---|---|---|
-| **1. Número de petición** | `ConsecutivoPeticion`, `numero_peticion` automático, migración de datos, se elimina `numero_caso`, `numero_orden_externa`, prueba de concurrencia y base de pruebas en archivo. Nombre del PDF, listados, formulario y Postman. | backend, frontend, PDF (solo el número), pruebas |
+| **1. Número de petición** (hecha, 2026-10-04) | `ConsecutivoPeticion`, `numero_peticion` automático, migración de datos, se elimina `numero_caso`, `numero_orden_externa`, prueba de concurrencia y base de pruebas en archivo. Nombre del PDF, listados, formulario y Postman. | backend, frontend, PDF (solo el número), pruebas |
 | **2. Catálogos y opciones** | `EPS`, `Servicio`, `TipoEstudio`, `GET /api/opciones/` y `seed_data`. Solo backend, con sus pruebas. | backend |
 | **3. Pacientes** | App `pacientes`, CRUD, búsqueda, edad calculada, permisos, `PacientesPage` y enlace en el Navbar. | backend, frontend |
 | **4. Datos de la solicitud** | Paciente y campos de 3.4 en el informe, `SelectorPaciente`, tarjeta "Datos de la solicitud", búsqueda ampliada y columnas de los listados. | backend, frontend |

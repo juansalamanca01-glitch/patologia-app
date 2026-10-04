@@ -130,13 +130,15 @@ def generar_pdf_informe(informe) -> io.BytesIO:
 
     # Tabla con los datos generales del informe
     meta_data = [
-        ['Número de Caso:', informe.numero_caso],
+        ['N.º de petición:', informe.numero_peticion],
         ['Fecha:', informe.fecha.strftime('%d/%m/%Y') if informe.fecha else ''],
         ['Patología:', informe.patologia.nombre],
         ['Tipo de Muestra:', informe.tipo_muestra or 'N/A'],
         ['Patólogo:', informe.autor.nombre_visible],
         ['Estado:', informe.get_estado_display()],
     ]
+    if informe.numero_orden_externa:
+        meta_data.insert(1, ['Orden externa:', informe.numero_orden_externa])
 
     meta_table = Table(meta_data, colWidths=[3.5 * cm, 13 * cm])
     meta_table.setStyle(TableStyle([

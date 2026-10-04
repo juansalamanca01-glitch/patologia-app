@@ -86,7 +86,7 @@ export default function BuscarPage() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Número de caso, patología o tipo de muestra..."
+                  placeholder="Número de petición, orden externa, patología o tipo de muestra..."
                 />
               </div>
               <div className="form-group">
@@ -143,7 +143,7 @@ export default function BuscarPage() {
               <table>
                 <thead>
                   <tr>
-                    <th>Nº Caso</th>
+                    <th>N.º de petición</th>
                     <th>Patología</th>
                     <th>Tipo Muestra</th>
                     <th>Autor</th>
@@ -155,7 +155,7 @@ export default function BuscarPage() {
                 <tbody>
                   {results.map((inf) => (
                     <tr key={inf.id}>
-                      <td><strong>{inf.numero_caso}</strong></td>
+                      <td><strong>{inf.numero_peticion}</strong></td>
                       <td>{inf.patologia_nombre}</td>
                       <td>{inf.tipo_muestra || '—'}</td>
                       <td>{inf.autor_nombre}</td>

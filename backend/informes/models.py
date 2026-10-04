@@ -1,5 +1,7 @@
-from django.db import models
+from django.db import IntegrityError, models, transaction
+from django.db.models import F
 from django.conf import settings
+from django.utils import timezone
 
 
 class Categoria(models.Model):
@@ -96,14 +98,56 @@ class Plantilla(models.Model):
         return f'{self.patologia.nombre} → {self.campo_label or self.campo_nombre}'
 
 
+class ConsecutivoPeticion(models.Model):
+    """Último número de petición usado en cada año (decisión D-7)."""
+
+    anio = models.PositiveIntegerField(primary_key=True, verbose_name='Año')
+    ultimo = models.PositiveIntegerField(default=0, verbose_name='Último consecutivo')
+
+    class Meta:
+        verbose_name = 'Consecutivo de petición'
+        verbose_name_plural = 'Consecutivos de petición'
+
+    def __str__(self):
+        return f'{self.anio}: {self.ultimo}'
+
+
+def siguiente_numero_peticion():
+    """
+    Reserva el siguiente número de petición del año: P-AÑO-NNNNN (decisión D-7).
+    Debe llamarse dentro de la transacción que guarda el informe. El UPDATE
+    bloquea el contador (la fila en PostgreSQL, la base entera en SQLite) hasta
+    el COMMIT, así que dos informes creados a la vez nunca reciben el mismo
+    número. Se empieza con UPDATE y no con SELECT porque en SQLite una
+    transacción que lee y luego escribe falla en lugar de esperar su turno.
+    """
+    anio = timezone.localdate().year
+    if not ConsecutivoPeticion.objects.filter(anio=anio).update(ultimo=F('ultimo') + 1):
+        try:
+            with transaction.atomic():  # primer informe del año
+                ConsecutivoPeticion.objects.create(anio=anio, ultimo=1)
+        except IntegrityError:  # otro usuario creó el contador del año al mismo tiempo
+            ConsecutivoPeticion.objects.filter(anio=anio).update(ultimo=F('ultimo') + 1)
+    ultimo = ConsecutivoPeticion.objects.get(anio=anio).ultimo
+    return f'P-{anio}-{ultimo:05d}'
+
+
 class Informe(models.Model):
-    """Clinical pathology report."""
+    """Informe de anatomía patológica."""
 
     class Estado(models.TextChoices):
         BORRADOR = 'borrador', 'Borrador'
         FINALIZADO = 'finalizado', 'Finalizado'
 
-    numero_caso = models.CharField(max_length=50, unique=True, verbose_name='Número de caso')
+    # Lo asigna save() al crear el informe; no se puede cambiar (decisión D-7).
+    numero_peticion = models.CharField(
+        max_length=20, unique=True, editable=False, verbose_name='Número de petición',
+    )
+    numero_orden_externa = models.CharField(
+        max_length=50, blank=True,
+        verbose_name='Número de orden externa',
+        help_text='Número de orden de la institución remitente (opcional).',
+    )
     patologia = models.ForeignKey(
         Patologia,
         on_delete=models.PROTECT,
@@ -144,4 +188,14 @@ class Informe(models.Model):
         ordering = ['-fecha_creacion']
 
     def __str__(self):
-        return f'Caso {self.numero_caso} — {self.patologia.nombre}'
+        return f'{self.numero_peticion} — {self.patologia.nombre}'
+
+    def save(self, *args, **kwargs):
+        if self.pk is None and not self.numero_peticion:
+            # El número y el informe se guardan en la misma transacción: el
+            # contador queda bloqueado hasta que el informe existe.
+            with transaction.atomic():
+                self.numero_peticion = siguiente_numero_peticion()
+                super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)

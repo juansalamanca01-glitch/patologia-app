@@ -1,7 +1,13 @@
+import threading
+from datetime import date, datetime
 from unittest import mock
 
+from django.db import IntegrityError, connection, transaction
+from django.db.migrations.executor import MigrationExecutor
+from django.test import TransactionTestCase
+from django.utils import timezone
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient, APITestCase
 
 from accounts.models import Usuario
 from .models import Categoria, Informe, Patologia, Plantilla
@@ -31,7 +37,6 @@ class PermisosInformeTests(APITestCase):
 
     def crear_informe(self, estado=Informe.Estado.BORRADOR):
         return Informe.objects.create(
-            numero_caso=f'PRUEBA-{Informe.objects.count() + 1}',
             patologia=self.patologia,
             autor=self.autor,
             notas='original',
@@ -155,7 +160,7 @@ class BorrarPatologiaTests(APITestCase):
         self.patologia = Patologia.objects.create(nombre='Patología con informes')
 
     def test_no_se_puede_borrar_patologia_con_informes(self):
-        Informe.objects.create(numero_caso='I1-1', patologia=self.patologia, autor=self.patologo)
+        Informe.objects.create(patologia=self.patologia, autor=self.patologo)
         respuesta = self.client.delete(f'/api/patologias/{self.patologia.id}/')
         self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('informe', respuesta.data['detail'])
@@ -181,7 +186,6 @@ class PdfConTextoDelUsuarioTests(APITestCase):
         )
         self.client.force_authenticate(self.patologo)
         self.informe = Informe.objects.create(
-            numero_caso='PDF-1',
             patologia=Patologia.objects.create(nombre='Patología PDF'),
             autor=self.patologo,
             datos_ingresados={'hallazgos': 'ver <i>H. pylori', 'campo<br>raro': 'tejido <br> pardo'},
@@ -243,7 +247,6 @@ class EstadisticasYPaginacionTests(APITestCase):
         patologia = Patologia.objects.create(nombre='Patología estadísticas')
         for i in range(25):
             Informe.objects.create(
-                numero_caso=f'I4-{i}',
                 patologia=patologia,
                 autor=self.patologo,
                 estado=Informe.Estado.FINALIZADO if i < 15 else Informe.Estado.BORRADOR,
@@ -295,7 +298,6 @@ class DescargaPdfTests(APITestCase):
             username='patologo_descarga', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
         )
         self.informe = Informe.objects.create(
-            numero_caso='PAT-1',
             patologia=Patologia.objects.create(nombre='Patología descarga'),
             autor=self.patologo,
         )
@@ -306,7 +308,9 @@ class DescargaPdfTests(APITestCase):
         respuesta = self.client.get(self.url)
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         self.assertEqual(respuesta['Content-Type'], 'application/pdf')
-        self.assertEqual(respuesta['Content-Disposition'], 'attachment; filename="informe_PAT-1.pdf"')
+        self.assertEqual(
+            respuesta['Content-Disposition'], f'attachment; filename="informe_{self.informe.numero_peticion}.pdf"',
+        )
 
     def test_auditor_puede_descargar(self):
         auditor = Usuario.objects.create_user(
@@ -325,8 +329,9 @@ class DescargaPdfTests(APITestCase):
         self.assertEqual(respuesta.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_nombre_de_archivo_sin_caracteres_peligrosos(self):
-        # Las comillas o el punto y coma del número de caso podrían romper la cabecera.
-        self.informe.numero_caso = 'PAT 1"x";y'
+        # Las comillas o el punto y coma romperían la cabecera. El número de petición
+        # lo genera el sistema (D-7), pero la limpieza se mantiene como defensa.
+        self.informe.numero_peticion = 'PAT 1"x";y'
         self.informe.save()
         self.client.force_authenticate(self.patologo)
         respuesta = self.client.get(self.url)
@@ -354,7 +359,7 @@ class CamposObligatoriosTests(APITestCase):
         self.datos_completos = {'localizacion': 'Axila izquierda', 'num_ganglios': 3}
 
     def crear(self, **extra):
-        cuerpo = {'numero_caso': f'I2-{Informe.objects.count() + 1}', 'patologia': self.patologia.id, **extra}
+        cuerpo = {'patologia': self.patologia.id, **extra}
         return self.client.post('/api/informes/', cuerpo, format='json')
 
     def test_rechaza_datos_vacios(self):
@@ -411,13 +416,13 @@ class NombreVisibleAutorTests(APITestCase):
         )
         patologia = Patologia.objects.create(nombre='Patología nombres')
         for autor in (self.con_nombre, self.sin_nombre):
-            Informe.objects.create(numero_caso=f'NV-{autor.id}', patologia=patologia, autor=autor)
+            Informe.objects.create(patologia=patologia, autor=autor)
         self.client.force_authenticate(self.con_nombre)
 
     def test_informes_muestran_nombre_completo_o_username(self):
-        nombres = {i['numero_caso']: i['autor_nombre'] for i in self.client.get('/api/informes/').data['results']}
-        self.assertEqual(nombres[f'NV-{self.con_nombre.id}'], 'Dr. Carlos Méndez')
-        self.assertEqual(nombres[f'NV-{self.sin_nombre.id}'], 'patologo_sin_nombre')
+        nombres = {i['autor']: i['autor_nombre'] for i in self.client.get('/api/informes/').data['results']}
+        self.assertEqual(nombres[self.con_nombre.id], 'Dr. Carlos Méndez')
+        self.assertEqual(nombres[self.sin_nombre.id], 'patologo_sin_nombre')
         informe = Informe.objects.get(autor=self.sin_nombre)
         self.assertEqual(self.client.get(f'/api/informes/{informe.id}/').data['autor_nombre'], 'patologo_sin_nombre')
 
@@ -568,3 +573,202 @@ class PatologiasActivasTests(APITestCase):
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         self.activa.refresh_from_db()
         self.assertFalse(self.activa.activa)
+
+
+class NumeroPeticionTests(APITestCase):
+    """
+    Decisión D-7 (docs/decisiones.md): al crear un informe, el sistema le asigna
+    un número de petición P-AÑO-NNNNN, que reemplaza al número de caso que
+    escribía el usuario. Se agrega un número de orden externo opcional.
+    """
+
+    def setUp(self):
+        self.patologo = Usuario.objects.create_user(
+            username='patologo_np', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+        )
+        self.patologia = Patologia.objects.create(nombre='Patología número de petición')
+        self.client.force_authenticate(self.patologo)
+        self.anio = timezone.localdate().year
+
+    def crear(self, **extra):
+        return self.client.post(
+            '/api/informes/',
+            {'patologia': self.patologia.id, 'datos_ingresados': {}, **extra},
+            format='json',
+        )
+
+    def numero(self, consecutivo, anio=None):
+        return f'P-{anio or self.anio}-{consecutivo:05d}'
+
+    def test_al_crear_se_asigna_el_numero_con_el_formato(self):
+        respuesta = self.crear()
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        self.assertEqual(respuesta.data['numero_peticion'], self.numero(1))
+
+    def test_los_numeros_son_consecutivos(self):
+        numeros = [self.crear().data['numero_peticion'] for _ in range(3)]
+        self.assertEqual(numeros, [self.numero(1), self.numero(2), self.numero(3)])
+
+    def test_el_consecutivo_vuelve_a_empezar_cada_anio(self):
+        with mock.patch('django.utils.timezone.localdate', return_value=date(2026, 12, 31)):
+            diciembre = [self.crear().data['numero_peticion'] for _ in range(2)]
+        with mock.patch('django.utils.timezone.localdate', return_value=date(2027, 1, 1)):
+            enero = self.crear().data['numero_peticion']
+        self.assertEqual(diciembre, ['P-2026-00001', 'P-2026-00002'])
+        self.assertEqual(enero, 'P-2027-00001')
+
+    def test_el_cliente_no_puede_elegir_ni_cambiar_el_numero(self):
+        respuesta = self.crear(numero_peticion='P-1999-99999')
+        self.assertEqual(respuesta.data['numero_peticion'], self.numero(1))
+        id_informe = respuesta.data['id']
+        cambio = self.client.patch(
+            f'/api/informes/{id_informe}/', {'numero_peticion': 'P-1999-00001'}, format='json',
+        )
+        self.assertEqual(cambio.status_code, status.HTTP_200_OK)
+        self.assertEqual(Informe.objects.get(id=id_informe).numero_peticion, self.numero(1))
+
+    def test_ya_no_existe_el_numero_de_caso(self):
+        respuesta = self.crear()
+        self.assertNotIn('numero_caso', respuesta.data)
+        fila = self.client.get('/api/informes/').data['results'][0]
+        self.assertEqual(fila['numero_peticion'], self.numero(1))
+        self.assertNotIn('numero_caso', fila)
+
+    def test_borrar_un_borrador_no_reutiliza_su_numero(self):
+        primero = self.crear()
+        self.client.delete(f"/api/informes/{primero.data['id']}/")
+        self.assertEqual(self.crear().data['numero_peticion'], self.numero(2))
+
+    def test_los_informes_creados_sin_la_api_tambien_se_numeran(self):
+        # /admin/, seed_data y las pruebas crean informes con el ORM.
+        informe = Informe.objects.create(patologia=self.patologia, autor=self.patologo)
+        self.assertEqual(informe.numero_peticion, self.numero(1))
+
+    def test_la_base_de_datos_rechaza_un_numero_repetido(self):
+        primero = Informe.objects.create(patologia=self.patologia, autor=self.patologo)
+        segundo = Informe.objects.create(patologia=self.patologia, autor=self.patologo)
+        segundo.numero_peticion = primero.numero_peticion
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            segundo.save()
+
+    def test_el_numero_de_orden_externa_es_opcional_y_se_puede_repetir(self):
+        sin_orden = self.crear()
+        self.assertEqual(sin_orden.data['numero_orden_externa'], '')
+        # Dos instituciones distintas pueden usar el mismo número de orden.
+        for _ in range(2):
+            con_orden = self.crear(numero_orden_externa='ORD-123')
+            self.assertEqual(con_orden.status_code, status.HTTP_201_CREATED, con_orden.data)
+            self.assertEqual(con_orden.data['numero_orden_externa'], 'ORD-123')
+
+    def test_se_busca_por_numero_de_peticion_y_de_orden_externa(self):
+        self.crear()
+        self.crear(numero_orden_externa='HOSP-77')
+        por_peticion = self.client.get('/api/informes/', {'q': self.numero(1)}).data
+        self.assertEqual([i['numero_peticion'] for i in por_peticion['results']], [self.numero(1)])
+        por_orden = self.client.get('/api/informes/', {'q': 'HOSP-77'}).data
+        self.assertEqual([i['numero_peticion'] for i in por_orden['results']], [self.numero(2)])
+
+    def test_el_pdf_lleva_el_numero_de_peticion(self):
+        from reportlab.platypus import Table
+        id_informe = self.crear().data['id']
+        with mock.patch('informes.utils.Table', wraps=Table) as espia:
+            respuesta = self.client.get(f'/api/informes/{id_informe}/pdf/')
+        self.assertEqual(
+            respuesta['Content-Disposition'], f'attachment; filename="informe_{self.numero(1)}.pdf"',
+        )
+        celdas = str([llamada.args[0] for llamada in espia.call_args_list])
+        self.assertIn(self.numero(1), celdas)
+
+
+class NumeroPeticionConcurrenciaTests(TransactionTestCase):
+    """
+    Decisión D-7: el número de petición no se repite aunque varios usuarios creen
+    informes al mismo tiempo. Cada hilo usa su propia conexión a la base de datos,
+    como dos peticiones simultáneas al servidor.
+    """
+
+    HILOS = 10
+
+    def test_informes_creados_a_la_vez_reciben_numeros_distintos(self):
+        patologo = Usuario.objects.create_user(
+            username='patologo_concurrencia', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+        )
+        patologia = Patologia.objects.create(nombre='Patología concurrencia')
+        barrera = threading.Barrier(self.HILOS)
+        numeros, errores = [], []
+
+        def crear_informe():
+            try:
+                cliente = APIClient()
+                cliente.force_authenticate(patologo)
+                barrera.wait()  # todos los hilos envían su petición al mismo tiempo
+                respuesta = cliente.post(
+                    '/api/informes/', {'patologia': patologia.id, 'datos_ingresados': {}}, format='json',
+                )
+                if respuesta.status_code == status.HTTP_201_CREATED:
+                    numeros.append(respuesta.data['numero_peticion'])
+                else:
+                    errores.append((respuesta.status_code, respuesta.data))
+            except Exception as error:  # cualquier fallo de un hilo debe verse en la prueba
+                errores.append(repr(error))
+            finally:
+                connection.close()
+
+        hilos = [threading.Thread(target=crear_informe) for _ in range(self.HILOS)]
+        for hilo in hilos:
+            hilo.start()
+        for hilo in hilos:
+            hilo.join()
+
+        self.assertEqual(errores, [])
+        anio = timezone.localdate().year
+        self.assertEqual(sorted(numeros), [f'P-{anio}-{n:05d}' for n in range(1, self.HILOS + 1)])
+
+
+class MigracionNumeroPeticionTests(TransactionTestCase):
+    """
+    La migración de datos de la etapa 1 numera los informes que ya existían: en
+    orden de creación, por año de creación (hora de Bogotá), y deja el contador
+    listo para que el siguiente informe continúe la numeración.
+    """
+
+    ANTES = [('informes', '0003_quitar_campos_requeridos')]
+
+    def test_numera_los_informes_existentes(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(self.ANTES)
+        modelos = executor.loader.project_state(self.ANTES).apps
+        UsuarioAntiguo = modelos.get_model('accounts', 'Usuario')
+        PatologiaAntigua = modelos.get_model('informes', 'Patologia')
+        InformeAntiguo = modelos.get_model('informes', 'Informe')
+
+        autor = UsuarioAntiguo.objects.create(username='autor_migracion')
+        patologia = PatologiaAntigua.objects.create(nombre='Patología migración')
+        # 31/12/2025 23:30 en Bogotá ya es 1/1/2026 en UTC: debe contar como 2025.
+        fechas = {
+            'NOCHEVIEJA': timezone.make_aware(datetime(2025, 12, 31, 23, 30)),
+            'MARZO': timezone.make_aware(datetime(2026, 3, 1, 9, 0)),
+            'FEBRERO': timezone.make_aware(datetime(2026, 2, 1, 9, 0)),
+        }
+        ids = {}
+        for caso, fecha in fechas.items():
+            informe = InformeAntiguo.objects.create(numero_caso=caso, patologia=patologia, autor=autor)
+            InformeAntiguo.objects.filter(id=informe.id).update(fecha_creacion=fecha)
+            ids[caso] = informe.id
+
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        executor.migrate(executor.loader.graph.leaf_nodes())
+
+        numeros = {caso: Informe.objects.get(id=id_informe).numero_peticion for caso, id_informe in ids.items()}
+        self.assertEqual(numeros, {
+            'NOCHEVIEJA': 'P-2025-00001',
+            'FEBRERO': 'P-2026-00001',
+            'MARZO': 'P-2026-00002',
+        })
+        # El siguiente informe de 2026 continúa la numeración.
+        with mock.patch('django.utils.timezone.localdate', return_value=date(2026, 10, 4)):
+            nuevo = Informe.objects.create(
+                patologia=Patologia.objects.get(id=patologia.id), autor=Usuario.objects.get(id=autor.id),
+            )
+        self.assertEqual(nuevo.numero_peticion, 'P-2026-00003')

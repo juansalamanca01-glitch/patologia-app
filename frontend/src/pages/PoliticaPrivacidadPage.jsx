@@ -23,7 +23,8 @@ export default function PoliticaPrivacidadPage() {
           <h2>2. Datos que se recopilan</h2>
           <ul>
             <li>Datos de cuenta: nombre, usuario, correo electrónico, teléfono, especialidad y rol.</li>
-            <li>Datos clínicos de los informes de patología: número de caso, tipo de muestra, datos
+            <li>Datos clínicos de los informes de patología: número de petición, número de orden de la
+              institución remitente, tipo de muestra, datos
               del formulario dinámico y observaciones asociadas.</li>
             <li>Contenido compartido voluntariamente en el foro (publicaciones, comentarios e imágenes).</li>
             <li>Metadatos técnicos: fecha y hora de creación/edición de registros, para trazabilidad.</li>

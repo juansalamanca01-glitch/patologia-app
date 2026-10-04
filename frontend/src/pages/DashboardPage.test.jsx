@@ -13,7 +13,7 @@ vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({ user: { id: 1, rol: 'patologo', username: 'patologo1' }, canWrite: true, isAdmin: false }),
 }));
 
-const BORRADOR = { id: 5, numero_caso: 'PAT-1', patologia_nombre: 'Piel', fecha: '2026-10-04', estado: 'borrador', autor: 1 };
+const BORRADOR = { id: 5, numero_peticion: 'P-2026-00001', patologia_nombre: 'Piel', fecha: '2026-10-04', estado: 'borrador', autor: 1 };
 
 function simularApi() {
   client.get.mockImplementation((url) => Promise.resolve({
@@ -41,5 +41,19 @@ describe('DashboardPage: errores visibles', () => {
     fireEvent.click(await screen.findByTitle('Eliminar borrador'));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
     expect(await screen.findByText('El informe está finalizado y no se puede modificar.')).toBeInTheDocument();
+  });
+});
+
+// Decisión D-7: los informes se identifican por su número de petición.
+describe('DashboardPage: número de petición', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('la tabla de informes recientes muestra el número de petición', async () => {
+    simularApi();
+    render(<MemoryRouter><DashboardPage /></MemoryRouter>);
+    expect(await screen.findByText('P-2026-00001')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /petición/i })).toBeInTheDocument();
   });
 });

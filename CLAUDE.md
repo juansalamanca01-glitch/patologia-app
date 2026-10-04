@@ -55,7 +55,7 @@ Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234`, `auditor1/
 
 `backend/config/settings.py` lee todo con `python-decouple` desde `backend/.env` (ver `.env.example`):
 - `SECRET_KEY` es obligatoria: si falta, `settings.py` lanza `ImproperlyConfigured` y nada arranca (ni `runserver` ni las pruebas). `DEBUG` vale `False` si no se define. Las dos cosas las verifica `backend/config/tests.py`.
-- Si `DB_NAME` está definido usa PostgreSQL; si no, SQLite (`backend/db.sqlite3`).
+- Si `DB_NAME` está definido usa PostgreSQL; si no, SQLite (`backend/db.sqlite3`, con `timeout` de 20 s para esperar en vez de fallar con "database is locked"). Con SQLite, las pruebas usan el archivo `backend/test_db.sqlite3` y no la base en memoria, porque la prueba de concurrencia del número de petición escribe desde varios hilos.
 - `DEBUG=True` activa `CORS_ALLOW_ALL_ORIGINS` y sirve `/media/`; con `DEBUG=False` se usan `CORS_ALLOWED_ORIGINS` y los ajustes HTTPS/HSTS.
 - `FORO_MAX_TAMANO_IMAGEN` (10 MB) es el límite por imagen del foro. Lo aplica `foro/views.py` (`subir_imagenes`, que además comprueba con Pillow que el archivo sea una imagen real), y `ForoPage.jsx` repite el valor en `MAX_TAMANO_IMAGEN_MB`: si cambia uno, hay que cambiar el otro.
 - Idioma `es`, zona horaria `America/Bogota`.
@@ -78,6 +78,7 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
 **Formularios dinámicos e informes.**
 - Cada `Patologia` tiene filas `Plantilla` con `campo_nombre`, `tipo_campo` (`texto`, `numero`, `lista`, `textarea`, `boolean`), `opciones` y `orden`. `InformePage.jsx` renderiza el formulario con ellas.
 - Los valores se guardan como JSON en `Informe.datos_ingresados`.
+- **Número de petición (decisión D-7).** `Informe.save()` asigna `numero_peticion` (`P-AÑO-NNNNN`) al crear el informe, también desde el ORM, `/admin/` o `seed_data`. Usa `siguiente_numero_peticion()` de `informes/models.py`, que incrementa el contador del año (`ConsecutivoPeticion`) con un `UPDATE` atómico dentro de la misma transacción que guarda el informe. No lo cambies por "el mayor número + 1": con dos usuarios a la vez se repite o falla. Lo comprueba `NumeroPeticionConcurrenciaTests`. El número es de solo lectura en la API, no se reutiliza y es el que identifica al informe en listados, búsqueda y PDF. `numero_orden_externa` es opcional y no es único. Ya no existe `numero_caso`.
 - En cada create/update, `InformeViewSet` regenera `texto_generado` con `informes/utils.generar_descripcion_macroscopica`. Esa función usa un diccionario `mapeo` de `campo_nombre` → frase: los campos cuyo nombre coincide con una clave (`localizacion`, `dimensiones`, `peso`, `margenes`…) producen una frase redactada; los demás se agregan como `Etiqueta: valor`. Por eso, al añadir plantillas o patologías conviene reutilizar esos nombres de campo.
 - `generar_pdf_informe` (ReportLab) arma el PDF.
 - El PDF se descarga solo por `GET /api/informes/{id}/pdf/` (acción `exportar_pdf`), con el token en la cabecera `Authorization`. `InformePage.jsx` lo pide con `client.get(..., { responseType: 'blob' })` y lo guarda con un enlace temporal `blob:`. Nunca se debe pasar el token por la URL: la antigua ruta `/api/descargar-pdf/...?token=` se eliminó (auditoría I-5).

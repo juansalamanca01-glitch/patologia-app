@@ -74,12 +74,16 @@ class InformeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Informe
         fields = [
-            'id', 'numero_caso', 'patologia', 'patologia_nombre',
+            'id', 'numero_peticion', 'numero_orden_externa', 'patologia', 'patologia_nombre',
             'autor', 'autor_nombre', 'fecha', 'tipo_muestra',
             'datos_ingresados', 'texto_generado', 'estado', 'notas',
             'fecha_creacion', 'fecha_actualizacion',
         ]
-        read_only_fields = ['id', 'autor', 'texto_generado', 'fecha', 'fecha_creacion', 'fecha_actualizacion']
+        # numero_peticion lo asigna el sistema y no se puede cambiar (decisión D-7).
+        read_only_fields = [
+            'id', 'numero_peticion', 'autor', 'texto_generado', 'fecha',
+            'fecha_creacion', 'fecha_actualizacion',
+        ]
 
     def validate(self, data):
         """Comprueba que estén llenos los campos obligatorios de la plantilla de la patología."""
@@ -114,6 +118,6 @@ class InformeListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Informe
         fields = [
-            'id', 'numero_caso', 'patologia_nombre', 'autor', 'autor_nombre',
+            'id', 'numero_peticion', 'numero_orden_externa', 'patologia_nombre', 'autor', 'autor_nombre',
             'fecha', 'tipo_muestra', 'estado', 'fecha_creacion',
         ]

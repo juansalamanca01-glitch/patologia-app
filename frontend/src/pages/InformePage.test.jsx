@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import client from '../api/client';
@@ -16,7 +16,8 @@ vi.mock('../context/AuthContext', () => ({
 
 const INFORME = {
   id: 5,
-  numero_caso: 'PAT-2026-0001',
+  numero_peticion: 'P-2026-00001',
+  numero_orden_externa: 'ORD-9',
   patologia: 1,
   autor: 1,
   estado: 'borrador',
@@ -29,7 +30,7 @@ const INFORME = {
 // Simula las respuestas de la API según la URL pedida.
 function simularApi() {
   client.get.mockImplementation((url) => {
-    if (url === '/patologias/') return Promise.resolve({ data: { results: [] } });
+    if (url === '/patologias/') return Promise.resolve({ data: { results: [{ id: 1, nombre: 'Piel', activa: true }] } });
     if (url === '/informes/5/') return Promise.resolve({ data: INFORME });
     if (url === '/patologias/1/') return Promise.resolve({ data: { plantillas: [] } });
     if (url === '/informes/5/pdf/') return Promise.resolve({ data: new Blob(['%PDF'], { type: 'application/pdf' }) });
@@ -70,11 +71,11 @@ describe('InformePage: exportar PDF', () => {
     });
     expect(submitSpy).not.toHaveBeenCalled();
     expect(document.querySelector('input[name="token"]')).toBeNull();
-    // El archivo se entrega con un enlace temporal "blob:" y el nombre del caso.
+    // El archivo se entrega con un enlace temporal "blob:" y el número de petición (D-7).
     expect(clickSpy).toHaveBeenCalled();
     const enlace = clickSpy.mock.contexts[0];
     expect(enlace.href).toBe('blob:pdf');
-    expect(enlace.download).toBe('informe_PAT-2026-0001.pdf');
+    expect(enlace.download).toBe('informe_P-2026-00001.pdf');
   });
 });
 
@@ -135,5 +136,52 @@ describe('InformePage: errores visibles', () => {
     ));
     renderInforme();
     expect(await screen.findByText(/No se pudieron cargar los campos de la patología/i)).toBeInTheDocument();
+  });
+});
+
+// Decisión D-7 de docs/decisiones.md: el número de petición lo asigna el sistema
+// al guardar. El formulario ya no pide número de caso; sí permite anotar el
+// número de orden externo de la institución remitente (opcional).
+describe('InformePage: número de petición', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    simularApi();
+  });
+
+  function renderNuevo() {
+    return render(
+      <MemoryRouter initialEntries={['/informes/nuevo']}>
+        <Routes>
+          <Route path="/informes/nuevo" element={<InformePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+  }
+
+  it('un informe nuevo no pide número de caso', async () => {
+    renderNuevo();
+    await screen.findByRole('option', { name: 'Piel' });
+    expect(screen.queryByLabelText(/Número de caso/i)).toBeNull();
+  });
+
+  it('al guardar envía la orden externa y no envía número de caso', async () => {
+    client.post.mockResolvedValue({ data: { id: 9, numero_peticion: 'P-2026-00002' } });
+    renderNuevo();
+    await screen.findByRole('option', { name: 'Piel' });
+    fireEvent.change(screen.getByLabelText(/Tipo de Patología/i), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText(/orden externa/i), { target: { value: 'ORD-1' } });
+    fireEvent.click(screen.getByRole('button', { name: /Guardar Informe/i }));
+
+    await vi.waitFor(() => expect(client.post).toHaveBeenCalled());
+    const [url, datos] = client.post.mock.calls[0];
+    expect(url).toBe('/informes/');
+    expect(datos).not.toHaveProperty('numero_caso');
+    expect(datos.numero_orden_externa).toBe('ORD-1');
+  });
+
+  it('un informe guardado muestra su número de petición y su orden externa', async () => {
+    renderInforme();
+    expect(await screen.findByRole('heading', { name: /Informe P-2026-00001/ })).toBeInTheDocument();
+    expect(screen.getByLabelText(/orden externa/i)).toHaveValue('ORD-9');
   });
 });

@@ -132,7 +132,8 @@ class InformeViewSet(viewsets.ModelViewSet):
         q = params.get('q')
         if q:
             qs = qs.filter(
-                Q(numero_caso__icontains=q) |
+                Q(numero_peticion__icontains=q) |
+                Q(numero_orden_externa__icontains=q) |
                 Q(patologia__nombre__icontains=q) |
                 Q(tipo_muestra__icontains=q)
             )
@@ -197,9 +198,10 @@ class InformeViewSet(viewsets.ModelViewSet):
         """Descarga el informe en PDF."""
         informe = self.get_object()
         buffer = generar_pdf_informe(informe)
-        # Solo letras, números y guiones en el nombre: unas comillas o un punto y coma
-        # del número de caso romperían la cabecera Content-Disposition (auditoría I-5).
-        safe_name = re.sub(r'[^A-Za-z0-9\-]', '_', informe.numero_caso)
+        # El número de petición lo genera el sistema (D-7), pero se sigue limpiando:
+        # unas comillas o un punto y coma romperían la cabecera Content-Disposition (I-5).
+        # El nombre del archivo nunca lleva datos del paciente.
+        safe_name = re.sub(r'[^A-Za-z0-9\-]', '_', informe.numero_peticion)
         response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="informe_{safe_name}.pdf"'
         return response

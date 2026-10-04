@@ -14,7 +14,7 @@ export default function InformePage() {
   const [selectedPatologia, setSelectedPatologia] = useState(null);
   const [plantillas, setPlantillas] = useState([]);
   const [formData, setFormData] = useState({});
-  const [numeroCaso, setNumeroCaso] = useState('');
+  const [numeroOrdenExterna, setNumeroOrdenExterna] = useState('');
   const [tipoMuestra, setTipoMuestra] = useState('');
   const [notas, setNotas] = useState('');
   const [informe, setInforme] = useState(null);
@@ -46,7 +46,7 @@ export default function InformePage() {
       setLoading(true);
       client.get(`/informes/${id}/`).then(({ data }) => {
         setInforme(data);
-        setNumeroCaso(data.numero_caso);
+        setNumeroOrdenExterna(data.numero_orden_externa || '');
         setTipoMuestra(data.tipo_muestra || '');
         setNotas(data.notas || '');
         setFormData(data.datos_ingresados || {});
@@ -83,7 +83,6 @@ export default function InformePage() {
 
   const validate = () => {
     const newErrors = {};
-    if (!numeroCaso.trim()) newErrors.numeroCaso = 'El número de caso es obligatorio.';
     if (!selectedPatologia) newErrors.patologia = 'Seleccione una patología.';
 
     plantillas.filter(p => p.obligatorio).forEach((p) => {
@@ -104,8 +103,9 @@ export default function InformePage() {
     setSaving(true);
     setSuccessMsg('');
 
+    // El número de petición no se envía: lo asigna el backend al crear el informe (decisión D-7).
     const payload = {
-      numero_caso: numeroCaso,
+      numero_orden_externa: numeroOrdenExterna,
       patologia: selectedPatologia,
       tipo_muestra: tipoMuestra,
       datos_ingresados: formData,
@@ -158,7 +158,7 @@ export default function InformePage() {
   // Descarga el PDF con Axios, que envía el token en la cabecera Authorization.
   // Antes el token iba en la URL (?token=...) y quedaba en el historial (auditoría I-5).
   const downloadPDF = async () => {
-    const safeName = (numeroCaso || id).toString().replace(/[^a-zA-Z0-9\-]/g, '_');
+    const safeName = (informe?.numero_peticion || id).toString().replace(/[^a-zA-Z0-9\-]/g, '_');
     try {
       const { data } = await client.get(`/informes/${id}/pdf/`, { responseType: 'blob' });
       // Enlace temporal "blob:" para que el navegador guarde el archivo con su nombre.
@@ -256,7 +256,7 @@ export default function InformePage() {
     <div className="informe-page">
       <div className="page-header">
         <div>
-          <h1>{isEditing ? `Informe ${numeroCaso}` : 'Nuevo Informe'}</h1>
+          <h1>{isEditing ? `Informe ${informe?.numero_peticion || ''}` : 'Nuevo Informe'}</h1>
           {informe && (
             <EstadoBadge estado={informe.estado} />
           )}
@@ -301,17 +301,17 @@ export default function InformePage() {
           <div className="card-header"><h2>Datos Generales</h2></div>
           <div className="card-body">
             <div className="form-row">
-              <div className={`form-group ${errors.numeroCaso ? 'has-error' : ''}`}>
-                <label htmlFor="numeroCaso">Número de Caso <span className="required">*</span></label>
+              <div className={`form-group ${errors.numero_orden_externa ? 'has-error' : ''}`}>
+                <label htmlFor="numeroOrdenExterna">N.º de orden externa (opcional)</label>
                 <input
-                  id="numeroCaso"
+                  id="numeroOrdenExterna"
                   type="text"
-                  value={numeroCaso}
-                  onChange={(e) => { setNumeroCaso(e.target.value); setErrors(p => ({...p, numeroCaso: null})); }}
-                  placeholder="Ej: PAT-2026-0001"
+                  value={numeroOrdenExterna}
+                  onChange={(e) => setNumeroOrdenExterna(e.target.value)}
+                  placeholder="Número de la institución remitente"
                   disabled={informe?.estado === 'finalizado' || !puedeEditar}
                 />
-                {errors.numeroCaso && <span className="field-error">{errors.numeroCaso}</span>}
+                {errors.numero_orden_externa && <span className="field-error">{errors.numero_orden_externa}</span>}
               </div>
 
               <div className={`form-group ${errors.patologia ? 'has-error' : ''}`}>

@@ -35,10 +35,11 @@
 - **14 patologías preconfiguradas**: cada tipo de muestra tiene su propio formulario y su protocolo médico.
 - **Formularios dinámicos**: los campos (texto, número, lista desplegable, área de texto, sí/no) se generan según la patología elegida. Los campos obligatorios se validan en el frontend y en el backend (0 y "No" cuentan como respuestas válidas).
 - **Descripción macroscópica automática**: al guardar un informe, el backend convierte los datos del formulario en un párrafo redactado en lenguaje natural.
-- **Exportación a PDF**: genera con **ReportLab** un informe con título, número de caso, metadatos (fecha, patología, tipo de muestra, patólogo y estado), datos clínicos, descripción macroscópica y notas.
+- **Número de petición automático**: al crear un informe, el sistema le asigna un número `P-AÑO-NNNNN` (por ejemplo `P-2026-00045`). El consecutivo vuelve a 1 cada año, no se repite aunque varios usuarios guarden a la vez y no se reutiliza si se borra un borrador. Se puede anotar, de forma opcional, el número de orden de la institución remitente.
+- **Exportación a PDF**: genera con **ReportLab** un informe con título, número de petición (y orden externa, si existe), metadatos (fecha, patología, tipo de muestra, patólogo y estado), datos clínicos, descripción macroscópica y notas.
 - **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
 - **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables. Una patología se puede desactivar: deja de ofrecerse en los informes nuevos sin perder el historial.
-- **Búsqueda y filtros**: por número de caso, patología o tipo de muestra, rango de fechas y estado. Resultados paginados de 20 en 20.
+- **Búsqueda y filtros**: por número de petición, número de orden externa, patología o tipo de muestra, rango de fechas y estado. Resultados paginados de 20 en 20.
 - **Panel de inicio**: totales de informes (todos, borradores y finalizados) y los 10 más recientes.
 - **Foro de patólogos**: publicaciones por temas (los patólogos y administradores pueden crear temas nuevos), con hasta 6 imágenes (máximo 10 MB cada una) y comentarios. Un administrador puede fijar publicaciones importantes.
 - **Perfil de usuario**: edición de datos personales y cambio de contraseña.
@@ -328,7 +329,7 @@ npm run test:watch                        # se repiten al guardar cambios
 npm test
 ```
 
-- **Backend:** cubre los permisos por rol, el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
+- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
 - **Frontend:** cubre la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
 
 ---
@@ -385,8 +386,8 @@ Todas las rutas exigen la cabecera `Authorization: Bearer <token>`, excepto el l
 
 | Método | Endpoint | Descripción | Acceso |
 |---|---|---|---|
-| GET | `/api/informes/` | Listar informes. Filtros: `q` (caso, patología o tipo de muestra), `fecha_desde`, `fecha_hasta`, `estado`, `patologia` | Todos |
-| POST | `/api/informes/` | Crear un informe y generar su descripción macroscópica. Si falta un campo obligatorio de la plantilla → 400 | Patólogo / Admin |
+| GET | `/api/informes/` | Listar informes. Filtros: `q` (número de petición, orden externa, patología o tipo de muestra), `fecha_desde`, `fecha_hasta`, `estado`, `patologia` | Todos |
+| POST | `/api/informes/` | Crear un informe y generar su descripción macroscópica. El backend asigna `numero_peticion` (no se envía ni se puede cambiar); `numero_orden_externa` es opcional. Si falta un campo obligatorio de la plantilla → 400 | Patólogo / Admin |
 | GET | `/api/informes/estadisticas/` | Totales `{total, borradores, finalizados}`. Acepta los mismos filtros que el listado | Todos |
 | GET | `/api/informes/{id}/` | Ver un informe completo | Todos |
 | PUT / PATCH | `/api/informes/{id}/` | Editar un borrador (si está finalizado → 400) | Autor / Admin |
@@ -421,7 +422,7 @@ graph TD
     C --> E[Seleccionar patología]
     E --> F[Se carga el formulario de la plantilla]
     F --> G[Llenar los datos macroscópicos]
-    G --> H[Guardar como borrador]
+    G --> H[Guardar como borrador: se asigna el número de petición]
     H --> I[El backend genera la descripción macroscópica]
     I --> J{¿Revisión satisfactoria?}
     J -->|No| G

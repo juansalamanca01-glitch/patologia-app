@@ -128,7 +128,7 @@ export default function DashboardPage() {
               <table>
                 <thead>
                   <tr>
-                    <th>Nº Caso</th>
+                    <th>N.º de petición</th>
                     <th>Patología</th>
                     <th>Fecha</th>
                     <th>Estado</th>
@@ -138,7 +138,7 @@ export default function DashboardPage() {
                 <tbody>
                   {recientes.map((inf) => (
                     <tr key={inf.id}>
-                      <td><strong>{inf.numero_caso}</strong></td>
+                      <td><strong>{inf.numero_peticion}</strong></td>
                       <td>{inf.patologia_nombre}</td>
                       <td>{inf.fecha}</td>
                       <td>

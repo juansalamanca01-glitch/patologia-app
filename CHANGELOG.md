@@ -5,6 +5,44 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Informe v2, etapa 1: número de petición automático (decisión D-7)
+
+**Qué se cambió**
+- **`backend/informes/models.py`:**
+  - Nuevo modelo `ConsecutivoPeticion`: guarda el último número usado en cada año.
+  - Nueva función `siguiente_numero_peticion()`: devuelve `P-AÑO-NNNNN` (5 cifras; el consecutivo vuelve a 1 cada año, con el año en hora de Bogotá).
+  - `Informe.save()` asigna el número al crear el informe, en la misma transacción que lo guarda. Así también se numeran los informes creados desde `/admin/` o con el ORM.
+  - `Informe` pierde `numero_caso` y gana `numero_peticion` (único, no editable) y `numero_orden_externa` (opcional, no único).
+- **Migraciones:**
+  - `0004_numero_peticion`: contador y campos nuevos.
+  - `0005_numerar_informes_existentes`: numera los informes que ya existían, en orden de creación y por año, y deja el contador al día.
+  - `0006_quitar_numero_caso`: hace obligatorio y único el número de petición y elimina `numero_caso`. Si se deshace, `numero_caso` vuelve con el número de petición; el valor original no se recupera.
+- **`serializers.py`, `views.py`, `admin.py` y `utils.py`:**
+  - `numero_peticion` es de solo lectura en la API.
+  - La búsqueda `q` incluye el número de petición y la orden externa.
+  - El PDF muestra "N.º de petición" (y la orden externa, si existe) y el archivo se llama `informe_P-AÑO-NNNNN.pdf`.
+  - En `/admin/`, el número es de solo lectura y el contador solo se puede consultar.
+- **`backend/config/settings.py`** (SQLite):
+  - Espera hasta 20 s si la base está ocupada (`timeout`).
+  - Las pruebas usan el archivo `test_db.sqlite3` (ya cubierto por `*.sqlite3` en `.gitignore`).
+- **Frontend:**
+  - `InformePage.jsx` ya no pide número de caso; tiene el campo "N.º de orden externa (opcional)" y el título muestra el número de petición, que también da nombre al PDF.
+  - `DashboardPage.jsx` y `BuscarPage.jsx` muestran la columna "N.º de petición", y el buscador explica que se puede buscar por él.
+  - `PoliticaPrivacidadPage.jsx` describe los datos nuevos.
+- **Pruebas:**
+  - Backend: 13 nuevas.
+    - `NumeroPeticionTests` (11): formato, consecutivo, reinicio por año, no se elige ni se cambia, no se reutiliza, `unique`, orden externa, búsqueda y PDF.
+    - `NumeroPeticionConcurrenciaTests`: 10 hilos crean informes a la vez.
+    - `MigracionNumeroPeticionTests`: numeración de los informes existentes, incluido un informe del 31/12 a las 23:30 de Bogotá.
+    - Se quitó `numero_caso` de las pruebas que ya existían. La prueba del nombre de archivo con caracteres peligrosos se mantiene como defensa.
+  - Frontend: 7 nuevas o ajustadas en `InformePage.test.jsx`, `DashboardPage.test.jsx` y `BuscarPage.test.jsx` (nuevo).
+- **Documentación:** `README.md`, `CLAUDE.md`, la colección de Postman, `docs/propuesta-informe-v2.md` y `docs/progreso.md`.
+
+**Por qué**
+- El número de caso lo escribía el usuario: permitía errores y obligaba a inventar un consecutivo.
+- Se usa un contador con `UPDATE` atómico y no "el mayor número + 1". Se comprobó poniendo por un momento esa versión ingenua: la prueba de concurrencia falló las 3 veces que se corrió ("database is locked"). Con el contador pasó las 5 veces.
+- Base local: el único informe ("Prueba claudio") quedó como `P-2026-00001`. Se hizo una copia de seguridad antes de migrar. También se comprobó que las migraciones se pueden deshacer y volver a aplicar.
+
 ### Se elimina `iniciar_y_probar.ps1`
 
 **Qué se cambió**

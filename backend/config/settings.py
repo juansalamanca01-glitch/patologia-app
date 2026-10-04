@@ -93,6 +93,13 @@ else:
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
+            # Si otro usuario está escribiendo, espera hasta 20 s en lugar de fallar
+            # con "database is locked" (número de petición, decisión D-7).
+            'OPTIONS': {'timeout': 20},
+            # Las pruebas usan un archivo y no la base en memoria: la prueba de
+            # concurrencia escribe desde varios hilos, y la base en memoria falla
+            # con "table is locked" en vez de esperar. *.sqlite3 está en .gitignore.
+            'TEST': {'NAME': BASE_DIR / 'test_db.sqlite3'},
         }
     }
 

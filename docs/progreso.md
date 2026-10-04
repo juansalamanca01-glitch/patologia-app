@@ -13,14 +13,14 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 - **Ubicación del proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`. El 2026-10-03 se movió de Descargas al Escritorio.
 - **Rama de trabajo:** `informe-v2`, creada el 2026-10-04 desde `main` (`267e91b`) para el informe de anatomía patológica v2. Las ramas anteriores, `desarrollo-un-comando` y `seguridad-critica`, quedaron iguales que `main`. Historial de uniones a `main`: Se unió a `main` el 2026-10-03 en dos ocasiones: hasta `958c2f0` (C-1, C-2, C-3, I-1, I-3, I-4, M-8) luego hasta `da69796` (I-5, I-6, I-8, I-11, I-9a, I-9b). Se hizo con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado. El 2026-10-03 también se unió hasta `0d94a56` (I-10, I-12, I-2), y el 2026-10-04 hasta `bbf8386` (limpieza completa y decisiones D-4 a D-6) y luego hasta el commit que registra esta unión (README sin emojis y arreglo del formulario de Patologías). `main` y `seguridad-critica` quedan iguales. El trabajo sigue en esta rama y se volverá a unir a `main` cuando el usuario lo pida.
-- **Tarea actual:** informe de anatomía patológica v2, **etapa 1 (número de petición)**. El plan completo está en `docs/propuesta-informe-v2.md`, que el usuario aprobó el 2026-10-04 (respuestas en su sección 10 y decisiones D-7 a D-11 en `docs/decisiones.md`). Las pruebas de la etapa 1 están escritas y fallan; falta que el usuario confirme el arreglo. La auditoría está completa y `main` tiene todo lo anterior.
+- **Tarea actual:** informe de anatomía patológica v2. La **etapa 1 (número de petición) está terminada**; la siguiente es la **etapa 2 (catálogos de EPS y servicios, tipo de estudio y `GET /api/opciones/`)**, que todavía no se empezó. El plan completo está en `docs/propuesta-informe-v2.md`, que el usuario aprobó el 2026-10-04 (respuestas en su sección 10 y decisiones D-7 a D-11 en `docs/decisiones.md`). La auditoría está completa y `main` tiene todo lo anterior a `informe-v2`.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
   1. Escribir una prueba que demuestre el fallo y mostrar que falla.
   2. Explicar el arreglo y esperar confirmación.
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 77 del backend (`cd backend` y luego `python manage.py test`) y 32 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 90 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 38 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -60,10 +60,11 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | Nuevo | "Editar" en Patologías pide la patología completa (antes no se veían la descripción ni el protocolo) | `dac13ef` |
 | — | `npm run dev` en la raíz: comprueba el entorno y arranca backend y frontend juntos (rama `desarrollo-un-comando`) | `c44d7ec` |
 | — | Se borra `iniciar_y_probar.ps1` (no se usaba; lo reemplaza `npm run dev`) | `b1ef010` |
+| D-7 | Informe v2, etapa 1: número de petición `P-AÑO-NNNNN` automático (contador con `UPDATE` atómico, prueba de concurrencia), orden externa opcional, se elimina `numero_caso` | commit "feat: número de petición automático (informe v2, etapa 1)" |
 
 ## Siguiente paso
 
-1. **Informe v2:** terminar la etapa 1 (número de petición) y seguir con las etapas 2 a 9, en el orden de la sección 9 de `docs/propuesta-informe-v2.md`. Una etapa por vez, con el procedimiento habitual.
+1. **Informe v2:** empezar la etapa 2 (catálogos y opciones) y seguir con las etapas 3 a 9, en el orden de la sección 9 de `docs/propuesta-informe-v2.md`. Una etapa por vez, con el procedimiento habitual.
 2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
 4. **Opcional:** añadir "Cerrar sesión" (`POST /api/auth/logout/`) a la colección de Postman.
@@ -74,7 +75,7 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 
 ## Pendiente de respuesta del usuario
 
-- **Etapa 1 del informe v2:** confirmar el arreglo propuesto antes de aplicarlo. La migración eliminará `numero_caso`; el único informe de la base local ("Prueba claudio") quedará como `P-2026-00001`.
+- Nada por ahora.
 
 ## Pendiente de hacer (anotado para no olvidarlo)
 
