@@ -47,3 +47,53 @@ Los códigos como "I-7" o "C-2" remiten a `docs/auditoria-inicial.md`.
 - **Hallazgo relacionado:** M-11
 - **Decisión:** se activa la lista negra de tokens de SimpleJWT (`token_blacklist`). Al cerrar sesión (nuevo endpoint `POST /api/auth/logout/`) y al cambiar la contraseña, el token de renovación queda invalidado. El token de acceso sigue siendo válido hasta que vence (máximo 8 horas), que es una limitación normal de JWT.
 - **Motivo:** hasta ahora, cerrar sesión solo borraba los tokens del navegador. Un token robado seguía sirviendo hasta 7 días.
+
+## D-7. El número de petición lo genera el sistema y reemplaza al número de caso
+
+- **Fecha:** 2026-10-04
+- **Relacionado con:** `docs/propuesta-informe-v2.md` (secciones 3.5 y 10, respuestas P-1 y P-2)
+- **Decisión:** al crear un informe, el sistema le asigna un **número de petición** con el formato `P-AÑO-NNNNN` (por ejemplo `P-2026-00045`): 5 cifras con ceros a la izquierda y el consecutivo vuelve a 1 cada año. El año es el de la fecha de creación en la hora de Bogotá. El número es único aunque dos usuarios creen informes al mismo tiempo, no se puede modificar y **nunca se reutiliza**: si se borra un borrador, su número queda sin usar. El campo `numero_caso`, que escribía el usuario, **se elimina**. Se agrega un campo opcional, `numero_orden_externa`, para el número de orden de la institución remitente; ese campo no es único.
+- **Motivo:** el número escrito a mano permitía errores y obligaba a inventar un consecutivo. En un documento clínico, un mismo número no debe apuntar nunca a dos informes distintos.
+
+## D-8. Firma del patólogo y requisitos para finalizar un informe
+
+- **Fecha:** 2026-10-04
+- **Relacionado con:** `docs/propuesta-informe-v2.md` (secciones 3.7 y 3.9, respuestas P-6 y P-7)
+- **Decisión:**
+  - El **registro médico** del usuario solo lo asigna un **administrador**, al crear el usuario o desde `/admin/`. En el perfil es de solo lectura, como el rol (C-1).
+  - La firma del informe es siempre la de su **autor**, aunque lo finalice un administrador (D-2).
+  - Para finalizar un informe:
+    - el autor debe tener registro médico;
+    - el informe debe tener **al menos un diagnóstico**;
+    - si el tipo de estudio es **histología**, la **descripción microscópica** no puede estar vacía. En los demás tipos de estudio es opcional.
+  - Un borrador se puede guardar sin cumplir estos requisitos.
+- **Motivo:** si cualquiera pudiera escribir un registro médico, podría firmar informes clínicos con un registro falso. Un informe sin diagnóstico no está completo. En estudios como la citología, la descripción microscópica no siempre va separada.
+
+## D-9. Un informe finalizado se corrige con adendas
+
+- **Fecha:** 2026-10-04
+- **Relacionado con:** D-3; `docs/propuesta-informe-v2.md` (sección 3.8)
+- **Decisión:**
+  - Un informe finalizado se corrige agregando una **adenda**: un texto nuevo con motivo, fecha, número consecutivo dentro del informe y firma de quien la crea.
+  - **Contenido original:** la adenda **no modifica** el informe, así que D-3 sigue vigente.
+  - **Cuándo y quién:** las adendas solo se crean en informes finalizados (un borrador se corrige editándolo). Las crea el autor del informe o un administrador (D-2), y quien la crea debe tener registro médico.
+  - **No se modifican:** no se editan ni se borran desde la aplicación, y en `/admin/` son de solo lectura.
+  - **En el PDF:** van al final, y al principio del informe aparece un aviso de que existen.
+- **Motivo:** D-3 impide corregir un informe cerrado desde la aplicación. Las adendas permiten corregirlo sin perder lo que se entregó originalmente y dejan constancia de quién corrigió qué y cuándo.
+
+## D-10. Al finalizar un informe se congelan los datos que imprime
+
+- **Fecha:** 2026-10-04
+- **Relacionado con:** D-3; `docs/propuesta-informe-v2.md` (sección 3.7)
+- **Decisión:** al finalizar, se guardan en el informe (`datos_finalizacion`) los datos del paciente (nombre, documento, fecha de nacimiento y sexo), los nombres de la EPS y del servicio, y la firma del autor (nombre, especialidad y registro médico). Desde ese momento, la API y el PDF de ese informe usan estos datos y no los actuales.
+- **Motivo:** si se corrigiera después el nombre de un paciente o de un usuario, un informe ya entregado cambiaría sin dejar rastro. Es la misma idea de D-3 aplicada a los datos relacionados.
+
+## D-11. Permisos sobre pacientes y sobre los catálogos de EPS y servicios
+
+- **Fecha:** 2026-10-04
+- **Relacionado con:** D-1, D-4; `docs/propuesta-informe-v2.md` (respuesta P-4)
+- **Decisión:**
+  - **Pacientes:** todos los usuarios autenticados ven los pacientes. Los crean y editan patólogos y administradores. **Solo un administrador** puede borrar un paciente, y solo si no tiene informes; si los tiene, la API responde 400.
+  - **EPS y servicios:** los administran patólogos y administradores, igual que el catálogo de patologías (D-1). Se desactivan en lugar de borrarse (D-4).
+  - **Auditor:** solo lee.
+- **Motivo:** el patólogo es quien registra a los pacientes y conoce las EPS y los servicios con los que trabaja. Borrar un paciente es más delicado porque se pierde su identificación, por eso queda solo para el administrador.

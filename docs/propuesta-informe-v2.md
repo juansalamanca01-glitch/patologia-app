@@ -1,11 +1,11 @@
 # Propuesta: informe de anatomía patológica v2
 
 **Fecha:** 2026-10-04
-**Estado:** propuesta. No se ha modificado código. Antes de empezar, el usuario debe responder las preguntas de la sección 10.
+**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); la etapa 1 (número de petición) está en curso.
 
 **Objetivo:** que el informe tenga los datos y el orden de un informe real de laboratorio:
 
-1. Encabezado con nombre del paciente, número de identificación, edad, médico tratante, fecha de ingreso, número de petición, género, EPS, servicio, fecha de informe y estudios solicitados.
+1. Encabezado con nombre del paciente, número de identificación, edad, médico tratante, fecha de ingreso, número de petición, sexo, EPS, servicio, fecha de informe y estudios solicitados.
 2. Título "Informe de anatomía patológica" y tipo de estudio.
 3. Descripción macroscópica, descripción microscópica, diagnósticos, comentarios y firma.
 
@@ -40,7 +40,7 @@ El formato real se usa como **referencia de estructura**. El PDF no copia el nom
 | Nombre del paciente | `Paciente.nombres` + `Paciente.apellidos` | Se escoge o se crea el paciente |
 | Número de identificación | `Paciente.tipo_documento` + `Paciente.numero_documento` | Ídem |
 | Edad | **No se guarda** | Se calcula de `Paciente.fecha_nacimiento` a la **fecha de ingreso** del informe |
-| Género | `Paciente.genero` (lista) | Ídem |
+| Sexo | `Paciente.sexo` (lista: Femenino, Masculino, Indeterminado) | Ídem |
 | EPS | `Informe.eps` (catálogo), precargada con `Paciente.eps` | Lista |
 | Médico tratante | `Informe.medico_tratante` (texto) | Texto libre |
 | Fecha de ingreso | `Informe.fecha_ingreso` | Fecha; por defecto, hoy |
@@ -83,18 +83,17 @@ class Paciente(models.Model):
         MS = 'MS', 'Menor sin identificación'
         AS = 'AS', 'Adulto sin identificación'
 
-    class Genero(models.TextChoices):            # ver la pregunta P-3
+    class Sexo(models.TextChoices):              # etiqueta "Sexo", como el formato real (P-3)
         FEMENINO = 'femenino', 'Femenino'
         MASCULINO = 'masculino', 'Masculino'
-        OTRO = 'otro', 'Otro'
-        NO_INFORMA = 'no_informa', 'No informa'
+        INDETERMINADO = 'indeterminado', 'Indeterminado'
 
     tipo_documento = models.CharField(max_length=3, choices=TipoDocumento.choices)
     numero_documento = models.CharField(max_length=20)   # alfanumérico: los pasaportes llevan letras
     nombres = models.CharField(max_length=150)
     apellidos = models.CharField(max_length=150)
     fecha_nacimiento = models.DateField()
-    genero = models.CharField(max_length=12, choices=Genero.choices)
+    sexo = models.CharField(max_length=13, choices=Sexo.choices)
     eps = models.ForeignKey(EPS, on_delete=models.PROTECT, null=True, blank=True)  # EPS actual
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
@@ -122,14 +121,14 @@ class Servicio(models.Model):
 
 | Lista | Tipo | Motivo |
 |---|---|---|
-| Género, tipo de documento, tipo de estudio | `TextChoices` en el código | Son estables y la lógica puede depender de ellas |
+| Sexo, tipo de documento, tipo de estudio | `TextChoices` en el código | Son estables y la lógica puede depender de ellas |
 | EPS, servicio | Tabla editable (catálogo) | Cambian según la institución y con el tiempo (las EPS se fusionan o se liquidan) |
 
 **Tipo de estudio** (`Informe.TipoEstudio`): Histología (por defecto), Citología no ginecológica, Citología cérvico-vaginal, Inmunohistoquímica, Estudio intraoperatorio por congelación y Revisión de láminas (segunda opinión).
 
-**Una sola fuente para las opciones fijas.** El endpoint nuevo `GET /api/opciones/` devuelve `{generos, tipos_documento, tipos_estudio}` con `valor` y `etiqueta`, sacados de los `TextChoices`. El frontend no los copia en `constants.js`. Así se evita tener el mismo valor en dos sitios, como pasa con `FORO_MAX_TAMANO_IMAGEN`. Las EPS y los servicios se piden a sus endpoints (`/api/pacientes/eps/` y `/api/servicios/`) con `?activa=true` y `LISTA_COMPLETA`.
+**Una sola fuente para las opciones fijas.** El endpoint nuevo `GET /api/opciones/` devuelve `{sexos, tipos_documento, tipos_estudio}` con `valor` y `etiqueta`, sacados de los `TextChoices`. El frontend no los copia en `constants.js`. Así se evita tener el mismo valor en dos sitios, como pasa con `FORO_MAX_TAMANO_IMAGEN`. Las EPS y los servicios se piden a sus endpoints (`/api/pacientes/eps/` y `/api/servicios/`) con `?activa=true` y `LISTA_COMPLETA`.
 
-**Quién administra los catálogos de EPS y servicios:** patólogo o admin (`EsPatologoOAdmin`), lo mismo que D-1 establece para el catálogo de patologías. El auditor solo lee. Es una extensión de D-1 y hay que confirmarla (pregunta P-4).
+**Quién administra los catálogos de EPS y servicios:** patólogo o admin (`EsPatologoOAdmin`), lo mismo que D-1 establece para el catálogo de patologías. El auditor solo lee. Es una extensión de D-1, confirmada por el usuario (P-4, decisión D-11).
 
 ### 3.4 Cambios en `Informe`
 
@@ -145,10 +144,10 @@ class Servicio(models.Model):
 | `estudios_solicitados` | `TextField(blank=True)` | |
 | `tipo_estudio` | `CharField(choices=TipoEstudio, default='histologia')` | |
 | `descripcion_microscopica` | `TextField(blank=True)` | |
-| `comentarios` | renombrado desde `notas` (`RenameField`) | Conserva los datos. Ver la pregunta P-5. |
+| `comentarios` | renombrado desde `notas` (`RenameField`) | Conserva los datos. Confirmado en P-5. |
 | `fecha_informe` | `DateTimeField(null=True)` | Se llena **solo** en `finalizar`, con `timezone.now()`. |
 | `datos_finalizacion` | `JSONField(null=True)` | Datos congelados al finalizar (sección 3.7). |
-| `numero_caso` | **se elimina** | Lo reemplaza `numero_peticion` (pregunta P-1). |
+| `numero_caso` | **se elimina** | Lo reemplaza `numero_peticion` (P-1, decisión D-7). |
 
 **Por qué la EPS está en el paciente y también en el informe:** el paciente puede cambiar de EPS. El informe debe mostrar la EPS que tenía cuando se hizo el estudio, no la actual.
 
@@ -217,11 +216,11 @@ class Diagnostico(models.Model):
 ### 3.7 Firma del patólogo
 
 - Se agrega `Usuario.registro_medico` (`CharField(30, blank=True)`).
-- **Quién lo escribe:** solo un administrador, al crear el usuario (`RegistroSerializer`) o desde `/admin/`. En `/perfil/` es de **solo lectura**, igual que `rol` (C-1): un registro médico falso firmaría informes clínicos (pregunta P-6).
+- **Quién lo escribe:** solo un administrador, al crear el usuario (`RegistroSerializer`) o desde `/admin/`. En `/perfil/` es de **solo lectura**, igual que `rol` (C-1): un registro médico falso firmaría informes clínicos (P-6, decisión D-8).
 - **Quién firma:** siempre el **autor** del informe, que es el patólogo responsable según D-2. Aunque un admin finalice el informe de otro, la firma es la del autor.
 - **Requisito para finalizar:** el autor debe tener `registro_medico`. Si no lo tiene, `finalizar` responde 400 con "El patólogo autor no tiene registro médico; un administrador debe registrarlo".
 - **Datos congelados (`datos_finalizacion`):** al finalizar se guarda en JSON lo que imprime el encabezado y la firma:
-  - del paciente: nombre, documento, fecha de nacimiento y género;
+  - del paciente: nombre, documento, fecha de nacimiento y sexo;
   - los nombres de la EPS y del servicio;
   - del autor: nombre, especialidad y registro médico.
 
@@ -261,7 +260,7 @@ Para finalizar, además de lo que se exige hoy (autor o admin, y que no esté ya
 1. Tiene paciente.
 2. Tiene al menos un diagnóstico.
 3. El autor tiene registro médico.
-4. Ver la pregunta P-7: ¿también es obligatoria la descripción microscópica?
+4. Si el tipo de estudio es **histología**, la descripción microscópica no puede estar vacía. En los demás tipos de estudio es opcional (P-7, decisión D-8).
 
 Al finalizar se fija `fecha_informe`, se guarda `datos_finalizacion` y se cambia el estado, todo en una sola transacción.
 
@@ -273,7 +272,7 @@ Para **guardar un borrador** solo se exigen la patología, el paciente (en infor
 
 | Endpoint | Cambio |
 |---|---|
-| `GET/POST /api/pacientes/`, `GET/PUT/PATCH/DELETE /api/pacientes/{id}/` | **Nuevo.** Todos leen; crean y editan patólogo y admin; **borra solo admin** y solo si el paciente no tiene informes (pregunta P-4). Búsqueda `?q=` por documento, nombres o apellidos. |
+| `GET/POST /api/pacientes/`, `GET/PUT/PATCH/DELETE /api/pacientes/{id}/` | **Nuevo.** Todos leen; crean y editan patólogo y admin; **borra solo admin** y solo si el paciente no tiene informes (P-4, decisión D-11). Búsqueda `?q=` por documento, nombres o apellidos. |
 | `GET /api/pacientes/{id}/informes/` | **Nuevo.** Historial de informes del paciente. También se puede usar `?paciente=` en `/api/informes/`. |
 | `/api/pacientes/eps/`, `/api/servicios/` | **Nuevos** catálogos con filtro `?activa=`. |
 | `GET /api/opciones/` | **Nuevo.** Opciones de las listas fijas. |
@@ -296,13 +295,13 @@ Para **guardar un borrador** solo se exigen la patología, el paciente (en infor
 
 ### 5.1 Orden
 
-1. **Encabezado del laboratorio:** nombre, dirección y teléfono salen de `settings` y `.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION`, `LABORATORIO_TELEFONO`). Por defecto: "PathoLab — Laboratorio de patología (demostración)".
+1. **Encabezado del laboratorio:** sale de `settings` y `.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION` y `LABORATORIO_TELEFONO`, opcional). Valores por defecto (P-9): "PathoLab — Laboratorio de Patología (demostración)", "Santiago de Cali, Colombia" y sin teléfono. Si el teléfono está vacío, no se imprime.
 2. **Tabla de datos en dos columnas**, como el formato real:
 
    | | |
    |---|---|
    | **Paciente:** Nombres Apellidos | **Identificación:** CC 0000000 |
-   | **Edad:** 45 años | **Género:** Femenino |
+   | **Edad:** 45 años | **Sexo:** Femenino |
    | **Médico tratante:** … | **EPS:** … |
    | **Servicio:** … | **N.º de petición:** P-2026-00045 |
    | **Fecha de ingreso:** 03/10/2026 | **Fecha de informe:** 04/10/2026 |
@@ -337,16 +336,16 @@ Para **guardar un borrador** solo se exigen la patología, el paciente (en infor
 |---|---|---|
 | `pacientes/0001_initial` | `EPS`, `Paciente` | — |
 | `accounts/0002_registro_medico` | `Usuario.registro_medico` (y luego `firma_imagen`) | Queda vacío. Un admin lo llena. |
-| `informes/0004_servicio_consecutivo` | `Servicio`, `ConsecutivoPeticion` | — |
-| `informes/0005_numero_peticion` | Agrega `numero_peticion` (nulo de forma temporal) y `numero_orden_externa` | — |
-| `informes/0006_numerar_informes_existentes` | **Migración de datos:** recorre los informes por `fecha_creacion`, les asigna `P-<año de creación>-NNNNN` y deja `ConsecutivoPeticion` en el último número de cada año | Todos los informes quedan numerados |
-| `informes/0007_quitar_numero_caso` | `numero_peticion` pasa a obligatorio y único; se elimina `numero_caso` (pregunta P-1) | Se pierde el número de caso anterior (pregunta P-1) |
+| `informes/0004_numero_peticion` (etapa 1) | `ConsecutivoPeticion`; agrega `numero_peticion` (nulo de forma temporal) y `numero_orden_externa` | — |
+| `informes/0005_numerar_informes_existentes` (etapa 1) | **Migración de datos:** recorre los informes por `fecha_creacion`, les asigna `P-<año de creación>-NNNNN` y deja `ConsecutivoPeticion` en el último número de cada año | Todos los informes quedan numerados |
+| `informes/0006_quitar_numero_caso` (etapa 1) | `numero_peticion` pasa a obligatorio y único; se elimina `numero_caso` (P-1) | Se pierde el número de caso anterior (P-1) |
+| `informes/0007_servicio` (etapa 2) | `Servicio` | — |
 | `informes/0008_datos_solicitud` | `paciente`, `medico_tratante`, `fecha_ingreso`, `eps`, `servicio`, `estudios_solicitados`, `tipo_estudio` | Los informes antiguos quedan sin paciente (`null`). Se ven y se imprimen con "No registrado". Para finalizar un borrador antiguo, primero hay que asignarle paciente. |
 | `informes/0009_contenido` | `descripcion_microscopica`; `RenameField notas → comentarios`; modelo `Diagnostico` | Las notas se conservan como comentarios |
 | `informes/0010_finalizacion` | `fecha_informe`, `datos_finalizacion` | **Migración de datos:** en los informes ya finalizados, `fecha_informe` toma el valor de `fecha_actualizacion`, que es la mejor aproximación disponible (se documenta). `datos_finalizacion` se llena con los datos actuales. |
 | `informes/0011_adenda` | Modelo `Adenda` | — |
 
-- Todas las migraciones tienen función de reversa cuando es posible. La 0007 no puede recuperar `numero_caso`, salvo que se elija la opción (b) de P-1.
+- Todas las migraciones tienen función de reversa cuando es posible. La 0006 no puede recuperar `numero_caso`: se eliminó por decisión del usuario (P-1).
 - Después de cada etapa, `npm run dev` avisará de las migraciones pendientes (`migrate --check`). Esto ya funciona.
 
 ### 6.2 API
@@ -358,12 +357,12 @@ Ver la sección 4. **Cambio incompatible:** `numero_caso` y `notas` desaparecen 
 | Archivo | Cambio |
 |---|---|
 | `InformePage.jsx` | Se reorganiza en tarjetas con el orden del informe real: **Paciente** → **Datos de la solicitud** → **Estudio** (tipo de estudio, patología, tipo de muestra) → **Descripción macroscópica** (campos dinámicos y texto generado) → **Descripción microscópica** → **Diagnósticos** → **Comentarios** → **Firma** (solo lectura) → **Adendas**. Se quita el campo "Número de caso". El número de petición se muestra en el título después de guardar ("Informe P-2026-00045"). |
-| Componentes nuevos en `components/informe/` | `SelectorPaciente.jsx`: busca por documento o nombre, con un botón "Nuevo paciente" que abre un formulario corto y muestra edad, género y EPS. También `ListaDiagnosticos.jsx` (filas para agregar, quitar y reordenar), `SeccionFirma.jsx` y `SeccionAdendas.jsx`. `InformePage.jsx` ya tiene unas 400 líneas; separar estas partes evita que se duplique. |
+| Componentes nuevos en `components/informe/` | `SelectorPaciente.jsx`: busca por documento o nombre, con un botón "Nuevo paciente" que abre un formulario corto y muestra edad, sexo y EPS. También `ListaDiagnosticos.jsx` (filas para agregar, quitar y reordenar), `SeccionFirma.jsx` y `SeccionAdendas.jsx`. `InformePage.jsx` ya tiene unas 400 líneas; separar estas partes evita que se duplique. |
 | `PacientesPage.jsx` (nueva, ruta `/pacientes`) | Lista con búsqueda, formulario para crear y editar, e historial de informes de cada paciente. Enlace nuevo en el Navbar. |
 | `BuscarPage.jsx`, `DashboardPage.jsx` | Las columnas pasan a ser N.º de petición, Paciente, Tipo de estudio, Patología, Autor y Estado. Cambia el texto de ayuda de la búsqueda. |
 | `PerfilPage.jsx` | Muestra el registro médico en solo lectura. Si un patólogo no lo tiene, avisa que no podrá finalizar informes. |
 | `hooks/useOpciones.js` (nuevo) | Pide `/api/opciones/` una vez. No se agregan copias de las opciones a `constants.js`. |
-| `PatologiasPage.jsx` u otra pantalla | Gestión de los catálogos de EPS y servicios (activar o desactivar, como D-4). Ver la pregunta P-4. |
+| `PatologiasPage.jsx` u otra pantalla | Gestión de los catálogos de EPS y servicios (activar o desactivar, como D-4). Los administran patólogos y admin (P-4, D-11). |
 | `PoliticaPrivacidadPage.jsx` | Se actualiza: ahora la aplicación guarda datos de salud de pacientes. |
 
 ### 6.4 PDF
@@ -407,19 +406,19 @@ Se actualiza en cada etapa, según las reglas 2, 3 y 6 de `CLAUDE.md`:
 
 | Decisión | Cómo se respeta |
 |---|---|
-| D-1 (los patólogos administran el catálogo) | El catálogo de patologías no cambia. Los catálogos nuevos (EPS, servicios) siguen el mismo criterio si se confirma P-4. |
+| D-1 (los patólogos administran el catálogo) | El catálogo de patologías no cambia. Los catálogos nuevos (EPS, servicios) siguen el mismo criterio (P-4, D-11). |
 | D-2 (solo el autor o un admin edita, borra o finaliza) | No cambia. Las adendas siguen la misma regla. La firma es siempre la del autor. |
 | D-3 (un informe finalizado no se modifica) | No cambia. Las adendas **no modifican** el informe: se agregan aparte. Los datos congelados refuerzan D-3. La excepción de `/admin/` sigue igual, pero en `/admin/` las adendas son de solo lectura. |
 | D-4 (se desactiva en lugar de borrar) | Se aplica igual a EPS y servicios. |
 | D-5, D-6 | No se ven afectadas. |
 
-**Decisiones nuevas que se registrarían si se aprueba la propuesta:**
+**Decisiones nuevas, registradas en `docs/decisiones.md` el 2026-10-04:**
 
-- **D-7.** El número de petición lo genera el sistema (`P-AÑO-NNNNN`), nunca se reutiliza y reemplaza al número de caso.
-- **D-8.** El registro médico solo lo asigna un administrador. Para finalizar, el autor debe tenerlo, y la firma es siempre la del autor.
+- **D-7.** El número de petición lo genera el sistema (`P-AÑO-NNNNN`, 5 cifras, reinicio cada año), nunca se reutiliza y reemplaza al número de caso, que se elimina.
+- **D-8.** El registro médico solo lo asigna un administrador y la firma es siempre la del autor. Para finalizar: el autor tiene registro médico, el informe tiene al menos un diagnóstico y, si es de histología, descripción microscópica.
 - **D-9.** Un informe finalizado se corrige con adendas. Las adendas no se editan ni se borran desde la aplicación.
 - **D-10.** Al finalizar se congelan los datos del paciente, la EPS, el servicio y la firma.
-- **D-11.** Los pacientes los crean y editan patólogos y admin; solo un admin los borra, y solo si no tienen informes.
+- **D-11.** Pacientes y catálogos nuevos: patólogos y admin crean y editan pacientes y administran EPS y servicios; solo un admin borra pacientes, y solo si no tienen informes.
 
 ---
 
@@ -432,14 +431,14 @@ Se actualiza en cada etapa, según las reglas 2, 3 y 6 de `CLAUDE.md`:
 - **Registro médico de prueba:** `RM-PRUEBA-0001` para `patologo1` en `seed_data`.
 - **Fechas de nacimiento:** fijas e inventadas.
 - **Pacientes en `seed_data`:** crea 2 pacientes ficticios para poder probar en el navegador. No crea informes, como hoy.
-- **Catálogo de EPS en `seed_data`:** incluye "Particular" y "Otra", más una lista corta de EPS colombianas reales. Son nombres de entidades públicas, no datos de personas, y el catálogo se puede editar (pregunta P-8).
+- **Catálogo de EPS en `seed_data`:** incluye "Particular" y "Otra", más una lista corta de EPS colombianas reales. Son nombres de entidades públicas, no datos de personas, y el catálogo se puede editar (confirmado en P-8).
 - **Ley:** los datos de salud son datos sensibles (Ley 1581 de 2012) y forman parte de la historia clínica (Resolución 1995 de 1999). La propuesta guarda solo los datos mínimos, nunca pone datos del paciente en URL, nombres de archivo ni logs, y actualiza la política de privacidad. Antes de un uso real haría falta una revisión legal, que este proyecto no reemplaza.
 
 ---
 
 ## 9. Orden de implementación por etapas
 
-**Rama:** trabajar en una rama nueva desde `main`, por ejemplo `informe-v2`.
+**Rama:** `informe-v2`, creada desde `main` el 2026-10-04.
 
 **En cada etapa** se sigue el procedimiento de `docs/progreso.md`: prueba que falla → explicación y confirmación → arreglo → prueba que pasa → `CHANGELOG.md`, documentación, `progreso.md`, commit y push. Cada etapa deja la aplicación funcionando y con todas las pruebas en verde.
 
@@ -453,25 +452,23 @@ Se actualiza en cada etapa, según las reglas 2, 3 y 6 de `CLAUDE.md`:
 | **6. Firma y finalización** | `registro_medico`, reglas para finalizar, `fecha_informe`, `datos_finalizacion`, perfil y `SeccionFirma`. | backend, frontend |
 | **7. PDF nuevo** | Estructura de la sección 5, encabezado configurable, numeración de páginas y borrador. | PDF |
 | **8. Adendas** | Modelo, endpoints, sección en el frontend y en el PDF. | backend, frontend, PDF |
-| **9. Cierre** | Política de privacidad, revisión completa del README y de Postman, decisiones D-7 a D-11 (pueden ir registrándose en sus etapas) y prueba manual de todo el flujo en el navegador. | documentación |
+| **9. Cierre** | Política de privacidad, revisión completa del README y de Postman, comprobar que el código cumple D-7 a D-11 y prueba manual de todo el flujo en el navegador. | documentación |
 | *(Opcional)* **10. Imagen de la firma** | `firma_imagen` en el usuario y en el PDF. | backend, PDF |
 
 Las etapas 1 y 2 no dependen entre sí. Las demás van en el orden de la tabla.
 
 ---
 
-## 10. Preguntas para el usuario (antes de empezar)
+## 10. Preguntas y respuestas del usuario (2026-10-04)
 
-- **P-1. `numero_caso`:** ¿se elimina, como recomiendo, o se conserva?
-  - Recomiendo eliminarlo, porque los informes actuales son de prueba.
-  - La alternativa es conservarlo como campo de solo lectura "Número de caso anterior", solo para los informes que ya existen.
-- **P-2. Formato del consecutivo:** ¿5 cifras (`P-2026-00045`) y reinicio cada año, como en el ejemplo?
-- **P-3. Género:** ¿sirven las opciones Femenino, Masculino, Otro y No informa? Muchos laboratorios colombianos imprimen "Sexo" (F/M/Indeterminado). ¿Qué etiqueta y qué opciones usa el formato real?
-- **P-4. Permisos:**
-  - ¿Los patólogos administran también los catálogos de EPS y servicios (extensión de D-1)?
-  - ¿Borrar un paciente queda solo para el admin?
-- **P-5. Nombre del campo:** ¿se renombra `notas` → `comentarios` en la base de datos y en la API, como recomiendo? ¿O se mantiene `notas` y solo cambia la etiqueta?
-- **P-6. Registro médico:** ¿lo asigna solo un admin, como recomiendo, o cada patólogo puede escribir el suyo en el perfil?
-- **P-7. Requisitos para finalizar:** ¿es obligatoria la descripción microscópica? Los estudios de citología a veces no la llevan separada.
-- **P-8. EPS de `seed_data`:** ¿se carga una lista corta de EPS reales, o solo "Particular" y "Otra" para que el administrador cargue las suyas?
-- **P-9. Encabezado del PDF:** ¿qué nombre, dirección y teléfono de laboratorio ficticio se usan por defecto?
+| Pregunta | Respuesta | Dónde queda |
+|---|---|---|
+| **P-1.** ¿Se elimina `numero_caso`? | **Sí, se elimina.** | D-7; etapa 1 |
+| **P-2.** ¿Formato del consecutivo? | **5 cifras y reinicio cada año** (`P-2026-00045`). | D-7; etapa 1 |
+| **P-3.** ¿Género? | Etiqueta **"Sexo"**, con las opciones **Femenino, Masculino e Indeterminado**. | Secciones 2, 3.1 y 5.1; etapas 2 y 3 |
+| **P-4.** ¿Permisos de catálogos y pacientes? | **Los patólogos administran EPS y servicios. Borrar pacientes, solo el admin.** | D-11; etapas 2 y 3 |
+| **P-5.** ¿Renombrar `notas`? | **Sí: `notas` → `comentarios`.** | Sección 3.4; etapa 5 |
+| **P-6.** ¿Quién asigna el registro médico? | **Solo un administrador.** | D-8; etapa 6 |
+| **P-7.** ¿Microscópica obligatoria para finalizar? | **Solo en histología; en los demás tipos de estudio es opcional. Siempre se exige al menos un diagnóstico.** | D-8; sección 3.9; etapa 6 |
+| **P-8.** ¿EPS de `seed_data`? | **Lista corta de EPS reales, más "Particular" y "Otra".** | Sección 8; etapa 2 |
+| **P-9.** ¿Encabezado del PDF? | **"PathoLab — Laboratorio de Patología (demostración)", "Santiago de Cali, Colombia", sin teléfono.** | Sección 5.1; etapa 7 |

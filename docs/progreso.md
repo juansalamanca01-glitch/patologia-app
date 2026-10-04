@@ -13,7 +13,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 - **Ubicación del proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`. El 2026-10-03 se movió de Descargas al Escritorio.
 - **Rama de trabajo:** `informe-v2`, creada el 2026-10-04 desde `main` (`267e91b`) para el informe de anatomía patológica v2. Las ramas anteriores, `desarrollo-un-comando` y `seguridad-critica`, quedaron iguales que `main`. Historial de uniones a `main`: Se unió a `main` el 2026-10-03 en dos ocasiones: hasta `958c2f0` (C-1, C-2, C-3, I-1, I-3, I-4, M-8) luego hasta `da69796` (I-5, I-6, I-8, I-11, I-9a, I-9b). Se hizo con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado. El 2026-10-03 también se unió hasta `0d94a56` (I-10, I-12, I-2), y el 2026-10-04 hasta `bbf8386` (limpieza completa y decisiones D-4 a D-6) y luego hasta el commit que registra esta unión (README sin emojis y arreglo del formulario de Patologías). `main` y `seguridad-critica` quedan iguales. El trabajo sigue en esta rama y se volverá a unir a `main` cuando el usuario lo pida.
-- **Tarea actual:** propuesta del informe de anatomía patológica v2 (`docs/propuesta-informe-v2.md`), escrita el 2026-10-04 **sin tocar código**. Espera las respuestas del usuario (sección 10 de la propuesta) antes de empezar la etapa 1. La auditoría está completa y `main` tiene todo lo anterior.
+- **Tarea actual:** informe de anatomía patológica v2, **etapa 1 (número de petición)**. El plan completo está en `docs/propuesta-informe-v2.md`, que el usuario aprobó el 2026-10-04 (respuestas en su sección 10 y decisiones D-7 a D-11 en `docs/decisiones.md`). Las pruebas de la etapa 1 están escritas y fallan; falta que el usuario confirme el arreglo. La auditoría está completa y `main` tiene todo lo anterior.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
   1. Escribir una prueba que demuestre el fallo y mostrar que falla.
   2. Explicar el arreglo y esperar confirmación.
@@ -63,20 +63,23 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 ## Siguiente paso
 
-Nada pendiente obligatorio. Para la próxima sesión:
-1. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
-2. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
-3. **Opcional:** añadir "Cerrar sesión" (`POST /api/auth/logout/`) a la colección de Postman.
-4. **Ideas de la Hoja de Ruta del README:** descripción microscópica, imágenes en los informes, firma digital, HL7/FHIR, Docker.
-5. **Para trabajo nuevo:** crear una rama desde `main` con un nombre que describa la tarea.
+1. **Informe v2:** terminar la etapa 1 (número de petición) y seguir con las etapas 2 a 9, en el orden de la sección 9 de `docs/propuesta-informe-v2.md`. Una etapa por vez, con el procedimiento habitual.
+2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
+3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
+4. **Opcional:** añadir "Cerrar sesión" (`POST /api/auth/logout/`) a la colección de Postman.
+5. **Ideas de la Hoja de Ruta del README:** descripción microscópica, imágenes en los informes, firma digital, HL7/FHIR, Docker.
+6. **Para trabajo nuevo:** crear una rama desde `main` con un nombre que describa la tarea.
 
 Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejecutar `git switch main`, luego `git merge --ff-only <rama de trabajo>` y `git push origin main`, y volver con `git switch <rama de trabajo>`. Siempre preguntar antes al usuario.
 
 ## Pendiente de respuesta del usuario
 
-- Preguntas P-1 a P-9 de `docs/propuesta-informe-v2.md` (sección 10): qué hacer con `numero_caso`, formato del consecutivo, opciones de género, permisos de catálogos y pacientes, renombrar `notas`, quién asigna el registro médico, requisitos para finalizar, EPS de `seed_data` y encabezado del PDF.
+- **Etapa 1 del informe v2:** confirmar el arreglo propuesto antes de aplicarlo. La migración eliminará `numero_caso`; el único informe de la base local ("Prueba claudio") quedará como `P-2026-00001`.
+
 ## Pendiente de hacer (anotado para no olvidarlo)
 
 - **Producción:** al publicar la app, configurar en el servidor web un límite de tamaño de petición (por ejemplo, `client_max_body_size 60m;` en Nginx). Ver la nota de I-6 en `settings.py`.
+- **Producción:** migrar la base de datos de SQLite a **PostgreSQL**. `settings.py` ya lo permite definiendo `DB_NAME`. Hay que pasar los datos y correr todas las pruebas contra PostgreSQL, en especial la de concurrencia del número de petición.
+- **Producción:** agregar un **registro de accesos**: quién consulta qué informe o paciente y cuándo, incluidas las descargas del PDF. Los datos de salud son datos sensibles (Ley 1581 de 2012), y la historia clínica exige saber quién accedió a ella.
 - **Navegador:** probar a mano el dashboard y la paginación del buscador (I-4) con más de 20 informes.
 - **Navegador:** probar a mano el cambio de C-2 en el frontend. Otro patólogo debe ver en solo lectura los informes ajenos. Para la prueba hay que crear un segundo patólogo desde `/admin/`.
