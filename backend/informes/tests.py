@@ -271,3 +271,53 @@ class EstadisticasYPaginacionTests(APITestCase):
         respuesta = self.client.get('/api/informes/', {'estado': 'borrador', 'page': 1}).data
         self.assertEqual(respuesta['count'], 10)
         self.assertTrue(all(i['estado'] == 'borrador' for i in respuesta['results']))
+
+
+class DescargaPdfTests(APITestCase):
+    """
+    Hallazgo I-5 de docs/auditoria-inicial.md: el token de sesión no debe viajar
+    en la URL (queda en el historial y en los registros del servidor). El PDF se
+    descarga solo por /api/informes/{id}/pdf/ con la cabecera Authorization.
+    """
+
+    def setUp(self):
+        self.patologo = Usuario.objects.create_user(
+            username='patologo_descarga', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+        )
+        self.informe = Informe.objects.create(
+            numero_caso='PAT-1',
+            patologia=Patologia.objects.create(nombre='Patología descarga'),
+            autor=self.patologo,
+        )
+        self.url = f'/api/informes/{self.informe.id}/pdf/'
+
+    def test_descarga_con_cabecera_authorization(self):
+        self.client.force_authenticate(self.patologo)
+        respuesta = self.client.get(self.url)
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta['Content-Type'], 'application/pdf')
+        self.assertEqual(respuesta['Content-Disposition'], 'attachment; filename="informe_PAT-1.pdf"')
+
+    def test_auditor_puede_descargar(self):
+        auditor = Usuario.objects.create_user(
+            username='auditor_descarga', password='ClaveSegura-2026', rol=Usuario.Rol.AUDITOR,
+        )
+        self.client.force_authenticate(auditor)
+        self.assertEqual(self.client.get(self.url).status_code, status.HTTP_200_OK)
+
+    def test_sin_autenticacion_no_descarga(self):
+        self.assertEqual(self.client.get(self.url).status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_ya_no_existe_la_descarga_con_token_en_la_url(self):
+        from rest_framework_simplejwt.tokens import AccessToken
+        token = str(AccessToken.for_user(self.patologo))
+        respuesta = self.client.get(f'/api/descargar-pdf/{self.informe.id}/informe.pdf', {'token': token})
+        self.assertEqual(respuesta.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_nombre_de_archivo_sin_caracteres_peligrosos(self):
+        # Las comillas o el punto y coma del número de caso podrían romper la cabecera.
+        self.informe.numero_caso = 'PAT 1"x";y'
+        self.informe.save()
+        self.client.force_authenticate(self.patologo)
+        respuesta = self.client.get(self.url)
+        self.assertEqual(respuesta['Content-Disposition'], 'attachment; filename="informe_PAT_1_x__y.pdf"')

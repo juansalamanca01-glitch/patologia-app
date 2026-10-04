@@ -138,6 +138,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### I-5. El token de sesión viaja en la URL al descargar el PDF
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`). Se eliminó `/api/descargar-pdf/`; el frontend descarga con Axios. Ver `CHANGELOG.md`, `DescargaPdfTests` y `InformePage.test.jsx`.
+
 - **Dónde:** `downloadPDF` en `InformePage.jsx` y la vista `descargar_pdf` en `backend/informes/views.py`.
 - **Qué pasa:** para descargar el PDF, el frontend arma una URL como `/api/descargar-pdf/5/informe.pdf?token=eyJ...`.
 - **Por qué importa:** las URLs quedan guardadas en el historial del navegador, en los registros del servidor y de proxies, y se pueden copiar sin querer. Cualquiera que vea esa URL tiene acceso a la cuenta durante 8 horas, que es lo que dura el token.

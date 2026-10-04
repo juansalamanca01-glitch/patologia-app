@@ -19,7 +19,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` a `seguridad-critica` después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 30 del backend (`cd backend` y luego `python manage.py test`) y 3 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 35 del backend (`cd backend` y luego `python manage.py test`) y 4 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -35,12 +35,13 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | I-3 | El PDF escapa el texto del usuario (sin error 500 ni etiquetas inyectadas) y respeta los saltos de línea | `8ebf17b` |
 | I-4 | Endpoint `/api/informes/estadisticas/` para el dashboard y paginación en el buscador | `4938f2d` |
 | M-8 | El perfil muestra un error con "Reintentar" en lugar de quedar en blanco; se instala Vitest en el frontend | `958c2f0` |
+| I-5 | PDF descargado con Axios (token en la cabecera); se eliminó `/api/descargar-pdf/?token=` | ver `git log` |
 
 ## Siguiente paso
 
 Seguir el orden sugerido en la sección 7 de la auditoría:
-1. **Seguridad restante:** I-5 (token en la URL del PDF), I-6 (límite real de tamaño de imágenes), I-8 (`fijado` y `publicacion` editables en el foro), I-9 (`npm audit fix`) e I-11 (validadores de contraseña).
-2. **I-10:** URL de la API fija en `frontend/src/api/client.js`.
+1. **Seguridad restante:** I-6 (límite real de tamaño de imágenes), I-8 (`fijado` y `publicacion` editables en el foro), I-9 (`npm audit fix`) e I-11 (validadores de contraseña).
+2. **I-10:** URL de la API fija en `frontend/src/api/client.js`. Desde I-5 nada usa el proxy `/api` de `vite.config.js`: decidir si `client.js` lo usa (recomendado) o si se elimina.
 3. **Documentación:** I-12 (reescribir el README, incluida la corrección por D-1), actualizar la colección de Postman.
 4. **Limpieza:** hallazgos menores M-1 a M-13 (M-5 ampliado, ver abajo).
 

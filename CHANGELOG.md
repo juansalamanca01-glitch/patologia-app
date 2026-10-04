@@ -5,6 +5,19 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Seguridad: el token de sesión ya no viaja en la URL al descargar el PDF (I-5)
+
+**Qué se cambió**
+- `backend/informes/views.py` y `backend/informes/urls.py`: se eliminaron la vista `descargar_pdf` (`/api/descargar-pdf/<id>/<filename>?token=...`), su ruta y el `import csrf_exempt` que solo ella usaba. El PDF se descarga únicamente por `GET /api/informes/{id}/pdf/`, que exige el token en la cabecera `Authorization`.
+- `backend/informes/views.py`: en `exportar_pdf`, el nombre del archivo se limpia con `re.sub(r'[^A-Za-z0-9\-]', '_', ...)`. Antes solo se reemplazaban los espacios, y unas comillas en el número de caso rompían la cabecera `Content-Disposition`.
+- `frontend/src/pages/InformePage.jsx`: `downloadPDF` pide el PDF con Axios (`responseType: 'blob'`) y lo guarda con un enlace temporal `blob:`. Ya no crea un formulario oculto con el token. Si la descarga falla, muestra *"No se pudo descargar el PDF."* (antes fallaba sin avisar).
+- Pruebas: `DescargaPdfTests` (5 pruebas del backend) y `frontend/src/pages/InformePage.test.jsx` (1 prueba del frontend).
+- Documentación: sección de PDF de `CLAUDE.md`.
+
+**Por qué**
+- Una URL con `?token=` queda guardada en el historial del navegador y en los registros del servidor y de los proxies. Cualquiera que la viera podía usar la cuenta durante las 8 horas de vida del token.
+- Había dos endpoints que hacían lo mismo. Ahora queda uno, autenticado igual que el resto de la API.
+
 ### Corrección: la página de perfil ya no queda en blanco si falla la carga (M-8) y primeras pruebas del frontend
 
 **Qué se cambió**

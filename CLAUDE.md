@@ -68,16 +68,14 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
 - Los valores se guardan como JSON en `Informe.datos_ingresados`.
 - En cada create/update, `InformeViewSet` regenera `texto_generado` con `informes/utils.generar_descripcion_macroscopica`. Esa función usa un diccionario `mapeo` de `campo_nombre` → frase: los campos cuyo nombre coincide con una clave (`localizacion`, `dimensiones`, `peso`, `margenes`…) producen una frase redactada; los demás se agregan como `Etiqueta: valor`. Por eso, al añadir plantillas o patologías conviene reutilizar esos nombres de campo.
 - `generar_pdf_informe` (ReportLab) arma el PDF.
-- Hay dos rutas de descarga del PDF:
-  - `/api/informes/{id}/pdf/`: acción del ViewSet, autenticada por header JWT.
-  - `/api/descargar-pdf/<id>/<filename>?token=<access>`: vista Django `csrf_exempt` que valida el token recibido por query string. Es la que usa el frontend, mediante un formulario o navegación.
+- El PDF se descarga solo por `GET /api/informes/{id}/pdf/` (acción `exportar_pdf`), con el token en la cabecera `Authorization`. `InformePage.jsx` lo pide con `client.get(..., { responseType: 'blob' })` y lo guarda con un enlace temporal `blob:`. Nunca se debe pasar el token por la URL: la antigua ruta `/api/descargar-pdf/...?token=` se eliminó (auditoría I-5).
 - `POST /api/informes/{id}/finalizar/` cambia el estado `borrador` → `finalizado`.
 - `GET /api/informes/estadisticas/` devuelve los totales por estado calculados en el backend. El listado está paginado de 20 en 20 (`PAGE_SIZE`): el frontend usa `count`, `next` y `previous` y nunca debe contar los resultados de una sola página. `BuscarPage.jsx` tiene `TAMANO_PAGINA = 20`, que debe coincidir con `PAGE_SIZE`.
 
 **Rate limiting.** En `settings.REST_FRAMEWORK` están los throttles globales (`anon`, `user`) y otros por scope (`login`, `registro`, `foro_publicacion`, `foro_comentario`). Los de scope se asignan en `accounts/throttles.py` y en `get_throttles()` de las vistas del foro. Si un endpoint nuevo usa un scope nuevo, hay que agregarlo a `DEFAULT_THROTTLE_RATES`.
 
 **Frontend.**
-- `src/api/client.js` es la instancia Axios con `baseURL` **fija** en `http://localhost:8000/api`. No usa `VITE_API_URL` ni el proxy `/api` de `vite.config.js`. Agrega el `Bearer` desde `localStorage` (`access_token`) y, ante un 401, intenta refrescar con `refresh_token`; si falla, redirige a `/login`.
+- `src/api/client.js` es la instancia Axios con `baseURL` **fija** en `http://localhost:8000/api`. No usa `VITE_API_URL`, y desde I-5 nada usa el proxy `/api` de `vite.config.js` (pendiente de I-10). Agrega el `Bearer` desde `localStorage` (`access_token`) y, ante un 401, intenta refrescar con `refresh_token`; si falla, redirige a `/login`.
 - Las rutas están en `App.jsx` con tres wrappers:
   - `ProtectedRoute`: requiere sesión y añade Navbar y Footer.
   - `PublicRoute`: solo para `/login`.

@@ -152,26 +152,24 @@ export default function InformePage() {
     }
   };
 
-  const downloadPDF = () => {
-    const token = localStorage.getItem('access_token');
+  // Descarga el PDF con Axios, que envía el token en la cabecera Authorization.
+  // Antes el token iba en la URL (?token=...) y quedaba en el historial (auditoría I-5).
+  const downloadPDF = async () => {
     const safeName = (numeroCaso || id).toString().replace(/[^a-zA-Z0-9\-]/g, '_');
-    const filename = `informe_${safeName}.pdf`;
-    
-    // Use hidden form to trigger native browser download (respects Content-Disposition)
-    const form = document.createElement('form');
-    form.method = 'GET';
-    form.action = `/api/descargar-pdf/${id}/${filename}`;
-    form.style.display = 'none';
-
-    const tokenInput = document.createElement('input');
-    tokenInput.type = 'hidden';
-    tokenInput.name = 'token';
-    tokenInput.value = token;
-    form.appendChild(tokenInput);
-
-    document.body.appendChild(form);
-    form.submit();
-    form.remove();
+    try {
+      const { data } = await client.get(`/informes/${id}/pdf/`, { responseType: 'blob' });
+      // Enlace temporal "blob:" para que el navegador guarde el archivo con su nombre.
+      const url = URL.createObjectURL(data);
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = `informe_${safeName}.pdf`;
+      document.body.appendChild(enlace);
+      enlace.click();
+      enlace.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setErrors({ general: 'No se pudo descargar el PDF.' });
+    }
   };
 
   const renderField = (plantilla) => {

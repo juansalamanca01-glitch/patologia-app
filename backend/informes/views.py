@@ -1,8 +1,9 @@
+import re
+
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Count, Q, ProtectedError
 
 from accounts.permissions import EsPatologoOAdmin, EsAutorOAdminOSoloLectura
@@ -190,7 +191,9 @@ class InformeViewSet(viewsets.ModelViewSet):
         """Export the report as a PDF file."""
         informe = self.get_object()
         buffer = generar_pdf_informe(informe)
-        safe_name = informe.numero_caso.replace(' ', '_')
+        # Solo letras, números y guiones en el nombre: unas comillas o un punto y coma
+        # del número de caso romperían la cabecera Content-Disposition (auditoría I-5).
+        safe_name = re.sub(r'[^A-Za-z0-9\-]', '_', informe.numero_caso)
         response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="informe_{safe_name}.pdf"'
         return response
@@ -208,26 +211,3 @@ class InformeViewSet(viewsets.ModelViewSet):
         informe.save(update_fields=['estado'])
         return Response(InformeSerializer(informe).data)
 
-
-@csrf_exempt
-def descargar_pdf(request, informe_id, filename):
-    """Standalone PDF download view with filename in URL path."""
-    from rest_framework_simplejwt.tokens import AccessToken
-
-    token = request.GET.get('token')
-    if not token:
-        return HttpResponse('Token requerido', status=401)
-    try:
-        AccessToken(token)
-    except Exception:
-        return HttpResponse('Token invalido', status=401)
-
-    try:
-        informe = Informe.objects.select_related('patologia', 'autor').get(id=informe_id)
-    except Informe.DoesNotExist:
-        return HttpResponse('Informe no encontrado', status=404)
-
-    buffer = generar_pdf_informe(informe)
-    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    return response
