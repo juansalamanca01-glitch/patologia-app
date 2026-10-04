@@ -19,7 +19,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` a `seguridad-critica` después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 63 del backend (`cd backend` y luego `python manage.py test`) y 17 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 66 del backend (`cd backend` y luego `python manage.py test`) y 18 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -46,7 +46,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | I-2 | Los campos obligatorios se validan aunque `datos_ingresados` llegue vacío; `0` y `false` cuentan como respuesta | `0d94a56` |
 | M-1, M-2 | Limpieza: imports, `LoginSerializer`, campo `campos_requeridos` (migración 0003), `isPatologo`/`isAuditor`, `console.log`, imágenes sobrantes y `dist/` | `f944dd7` |
 | M-3, M-13 | `nombre_visible`, `constants.js`, `EstadoBadge`, `resultados()`; 63 comentarios traducidos | `3dd9c49` |
-| M-4 | Listados de categorías, temas y publicaciones: de 22/22/25 a 2/2/3 consultas, conservando el orden | ver `git log` |
+| M-4 | Listados de categorías, temas y publicaciones: de 22/22/25 a 2/2/3 consultas, conservando el orden | `6af05d9` |
+| Nuevo | Menús desplegables y tabla de Patologías con todos los elementos (`?page_size=`, máx. 1000) | ver `git log` |
 
 ## Siguiente paso
 
@@ -56,7 +57,7 @@ Seguir el orden sugerido en la sección 7 de la auditoría:
    - Grupo 2, código duplicado y comentarios (M-3, M-13): **hecho**.
    - Grupo 3, comportamiento: **en curso**. El usuario aprobó todo el 2026-10-03 (decisiones D-4, D-5 y D-6). Orden de trabajo, un commit por punto:
      - [x] M-4: contar con `annotate(Count)` en los listados de categorías, temas y publicaciones (medido: 22, 22 y 25 consultas con 20 elementos).
-     - [ ] Selectores con más de 20 elementos: `?page_size=` (máximo 1000) en el backend y usarlo en los selectores del frontend.
+     - [x] Selectores con más de 20 elementos: `?page_size=` (máximo 1000) en el backend y usarlo en los selectores del frontend.
      - [ ] M-5 / D-4: ocultar las patologías inactivas al crear un informe y añadir la casilla "Activa" en Patologías.
      - [ ] M-6 / D-5: 4 temas iniciales en `seed_data` y botón "+ Tema" en el foro.
      - [ ] M-7: ocultar el formulario de comentarios si el usuario no puede escribir.

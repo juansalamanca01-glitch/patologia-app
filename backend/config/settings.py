@@ -116,7 +116,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'config.paginacion.PaginacionEstandar',  # admite ?page_size= (máx. 1000)
     'PAGE_SIZE': 20,
     # ---- Anti-SPAM / seguridad de la API REST ----
     # Limita cuántas peticiones puede hacer un cliente en una ventana de tiempo,

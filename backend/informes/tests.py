@@ -499,3 +499,32 @@ class ConsultasPorListadoTests(APITestCase):
         self.assertEqual(nombres('/api/categorias/', 'nombre'), ['Alfa', 'Media', 'Zeta'])
         self.assertEqual(nombres('/api/foro/temas/', 'nombre'), ['Alfa', 'Media', 'Zeta'])
         self.assertEqual(nombres('/api/foro/publicaciones/', 'titulo'), ['Fijada', 'Reciente', 'Normal'])
+
+
+class TamanoDePaginaTests(APITestCase):
+    """
+    Los listados vienen de 20 en 20. Los menús desplegables del frontend (patologías,
+    categorías, temas) necesitan todos los elementos: con ?page_size= se puede pedir
+    una página más grande, hasta un máximo de 1000.
+    """
+
+    def setUp(self):
+        usuario = Usuario.objects.create_user(username='paginas', password='x', rol=Usuario.Rol.PATOLOGO)
+        self.client.force_authenticate(usuario)
+        for i in range(25):
+            Patologia.objects.create(nombre=f'Patología {i:02d}')
+
+    def test_por_defecto_trae_20(self):
+        datos = self.client.get('/api/patologias/').data
+        self.assertEqual((datos['count'], len(datos['results'])), (25, 20))
+
+    def test_page_size_permite_traer_todas(self):
+        datos = self.client.get('/api/patologias/', {'page_size': 100}).data
+        self.assertEqual(len(datos['results']), 25)
+        self.assertIsNone(datos['next'])
+
+    def test_page_size_tiene_un_maximo(self):
+        from django.conf import settings
+        from django.utils.module_loading import import_string
+        paginacion = import_string(settings.REST_FRAMEWORK['DEFAULT_PAGINATION_CLASS'])
+        self.assertEqual(paginacion.max_page_size, 1000)

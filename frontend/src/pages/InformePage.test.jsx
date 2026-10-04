@@ -29,7 +29,7 @@ const INFORME = {
 // Simula las respuestas de la API según la URL pedida.
 function simularApi() {
   client.get.mockImplementation((url) => {
-    if (url === '/patologias/') return Promise.resolve({ data: [] });
+    if (url === '/patologias/') return Promise.resolve({ data: { results: [] } });
     if (url === '/informes/5/') return Promise.resolve({ data: INFORME });
     if (url === '/patologias/1/') return Promise.resolve({ data: { plantillas: [] } });
     if (url === '/informes/5/pdf/') return Promise.resolve({ data: new Blob(['%PDF'], { type: 'application/pdf' }) });
@@ -75,5 +75,26 @@ describe('InformePage: exportar PDF', () => {
     const enlace = clickSpy.mock.contexts[0];
     expect(enlace.href).toBe('blob:pdf');
     expect(enlace.download).toBe('informe_PAT-2026-0001.pdf');
+  });
+});
+
+// Los listados vienen de 20 en 20: el selector de patologías pide la lista completa.
+describe('InformePage: selector de patologías', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    simularApi();
+  });
+
+  it('pide todas las patologías, no solo la primera página de 20', async () => {
+    render(
+      <MemoryRouter initialEntries={['/informes/nuevo']}>
+        <Routes>
+          <Route path="/informes/nuevo" element={<InformePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await vi.waitFor(() => {
+      expect(client.get).toHaveBeenCalledWith('/patologias/', { params: { page_size: 1000 } });
+    });
   });
 });

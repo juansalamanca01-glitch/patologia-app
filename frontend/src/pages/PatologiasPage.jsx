@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import client, { resultados } from '../api/client';
+import client, { LISTA_COMPLETA, resultados } from '../api/client';
 
 const CATEGORIA_VACIA = { nombre: '', descripcion: '', color: '#2563eb' };
 const PATOLOGIA_VACIA = { nombre: '', categoria: '', descripcion: '', protocolo_medico: '' };
@@ -21,8 +21,10 @@ export default function PatologiasPage() {
     setLoading(true);
     try {
       const [catRes, patRes] = await Promise.all([
-        client.get('/categorias/'),
-        client.get('/patologias/', { params: filtroCategoria ? { categoria: filtroCategoria } : {} }),
+        client.get('/categorias/', { params: LISTA_COMPLETA }),
+        client.get('/patologias/', {
+          params: filtroCategoria ? { ...LISTA_COMPLETA, categoria: filtroCategoria } : LISTA_COMPLETA,
+        }),
       ]);
       setCategorias(resultados(catRes.data));
       setPatologias(resultados(patRes.data));

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import client, { resultados } from '../api/client';
+import client, { LISTA_COMPLETA, resultados } from '../api/client';
 
 // Debe coincidir con FORO_MAX_TAMANO_IMAGEN de backend/config/settings.py.
 const MAX_TAMANO_IMAGEN_MB = 10;
@@ -40,7 +40,7 @@ export default function ForoPage() {
     try {
       const [pubRes, temaRes] = await Promise.all([
         client.get('/foro/publicaciones/', { params: filtroTema ? { tema: filtroTema } : {} }),
-        client.get('/foro/temas/'),
+        client.get('/foro/temas/', { params: LISTA_COMPLETA }),
       ]);
       setPublicaciones(resultados(pubRes.data));
       setTemas(resultados(temaRes.data));

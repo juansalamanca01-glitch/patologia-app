@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import client, { resultados } from '../api/client';
+import client, { LISTA_COMPLETA, resultados } from '../api/client';
 import EstadoBadge from '../components/EstadoBadge';
 
 export default function InformePage() {
@@ -32,7 +32,7 @@ export default function InformePage() {
 
   // Carga la lista de patologías
   useEffect(() => {
-    client.get('/patologias/').then(({ data }) => {
+    client.get('/patologias/', { params: LISTA_COMPLETA }).then(({ data }) => {
       setPatologias(resultados(data));
     });
   }, []);

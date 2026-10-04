@@ -50,4 +50,8 @@ client.interceptors.response.use(
 // Devuelve la lista de resultados, o los datos tal cual si no vienen paginados.
 export const resultados = (data) => data.results ?? data;
 
+// Para menús desplegables y listas que deben mostrar todos los elementos, no solo
+// los primeros 20: el backend admite ?page_size= hasta 1000 (config/paginacion.py).
+export const LISTA_COMPLETA = { page_size: 1000 };
+
 export default client;

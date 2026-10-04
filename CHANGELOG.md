@@ -5,6 +5,17 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Corrección: los menús desplegables muestran todos los elementos, no solo los primeros 20
+
+**Qué se cambió**
+- `backend/config/paginacion.py` (nuevo): clase `PaginacionEstandar`, que sigue paginando de 20 en 20 pero admite `?page_size=` hasta 1000. Se configura en `settings.REST_FRAMEWORK['DEFAULT_PAGINATION_CLASS']`.
+- `frontend/src/api/client.js`: constante `LISTA_COMPLETA` (`{ page_size: 1000 }`). Se usa en el selector de patologías de "Nuevo informe", en los temas del foro y en las categorías y patologías de la pantalla Patologías.
+- Pruebas: `TamanoDePaginaTests` (3, backend) y una nueva en `InformePage.test.jsx`.
+- Documentación: `CLAUDE.md` y la nota de paginación de la API en el `README.md`.
+
+**Por qué**
+- Fallo encontrado durante la limpieza; no estaba en la auditoría. Los listados vienen de 20 en 20 y esas pantallas solo leían la primera página. Con más de 20 patologías, las demás no se podían elegir al crear un informe, ni se veían en la tabla de Patologías.
+
 ### Rendimiento: los listados ya no hacen una consulta por fila (M-4)
 
 **Qué se cambió**
