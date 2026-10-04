@@ -11,7 +11,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 ## Dónde estamos
 
-- **Rama de trabajo:** `seguridad-critica`. Todavía **no** se ha subido a GitHub ni se ha unido a `main`.
+- **Rama de trabajo:** `seguridad-critica`. Está subida a GitHub (`origin/seguridad-critica`) pero **no** se ha unido a `main`.
 - **Tarea actual:** corregir los hallazgos de la auditoría, empezando por los críticos.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
   1. Escribir una prueba que demuestre el fallo y mostrar que falla.
@@ -28,8 +28,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | C-1 | Un usuario ya no puede cambiarse el rol, `activo` ni `username` | `bf42ff9` |
 | I-7 | Resuelto por decisión D-1 (los patólogos sí administran el catálogo) | `945affb` |
 | C-2 | Informes finalizados bloqueados; solo el autor o un admin los modifica (D-2, D-3) | `e56174d` |
-| C-3 | `SECRET_KEY` obligatoria, `DEBUG=False` por defecto; el script crea el `.env` | este commit |
-| — | Borrada la clase `EsSoloLectura`, que ya no se usaba | este commit |
+| C-3 | `SECRET_KEY` obligatoria, `DEBUG=False` por defecto; el script crea el `.env` | `455cff0` |
+| — | Borrada la clase `EsSoloLectura`, que ya no se usaba | `455cff0` |
 
 ## Siguiente paso
 
@@ -39,7 +39,7 @@ Seguir con los hallazgos **importantes**, en el orden sugerido en la sección 7 
 - I-4: el dashboard y el buscador solo ven 20 informes.
 - M-8: la página de perfil se rompe si falla la carga.
 
-Antes de eso, conviene preguntar al usuario si quiere subir la rama `seguridad-critica` a GitHub o unirla a `main`.
+Más adelante hay que decidir cuándo unir `seguridad-critica` a `main` (con un pull request en GitHub o con `git merge`).
 
 ## Pendiente de respuesta del usuario
 
