@@ -1,3 +1,5 @@
+from unittest import mock
+
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -164,3 +166,54 @@ class BorrarPatologiaTests(APITestCase):
         respuesta = self.client.delete(f'/api/patologias/{self.patologia.id}/')
         self.assertEqual(respuesta.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Patologia.objects.filter(id=self.patologia.id).exists())
+
+
+class PdfConTextoDelUsuarioTests(APITestCase):
+    """
+    Hallazgo I-3 de docs/auditoria-inicial.md: ReportLab interpreta el texto de
+    Paragraph como marcado (<b>, <font>...). El texto que escribe el usuario debe
+    salir tal cual en el PDF: sin romper la generación y sin cambiar el formato.
+    """
+
+    def setUp(self):
+        self.patologo = Usuario.objects.create_user(
+            username='patologo_pdf', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+        )
+        self.client.force_authenticate(self.patologo)
+        self.informe = Informe.objects.create(
+            numero_caso='PDF-1',
+            patologia=Patologia.objects.create(nombre='Patología PDF'),
+            autor=self.patologo,
+            datos_ingresados={'hallazgos': 'ver <i>H. pylori', 'campo<br>raro': 'tejido <br> pardo'},
+            texto_generado='Lesión <b>grande',
+            notas='<font size=40>ENORME</font> & margen < 2 mm',
+        )
+
+    def descargar_pdf(self):
+        return self.client.get(f'/api/informes/{self.informe.id}/pdf/')
+
+    def test_pdf_se_genera_con_texto_que_parece_marcado(self):
+        respuesta = self.descargar_pdf()
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta['Content-Type'], 'application/pdf')
+
+    def test_el_marcado_del_usuario_no_se_interpreta(self):
+        from reportlab.platypus import Paragraph
+        with mock.patch('informes.utils.Paragraph', wraps=Paragraph) as espia:
+            self.descargar_pdf()
+        textos = ' '.join(str(llamada.args[0]) for llamada in espia.call_args_list)
+        # El texto del usuario llega escapado: se verá literal en el PDF.
+        self.assertIn('&lt;font size=40&gt;ENORME&lt;/font&gt; &amp; margen &lt; 2 mm', textos)
+        self.assertIn('Lesión &lt;b&gt;grande', textos)
+        self.assertIn('ver &lt;i&gt;H. pylori', textos)
+        self.assertNotIn('<font size=40>', textos)
+
+    def test_los_saltos_de_linea_de_las_notas_se_respetan(self):
+        from reportlab.platypus import Paragraph
+        self.informe.notas = 'Primera línea\r\nSegunda línea\nTercera < línea'
+        self.informe.save()
+        with mock.patch('informes.utils.Paragraph', wraps=Paragraph) as espia:
+            respuesta = self.descargar_pdf()
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        textos = [str(llamada.args[0]) for llamada in espia.call_args_list]
+        self.assertIn('Primera línea<br/>Segunda línea<br/>Tercera &lt; línea', textos)

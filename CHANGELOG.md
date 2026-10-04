@@ -5,6 +5,16 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Corrección: el PDF muestra literal el texto del usuario y respeta los saltos de línea (I-3)
+
+**Qué se cambió**
+- `backend/informes/utils.py`: nueva función `texto_seguro()`. Escapa `<`, `>` y `&` con `xml.sax.saxutils.escape` y convierte los saltos de línea en `<br/>`. Se aplica a todo el texto del usuario que va a un `Paragraph` del PDF: nombres y valores de los datos clínicos, descripción macroscópica y notas.
+- `backend/informes/tests.py`: nueva clase `PdfConTextoDelUsuarioTests` con 3 pruebas. Comprueban que el PDF se genera con textos como `<i>H. pylori` o `<b>grande`, que etiquetas como `<font size=40>` no cambian el formato y que las notas conservan sus saltos de línea.
+
+**Por qué**
+- ReportLab interpreta el texto de `Paragraph` como marcado. Un texto como `ver <i>H. pylori` hacía fallar la generación del PDF con un error 500. Con etiquetas válidas como `<font size=40>`, un usuario podía cambiar el aspecto del informe oficial.
+- Mejora pedida por el usuario: antes, las notas escritas en varias líneas se juntaban en un solo párrafo.
+
 ### Corrección: borrar una patología con informes ya no da error 500 (I-1)
 
 **Qué se cambió**

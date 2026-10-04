@@ -3,6 +3,7 @@ Utility functions for macroscopic description generation and PDF export.
 """
 import io
 from datetime import datetime
+from xml.sax.saxutils import escape
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -12,6 +13,16 @@ from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable,
 )
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+
+
+def texto_seguro(texto) -> str:
+    """
+    Prepara texto escrito por el usuario para un Paragraph de ReportLab.
+    Paragraph interpreta etiquetas como <b> o <font>; al escapar <, > y &
+    el texto se muestra literal (auditoría I-3). Los saltos de línea se
+    convierten en <br/> para que se respeten en el PDF.
+    """
+    return escape(str(texto)).replace('\r\n', '\n').replace('\n', '<br/>')
 
 
 # ── Macroscopic description generator ────────────────────────────
@@ -149,7 +160,7 @@ def generar_pdf_informe(informe) -> io.BytesIO:
             if valor and str(valor).strip():
                 label = campo.replace('_', ' ').capitalize()
                 elements.append(Paragraph(
-                    f'<b>{label}:</b> {valor}',
+                    f'<b>{texto_seguro(label)}:</b> {texto_seguro(valor)}',
                     styles['CuerpoTexto'],
                 ))
 
@@ -160,7 +171,7 @@ def generar_pdf_informe(informe) -> io.BytesIO:
         elements.append(Paragraph('DESCRIPCIÓN MACROSCÓPICA', styles['Subtitulo']))
         elements.append(HRFlowable(width='100%', thickness=0.5, color=HexColor('#cbd5e0')))
         elements.append(Spacer(1, 6))
-        elements.append(Paragraph(informe.texto_generado, styles['CuerpoTexto']))
+        elements.append(Paragraph(texto_seguro(informe.texto_generado), styles['CuerpoTexto']))
 
     # Notes
     if informe.notas:
@@ -168,7 +179,7 @@ def generar_pdf_informe(informe) -> io.BytesIO:
         elements.append(Paragraph('NOTAS ADICIONALES', styles['Subtitulo']))
         elements.append(HRFlowable(width='100%', thickness=0.5, color=HexColor('#cbd5e0')))
         elements.append(Spacer(1, 6))
-        elements.append(Paragraph(informe.notas, styles['CuerpoTexto']))
+        elements.append(Paragraph(texto_seguro(informe.notas), styles['CuerpoTexto']))
 
     # Footer
     elements.append(Spacer(1, 30))

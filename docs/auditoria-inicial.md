@@ -116,6 +116,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### I-3. El PDF se rompe (error 500) con ciertos textos y permite alterar su formato ✅ Comprobado
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`). Ver `CHANGELOG.md` y `PdfConTextoDelUsuarioTests` en `backend/informes/tests.py`. También se respetan ahora los saltos de línea de las notas.
+
 - **Dónde:** `generar_pdf_informe` en `backend/informes/utils.py`.
 - **Qué pasa:** ReportLab interpreta el texto de los párrafos como si fuera HTML sencillo. Los valores que escribe el usuario (datos, notas, texto generado) se insertan sin "escapar".
   - Textos como `lesión <b>grande`, `ver <i>H. pylori` o `tejido <br> pardo` hacen que el PDF **falle con error 500**.
