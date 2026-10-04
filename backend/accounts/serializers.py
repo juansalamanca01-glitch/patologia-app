@@ -5,7 +5,7 @@ Usuario = get_user_model()
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
-    """Read-only user profile serializer."""
+    """Perfil de usuario. Se usa en el login, la lista de usuarios y /api/auth/perfil/."""
 
     class Meta:
         model = Usuario
@@ -13,7 +13,9 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'nombre_completo',
             'rol', 'telefono', 'especialidad', 'activo', 'fecha_creacion',
         ]
-        read_only_fields = ['id', 'fecha_creacion']
+        # username, rol y activo son de solo lectura para que nadie pueda
+        # cambiárselos a sí mismo desde /api/auth/perfil/ (auditoría C-1).
+        read_only_fields = ['id', 'username', 'rol', 'activo', 'fecha_creacion']
 
 
 class RegistroSerializer(serializers.ModelSerializer):

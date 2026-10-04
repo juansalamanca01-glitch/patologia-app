@@ -20,7 +20,9 @@ python manage.py migrate
 python manage.py seed_data        # usuarios de prueba + 14 patologías con sus plantillas (idempotente)
 python manage.py runserver        # http://127.0.0.1:8000
 python manage.py makemigrations <app>
-python manage.py test <app>       # no existen tests todavía
+python manage.py test                                  # todas las pruebas
+python manage.py test accounts                         # pruebas de una app
+python manage.py test accounts.tests.PerfilCamposProtegidosTests.test_no_puede_cambiar_su_rol  # una sola prueba
 ```
 
 Frontend (desde `frontend/`):
@@ -30,7 +32,7 @@ npm run dev      # http://localhost:5173
 npm run build
 ```
 
-No hay linter ni suite de tests configurados. `iniciar_y_probar.ps1` (raíz) instala dependencias, migra, siembra datos, levanta el backend y prueba endpoints con el usuario `patologo1`. `PathoLab_API.postman_collection.json` contiene la colección de la API.
+Las pruebas usan `APITestCase` de DRF (por ahora solo `backend/accounts/tests.py`); el frontend no tiene pruebas. No hay linter configurado. Los hallazgos pendientes de corregir están en `docs/auditoria-inicial.md`. `iniciar_y_probar.ps1` (raíz) instala dependencias, migra, siembra datos, levanta el backend y prueba endpoints con el usuario `patologo1`. `PathoLab_API.postman_collection.json` contiene la colección de la API.
 
 Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234`, `auditor1/auditor1234`.
 
