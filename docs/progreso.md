@@ -53,25 +53,16 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | M-7 | El auditor ya no ve el formulario de comentarios del foro | `563fb85` |
 | M-9 | Errores de carga y borrado visibles en el Dashboard y en InformePage | `1c28a66` |
 | M-10 | El pie del PDF usa la hora de Bogotá (`timezone.localtime()`) | `df4ab5f` |
-| M-11 / D-6 | Lista negra de tokens, `POST /api/auth/logout/`, cambio de contraseña cierra otras sesiones, el interceptor guarda el `refresh` rotado | ver `git log` |
+| M-11 / D-6 | Lista negra de tokens, `POST /api/auth/logout/`, cambio de contraseña cierra otras sesiones, el interceptor guarda el `refresh` rotado | `ced62eb` |
+| M-12 | Resuelto con documentación (README, sección Seguridad); sin cambios de código | — |
 
 ## Siguiente paso
 
-Seguir el orden sugerido en la sección 7 de la auditoría:
-1. **Limpieza** (en 3 grupos, cada uno con su lista exacta y confirmación del usuario):
-   - Grupo 1, código y archivos sin usar (M-1, M-2): **hecho**.
-   - Grupo 2, código duplicado y comentarios (M-3, M-13): **hecho**.
-   - Grupo 3, comportamiento: **en curso**. El usuario aprobó todo el 2026-10-03 (decisiones D-4, D-5 y D-6). Orden de trabajo, un commit por punto:
-     - [x] M-4: contar con `annotate(Count)` en los listados de categorías, temas y publicaciones (medido: 22, 22 y 25 consultas con 20 elementos).
-     - [x] Selectores con más de 20 elementos: `?page_size=` (máximo 1000) en el backend y usarlo en los selectores del frontend.
-     - [x] M-5 / D-4: ocultar las patologías inactivas al crear un informe y añadir la casilla "Activa" en Patologías.
-     - [x] M-6 / D-5: 4 temas iniciales en `seed_data` y botón "+ Tema" en el foro.
-     - [x] M-7: ocultar el formulario de comentarios si el usuario no puede escribir.
-     - [x] M-9: mostrar en pantalla los errores de Dashboard (carga y borrado) e InformePage (patologías y plantillas).
-     - [x] M-10: hora del PDF en la zona horaria configurada.
-     - [x] M-11 / D-6: lista negra de tokens, `POST /api/auth/logout/` y token invalidado al cambiar la contraseña.
-     - [ ] M-12: marcar como resuelto con documentación (ya está en la sección Seguridad del README).
-2. **Opcional, al final (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal que obliga a revisar la navegación de todas las páginas.
+**La auditoría está completa:** todos los hallazgos críticos, importantes y menores están corregidos o resueltos con documentación, salvo el opcional I-9c. Quedan:
+1. **Unir `seguridad-critica` a `main`.** La última unión fue hasta `0d94a56`; desde entonces van la limpieza completa (grupos 1, 2 y 3) y las decisiones D-4 a D-6. Preguntar al usuario.
+2. **Fallo nuevo del formulario de patologías** (ver "Pendiente de hacer"): proponerlo al usuario.
+3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal que obliga a revisar la navegación de todas las páginas.
+4. **Opcional:** añadir "Cerrar sesión" (`POST /api/auth/logout/`) a la colección de Postman.
 
 Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejecutar `git switch main`, luego `git merge --ff-only seguridad-critica` y `git push origin main`, y volver con `git switch seguridad-critica`. Siempre preguntar antes al usuario.
 

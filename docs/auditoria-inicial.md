@@ -322,6 +322,8 @@ Si el backend está apagado, el usuario no ve ningún mensaje.
 
 ### M-12. Las imágenes del foro solo se ven en modo desarrollo
 
+> **Estado: resuelto con documentación el 2026-10-04.** No requiere cambios de código: es la configuración normal de Django. La sección **Seguridad** del `README.md` explica que, al publicar la app, el servidor web debe servir la carpeta `media/`.
+
 En `config/urls.py`, los archivos de `/media/` solo se sirven si `DEBUG=True`. En producción hará falta configurarlos aparte, por ejemplo con Nginx o un almacenamiento externo.
 
 ### M-13. Comentarios en inglés y un comentario equivocado
