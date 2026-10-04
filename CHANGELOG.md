@@ -5,6 +5,24 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Desarrollo: arrancar backend y frontend con un solo comando (`npm run dev`)
+
+**Qué se cambió**
+- `package.json` (nuevo, en la raíz): scripts `npm run dev` y `npm test`, con `concurrently` como única dependencia de desarrollo.
+- `scripts/entorno.mjs` (nuevo): comprueba que existan el entorno virtual de Python, `backend/.env` y `frontend/node_modules`. Si falta algo, explica el comando para resolverlo. La ruta de Python cambia según el sistema operativo.
+- `scripts/dev.mjs` (nuevo):
+  - Hace esas comprobaciones y avisa si hay migraciones sin aplicar (`migrate --check`).
+  - Arranca Django (8000) y Vite (5173) en la misma terminal, con la salida etiquetada.
+  - Si uno de los dos se detiene, detiene también el otro.
+  - Si falta el `npm install` de la raíz, también lo explica.
+- `scripts/entorno.test.mjs` (nuevo): 8 pruebas con el ejecutor de pruebas que trae Node (`node --test`).
+- Documentación: nueva sección **Arrancar el Proyecto** en el `README.md` (también la estructura, la instalación y las pruebas) y comandos en `CLAUDE.md`.
+
+**Por qué**
+- Para ver la app había que abrir dos terminales y arrancar el backend y el frontend por separado.
+- Se eligió un script de Node en lugar de archivos `.bat` porque funciona en Windows, Mac y Linux, no depende de rutas de un computador concreto, usa una sola terminal y explica qué falta en vez de fallar sin aviso.
+- Verificado arrancando `npm run dev`: frontend 200 y login a través del proxy 200. Al detener el backend a la fuerza, el frontend también se detuvo y los dos puertos quedaron libres.
+
 ### Corrección: al editar una patología se ven su descripción y su protocolo
 
 **Qué se cambió**

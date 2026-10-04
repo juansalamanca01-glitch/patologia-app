@@ -15,6 +15,13 @@ PathoLab: app web para crear, gestionar y exportar a PDF informes histopatológi
 
 ## Comandos
 
+Desde la raíz (después de `npm install` en la raíz):
+```powershell
+npm run dev      # arranca backend (8000) y frontend (5173) juntos; Ctrl + C detiene los dos
+npm test         # pruebas de scripts/ (comprobaciones previas de npm run dev)
+```
+`scripts/dev.mjs` revisa el entorno con `scripts/entorno.mjs` (venv, `backend/.env`, `frontend/node_modules`), avisa de migraciones pendientes (`migrate --check`) y lanza los dos servidores con `concurrently`.
+
 Backend (desde `backend/`, con el venv activado: `.\venv\Scripts\Activate.ps1`):
 ```powershell
 pip install -r requirements.txt

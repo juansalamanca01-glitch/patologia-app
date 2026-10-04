@@ -11,15 +11,15 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 ## Dónde estamos
 
-- **Rama de trabajo:** `seguridad-critica`, subida a GitHub. Se unió a `main` el 2026-10-03 en dos ocasiones: hasta `958c2f0` (C-1, C-2, C-3, I-1, I-3, I-4, M-8) luego hasta `da69796` (I-5, I-6, I-8, I-11, I-9a, I-9b). Se hizo con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado. El 2026-10-03 también se unió hasta `0d94a56` (I-10, I-12, I-2), y el 2026-10-04 hasta `bbf8386` (limpieza completa y decisiones D-4 a D-6) y luego hasta el commit que registra esta unión (README sin emojis y arreglo del formulario de Patologías). `main` y `seguridad-critica` quedan iguales. El trabajo sigue en esta rama y se volverá a unir a `main` cuando el usuario lo pida.
-- **Tarea actual:** corregir los hallazgos de la auditoría, empezando por los críticos.
+- **Rama de trabajo:** `desarrollo-un-comando`, creada el 2026-10-04 desde `main` (`f70d2ba`). La rama anterior, `seguridad-critica`, tiene toda la auditoría y quedó igual que `main`. Historial de uniones a `main`: Se unió a `main` el 2026-10-03 en dos ocasiones: hasta `958c2f0` (C-1, C-2, C-3, I-1, I-3, I-4, M-8) luego hasta `da69796` (I-5, I-6, I-8, I-11, I-9a, I-9b). Se hizo con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado. El 2026-10-03 también se unió hasta `0d94a56` (I-10, I-12, I-2), y el 2026-10-04 hasta `bbf8386` (limpieza completa y decisiones D-4 a D-6) y luego hasta el commit que registra esta unión (README sin emojis y arreglo del formulario de Patologías). `main` y `seguridad-critica` quedan iguales. El trabajo sigue en esta rama y se volverá a unir a `main` cuando el usuario lo pida.
+- **Tarea actual:** la auditoría terminó. Ahora: arrancar el proyecto con un solo comando (`npm run dev`), en la rama `desarrollo-un-comando`.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
   1. Escribir una prueba que demuestre el fallo y mostrar que falla.
   2. Explicar el arreglo y esperar confirmación.
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
-  5. Hacer `git push` a `seguridad-critica` después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 77 del backend (`cd backend` y luego `python manage.py test`) y 32 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+  5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
+- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 77 del backend (`cd backend` y luego `python manage.py test`) y 32 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -57,6 +57,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | M-12 | Resuelto con documentación (README, sección Seguridad); sin cambios de código | — |
 | — | README sin emojis (salvo el título), a pedido del usuario | `f6ccaa7` |
 | Nuevo | "Editar" en Patologías pide la patología completa (antes no se veían la descripción ni el protocolo) | `dac13ef` |
+| — | `npm run dev` en la raíz: comprueba el entorno y arranca backend y frontend juntos (rama `desarrollo-un-comando`) | ver `git log` |
 
 ## Siguiente paso
 
@@ -64,7 +65,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 1. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal que obliga a revisar la navegación de todas las páginas.
 2. **Opcional:** añadir "Cerrar sesión" (`POST /api/auth/logout/`) a la colección de Postman.
 
-Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejecutar `git switch main`, luego `git merge --ff-only seguridad-critica` y `git push origin main`, y volver con `git switch seguridad-critica`. Siempre preguntar antes al usuario.
+Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejecutar `git switch main`, luego `git merge --ff-only <rama de trabajo>` y `git push origin main`, y volver con `git switch <rama de trabajo>`. Siempre preguntar antes al usuario.
 
 ## Pendiente de respuesta del usuario
 

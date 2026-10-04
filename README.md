@@ -18,6 +18,7 @@
 - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Requisitos Previos](#requisitos-previos)
 - [Instalación y Configuración Local](#instalación-y-configuración-local)
+- [Arrancar el Proyecto](#arrancar-el-proyecto)
 - [Usuarios y Cuentas de Prueba](#usuarios-y-cuentas-de-prueba)
 - [Pruebas Automáticas](#pruebas-automáticas)
 - [Catálogo de Patologías Incluidas](#catálogo-de-patologías-incluidas)
@@ -159,8 +160,10 @@ patologia-app/
 │   └── .env.example           # Plantilla del .env (VITE_API_URL)
 ├── docs/                      # Auditoría, decisiones y estado del trabajo
 ├── CHANGELOG.md               # Registro de cambios
+├── scripts/                   # "npm run dev": comprobaciones y arranque de backend + frontend
+├── package.json               # Comandos de la raíz (npm run dev, npm test)
 ├── CLAUDE.md                  # Guía para el asistente de código
-├── iniciar_y_probar.ps1       # Arranque rápido del backend y prueba de endpoints (Windows)
+├── iniciar_y_probar.ps1       # Primera instalación del backend y prueba de endpoints (Windows)
 └── PathoLab_API.postman_collection.json
 ```
 
@@ -185,7 +188,7 @@ git clone https://github.com/juansalamanca01-glitch/patologia-app.git
 cd patologia-app
 ```
 
-> **Atajo en Windows:** el script `iniciar_y_probar.ps1` hace los pasos 3 a 7 del backend. Instala las dependencias, crea el `.env` con una clave nueva si no existe, migra, carga los datos de prueba, levanta el servidor y prueba el login y la creación de un informe. Necesita el entorno virtual creado y activado (pasos 1 y 2).
+> **Atajo en Windows para la primera instalación:** el script `iniciar_y_probar.ps1` hace los pasos 3 a 7 del backend. Instala las dependencias, crea el `.env` con una clave nueva si no existe, migra, carga los datos de prueba, levanta el servidor y prueba el login y la creación de un informe. Necesita el entorno virtual creado y activado (pasos 1 y 2).
 
 ### 2. Backend (Django)
 
@@ -271,6 +274,30 @@ Abre una **segunda terminal** en la raíz del proyecto:
 > - el mismo servidor web sirve el frontend y el backend, y `VITE_API_URL` queda vacía;
 > - o se compila con `VITE_API_URL=https://dirección-del-backend`.
 
+### 4. Herramientas de la raíz
+
+En la **raíz** del proyecto (una sola vez):
+```bash
+npm install
+```
+
+---
+
+## Arrancar el Proyecto
+
+Una vez hecha la instalación, para trabajar cada día basta **un solo comando** desde la raíz del proyecto:
+
+```bash
+npm run dev
+```
+
+- Arranca el backend (http://localhost:8000) y el frontend (http://localhost:5173) en la misma terminal. Cada línea lleva la etiqueta `[backend]` o `[frontend]`.
+- Abre la aplicación en **http://localhost:5173**.
+- **Ctrl + C** detiene los dos servidores. Si uno de los dos se cae, el otro también se detiene.
+- Antes de arrancar, comprueba que estén el entorno virtual, `backend/.env` y las dependencias del frontend. Si falta algo, dice qué comando ejecutar. También avisa si hay migraciones sin aplicar (pasa al traer cambios de otro computador): en ese caso, ejecuta `cd backend` y luego `python manage.py migrate`.
+
+También se pueden arrancar por separado, en dos terminales: `python manage.py runserver` en `backend/` y `npm run dev` en `frontend/`.
+
 ---
 
 ## Usuarios y Cuentas de Prueba
@@ -299,6 +326,9 @@ python manage.py test informes            # las de una app
 # Frontend (desde frontend/)
 npm test                                  # todas las pruebas, una vez
 npm run test:watch                        # se repiten al guardar cambios
+
+# Comprobaciones de "npm run dev" (desde la raíz)
+npm test
 ```
 
 - **Backend:** cubre los permisos por rol, el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
