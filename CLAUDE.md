@@ -11,6 +11,7 @@ PathoLab: app web para crear, gestionar y exportar a PDF informes histopatológi
 3. **Documentación al día.** Si un cambio afecta la arquitectura, el backend, el frontend o la base de datos (modelos o migraciones), actualizar también la documentación correspondiente: `docs/`, `README.md` (estructura, endpoints de la API, usuarios de prueba, roadmap) y, si aplica, este `CLAUDE.md`.
 4. **Idioma.** Los comentarios del código, los docstrings, la documentación y las entradas del CHANGELOG se escriben en español.
 5. **Respetar `docs/decisiones.md`.** Las decisiones registradas ahí son definitivas: el código y la documentación deben cumplirlas aunque contradigan una recomendación de `docs/auditoria-inicial.md` u otro documento. Si un cambio pedido entra en conflicto con una decisión, avisar al usuario antes de hacerlo. Las decisiones nuevas se agregan a ese archivo con fecha, decisión y motivo.
+6. **Estado del trabajo en `docs/progreso.md`.** Al empezar una sesión, leer `docs/progreso.md` para saber en qué rama se trabaja, qué está hecho, qué sigue y qué preguntas esperan respuesta del usuario. Actualizarlo al terminar cada tarea (en el mismo commit) y cada vez que quede algo pendiente de confirmar, para que el trabajo se pueda retomar aunque la conversación se corte.
 
 ## Comandos
 
@@ -33,13 +34,14 @@ npm run dev      # http://localhost:5173
 npm run build
 ```
 
-Las pruebas usan `APITestCase` de DRF (por ahora solo `backend/accounts/tests.py`); el frontend no tiene pruebas. No hay linter configurado. Los hallazgos pendientes de corregir están en `docs/auditoria-inicial.md`. `iniciar_y_probar.ps1` (raíz) instala dependencias, migra, siembra datos, levanta el backend y prueba endpoints con el usuario `patologo1`. `PathoLab_API.postman_collection.json` contiene la colección de la API.
+Las pruebas del backend están en `backend/*/tests.py`: `APITestCase` de DRF para la API y `SimpleTestCase` en `config/tests.py` para la configuración. El frontend no tiene pruebas. No hay linter configurado. Los hallazgos pendientes de corregir están en `docs/auditoria-inicial.md`. `iniciar_y_probar.ps1` (raíz) instala dependencias, migra, siembra datos, levanta el backend y prueba endpoints con el usuario `patologo1`. `PathoLab_API.postman_collection.json` contiene la colección de la API.
 
 Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234`, `auditor1/auditor1234`.
 
 ## Configuración
 
 `backend/config/settings.py` lee todo con `python-decouple` desde `backend/.env` (ver `.env.example`):
+- `SECRET_KEY` es obligatoria: si falta, `settings.py` lanza `ImproperlyConfigured` y nada arranca (ni `runserver` ni las pruebas). `DEBUG` vale `False` si no se define. Las dos cosas las verifica `backend/config/tests.py`.
 - Si `DB_NAME` está definido usa PostgreSQL; si no, SQLite (`backend/db.sqlite3`).
 - `DEBUG=True` activa `CORS_ALLOW_ALL_ORIGINS` y sirve `/media/`; con `DEBUG=False` se usan `CORS_ALLOWED_ORIGINS` y los ajustes HTTPS/HSTS.
 - Idioma `es`, zona horaria `America/Bogota`.
@@ -53,7 +55,6 @@ Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234`, `auditor1/
 
 **Permisos por rol.** DRF exige autenticación por defecto. Las clases están en `accounts/permissions.py`, y comparan `request.user.rol` como string:
 - `EsPatologoOAdmin`: todos leen; escriben solo admin y patólogo.
-- `EsSoloLectura`: el auditor solo lee. Hoy no la usa ninguna vista.
 - `EsAutorOAdminOSoloLectura` (informes y foro): todos leen; crear requiere admin o patólogo; editar, borrar o finalizar requiere ser el autor o admin (decisión D-2).
 - Un `Informe` finalizado no se puede editar ni borrar, ni siquiera por un admin: `InformeViewSet.update` y `destroy` responden 400 (decisión D-3).
 

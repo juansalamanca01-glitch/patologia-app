@@ -189,11 +189,16 @@ cd patologia-app
    pip install -r requirements.txt
    `
 
-4. **Configura el archivo de variables de entorno (opcional en desarrollo)**:
-   `ash
+4. **Crea el archivo de variables de entorno (obligatorio)**:
+   ```bash
    copy .env.example .env     # En Windows
    # cp .env.example .env      # En Linux/macOS
-   `
+   ```
+   Luego genera una clave secreta propia y pégala en `SECRET_KEY=` dentro de `.env`:
+   ```bash
+   python -c "import secrets; print(secrets.token_urlsafe(50))"
+   ```
+   > Sin `SECRET_KEY` el backend no arranca, y si no se define `DEBUG` queda en `False`. El `.env.example` trae `DEBUG=True` para desarrollo. El script `iniciar_y_probar.ps1` crea el `.env` con una clave nueva si no existe.
 
 5. **Aplica las migraciones de base de datos**:
    `ash

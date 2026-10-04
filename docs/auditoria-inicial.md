@@ -81,6 +81,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### C-3. Valores por defecto inseguros: DEBUG activado y clave secreta publicada en GitHub
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`). Ver `CHANGELOG.md` y las pruebas de `backend/config/tests.py`. **Importante:** la clave antigua sigue en el historial de git. Cualquier servidor que la haya usado debe cambiarla.
+
 - **Dónde:** `backend/config/settings.py`, líneas 11 y 13.
 - **Qué pasa:** si no existe el archivo `.env`, Django usa `DEBUG=True` y una `SECRET_KEY` de respaldo escrita en el código. Ese código es público en GitHub.
 - **Por qué importa:**

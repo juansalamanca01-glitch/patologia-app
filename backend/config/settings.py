@@ -1,16 +1,25 @@
 import os
 from pathlib import Path
 from datetime import timedelta
-from decouple import config, Csv
+from decouple import config, Csv, UndefinedValueError
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------- Core / seguridad general ----------
 # SECRET_KEY, DEBUG y ALLOWED_HOSTS se leen de variables de entorno (.env).
-# Nunca se deja un valor de producción por defecto en el código.
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-patologia-dev-key-change-in-production-!@#$%')
+# No hay SECRET_KEY por defecto: el código es público y con esa clave se podrían
+# falsificar tokens JWT. Si falta, la app no arranca (auditoría C-3).
+try:
+    SECRET_KEY = config('SECRET_KEY')
+except UndefinedValueError:
+    raise ImproperlyConfigured(
+        'Falta la variable SECRET_KEY. Copia backend/.env.example como backend/.env '
+        'y pon una clave propia (ver README).'
+    )
 
-DEBUG = config('DEBUG', default=True, cast=bool)
+# Si no se define, DEBUG queda desactivado (modo seguro para producción).
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 

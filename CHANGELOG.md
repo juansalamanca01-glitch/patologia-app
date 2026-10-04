@@ -5,6 +5,21 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Seguridad: SECRET_KEY obligatoria y DEBUG desactivado por defecto (C-3)
+
+**Qué se cambió**
+- `backend/config/settings.py`: se eliminó la `SECRET_KEY` de respaldo escrita en el código. Si falta la variable, la app no arranca y lanza `ImproperlyConfigured` con un mensaje en español que dice qué hacer. `DEBUG` vale `False` si no se define (antes era `True`).
+- `backend/config/tests.py` (nuevo): 4 pruebas que cargan `settings.py` simulando que no hay `.env`.
+- `iniciar_y_probar.ps1`: si no existe `backend/.env`, lo crea desde `.env.example` con una `SECRET_KEY` aleatoria (`secrets.token_urlsafe(50)`). Si el `.env` ya existe, no lo toca.
+- `backend/.env.example`: comentario que explica que `SECRET_KEY` es obligatoria y cómo generar una.
+- `README.md`: el paso 4 de la instalación (crear el `.env`) pasa a ser obligatorio y explica cómo generar la clave.
+- `backend/accounts/permissions.py`: se borró la clase `EsSoloLectura`, que ya no usaba ninguna vista desde el arreglo de C-2.
+- Documentación: `CLAUDE.md` (configuración y regla 6), `docs/progreso.md` (nuevo) y C-3 marcado como corregido en la auditoría.
+
+**Por qué**
+- La clave de respaldo era pública en GitHub. Si la app se publicaba sin `.env`, cualquiera podía firmar tokens JWT de administrador. Además quedaba con `DEBUG=True`, que muestra detalles internos en los errores y permite CORS desde cualquier origen.
+- `docs/progreso.md` registra en qué punto quedó el trabajo, para poder retomarlo aunque la conversación se corte.
+
 ### Seguridad: informes finalizados bloqueados y solo el autor o un admin puede modificarlos (C-2)
 
 **Qué se cambió**

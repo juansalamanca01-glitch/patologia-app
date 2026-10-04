@@ -40,6 +40,16 @@ Write-Host "`n[1/4] Verificando e instalando librerias necesarias..." -Foregroun
 pip install -r requirements.txt --quiet
 Write-Host "[OK] Dependencias de Python listas." -ForegroundColor Green
 
+# 3b. Crear backend\.env si no existe (sin SECRET_KEY la app no arranca)
+if (-not (Test-Path ".env")) {
+    Write-Host "No existe backend\.env: se crea desde .env.example con una SECRET_KEY nueva..." -ForegroundColor Yellow
+    $nuevaClave = python -c "import secrets; print(secrets.token_urlsafe(50))"
+    (Get-Content ".env.example" -Encoding UTF8) -replace '^SECRET_KEY=.*', "SECRET_KEY=$nuevaClave" | Set-Content ".env" -Encoding UTF8
+    Write-Host "[OK] Archivo .env creado." -ForegroundColor Green
+} else {
+    Write-Host "[OK] Archivo .env encontrado." -ForegroundColor Green
+}
+
 # 4. Migraciones de Base de Datos
 Write-Host "`n[2/4] Aplicando migraciones de base de datos..." -ForegroundColor Yellow
 python manage.py migrate --noinput

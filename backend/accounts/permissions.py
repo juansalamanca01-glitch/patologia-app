@@ -17,16 +17,6 @@ class EsPatologoOAdmin(permissions.BasePermission):
         return request.user.rol in ('admin', 'patologo')
 
 
-class EsSoloLectura(permissions.BasePermission):
-    """Read-only access for auditors."""
-    def has_permission(self, request, view):
-        if not request.user.is_authenticated:
-            return False
-        if request.user.rol == 'auditor':
-            return request.method in permissions.SAFE_METHODS
-        return True
-
-
 class EsAutorOAdminOSoloLectura(permissions.BasePermission):
     """
     Permiso compartido por informes y foro (ver decisión D-2 en docs/decisiones.md).
