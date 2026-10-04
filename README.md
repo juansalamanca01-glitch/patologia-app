@@ -10,54 +10,54 @@
 
 ---
 
-## 📋 Tabla de Contenidos
+## Tabla de Contenidos
 
-- [Características Principales](#-características-principales)
-- [Roles y Permisos](#-roles-y-permisos)
-- [Arquitectura y Tecnologías](#️-arquitectura-y-tecnologías)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Requisitos Previos](#-requisitos-previos)
-- [Instalación y Configuración Local](#-instalación-y-configuración-local)
-- [Usuarios y Cuentas de Prueba](#-usuarios-y-cuentas-de-prueba)
-- [Pruebas Automáticas](#-pruebas-automáticas)
-- [Catálogo de Patologías Incluidas](#-catálogo-de-patologías-incluidas)
-- [Referencia de la API REST](#-referencia-de-la-api-rest)
-- [Flujo de Trabajo del Informe](#-flujo-de-trabajo-del-informe)
-- [Seguridad](#-seguridad)
-- [Documentación del Proyecto](#-documentación-del-proyecto)
-- [Hoja de Ruta (Roadmap)](#️-hoja-de-ruta-roadmap)
-
----
-
-## ✨ Características Principales
-
-- 🩺 **14 patologías preconfiguradas**: cada tipo de muestra tiene su propio formulario y su protocolo médico.
-- 📝 **Formularios dinámicos**: los campos (texto, número, lista desplegable, área de texto, sí/no) se generan según la patología elegida. Los campos obligatorios se validan en el frontend y en el backend (0 y "No" cuentan como respuestas válidas).
-- 🤖 **Descripción macroscópica automática**: al guardar un informe, el backend convierte los datos del formulario en un párrafo redactado en lenguaje natural.
-- 📄 **Exportación a PDF**: genera con **ReportLab** un informe con título, número de caso, metadatos (fecha, patología, tipo de muestra, patólogo y estado), datos clínicos, descripción macroscópica y notas.
-- 🔒 **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
-- 🗂️ **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables. Una patología se puede desactivar: deja de ofrecerse en los informes nuevos sin perder el historial.
-- 🔍 **Búsqueda y filtros**: por número de caso, patología o tipo de muestra, rango de fechas y estado. Resultados paginados de 20 en 20.
-- 📊 **Panel de inicio**: totales de informes (todos, borradores y finalizados) y los 10 más recientes.
-- 💬 **Foro de patólogos**: publicaciones por temas (los patólogos y administradores pueden crear temas nuevos), con hasta 6 imágenes (máximo 10 MB cada una) y comentarios. Un administrador puede fijar publicaciones importantes.
-- 👤 **Perfil de usuario**: edición de datos personales y cambio de contraseña.
+- [Características Principales](#características-principales)
+- [Roles y Permisos](#roles-y-permisos)
+- [Arquitectura y Tecnologías](#arquitectura-y-tecnologías)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Requisitos Previos](#requisitos-previos)
+- [Instalación y Configuración Local](#instalación-y-configuración-local)
+- [Usuarios y Cuentas de Prueba](#usuarios-y-cuentas-de-prueba)
+- [Pruebas Automáticas](#pruebas-automáticas)
+- [Catálogo de Patologías Incluidas](#catálogo-de-patologías-incluidas)
+- [Referencia de la API REST](#referencia-de-la-api-rest)
+- [Flujo de Trabajo del Informe](#flujo-de-trabajo-del-informe)
+- [Seguridad](#seguridad)
+- [Documentación del Proyecto](#documentación-del-proyecto)
+- [Hoja de Ruta (Roadmap)](#hoja-de-ruta-roadmap)
 
 ---
 
-## 🔐 Roles y Permisos
+## Características Principales
+
+- **14 patologías preconfiguradas**: cada tipo de muestra tiene su propio formulario y su protocolo médico.
+- **Formularios dinámicos**: los campos (texto, número, lista desplegable, área de texto, sí/no) se generan según la patología elegida. Los campos obligatorios se validan en el frontend y en el backend (0 y "No" cuentan como respuestas válidas).
+- **Descripción macroscópica automática**: al guardar un informe, el backend convierte los datos del formulario en un párrafo redactado en lenguaje natural.
+- **Exportación a PDF**: genera con **ReportLab** un informe con título, número de caso, metadatos (fecha, patología, tipo de muestra, patólogo y estado), datos clínicos, descripción macroscópica y notas.
+- **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
+- **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables. Una patología se puede desactivar: deja de ofrecerse en los informes nuevos sin perder el historial.
+- **Búsqueda y filtros**: por número de caso, patología o tipo de muestra, rango de fechas y estado. Resultados paginados de 20 en 20.
+- **Panel de inicio**: totales de informes (todos, borradores y finalizados) y los 10 más recientes.
+- **Foro de patólogos**: publicaciones por temas (los patólogos y administradores pueden crear temas nuevos), con hasta 6 imágenes (máximo 10 MB cada una) y comentarios. Un administrador puede fijar publicaciones importantes.
+- **Perfil de usuario**: edición de datos personales y cambio de contraseña.
+
+---
+
+## Roles y Permisos
 
 | Acción | Administrador | Patólogo | Auditor |
 |---|:---:|:---:|:---:|
-| Ver informes, buscar y descargar PDF | ✅ | ✅ | ✅ |
-| Crear informes | ✅ | ✅ | ❌ |
-| Editar, borrar o finalizar un informe | ✅ (cualquiera) | Solo los suyos | ❌ |
-| Editar o borrar un informe **finalizado** | ❌ | ❌ | ❌ |
-| Administrar patologías, plantillas, categorías y temas del foro | ✅ | ✅ | ❌ |
-| Publicar y comentar en el foro | ✅ | ✅ | ❌ (solo lectura) |
-| Editar o borrar publicaciones y comentarios | ✅ (moderación) | Solo los suyos | ❌ |
-| Fijar publicaciones del foro | ✅ | ❌ | ❌ |
-| Registrar usuarios y ver la lista de usuarios | ✅ | ❌ | ❌ |
-| Editar su perfil y cambiar su contraseña | ✅ | ✅ | ✅ |
+| Ver informes, buscar y descargar PDF | Sí | Sí | Sí |
+| Crear informes | Sí | Sí | No |
+| Editar, borrar o finalizar un informe | Sí (cualquiera) | Solo los suyos | No |
+| Editar o borrar un informe **finalizado** | No | No | No |
+| Administrar patologías, plantillas, categorías y temas del foro | Sí | Sí | No |
+| Publicar y comentar en el foro | Sí | Sí | No (solo lectura) |
+| Editar o borrar publicaciones y comentarios | Sí (moderación) | Solo los suyos | No |
+| Fijar publicaciones del foro | Sí | No | No |
+| Registrar usuarios y ver la lista de usuarios | Sí | No | No |
+| Editar su perfil y cambiar su contraseña | Sí | Sí | Sí |
 
 Estas reglas responden a decisiones del proyecto registradas en [`docs/decisiones.md`](docs/decisiones.md):
 - **D-1:** los patólogos también administran el catálogo.
@@ -68,7 +68,7 @@ Si hace falta una corrección excepcional sobre un informe finalizado, el admini
 
 ---
 
-## 🛠️ Arquitectura y Tecnologías
+## Arquitectura y Tecnologías
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -113,7 +113,7 @@ Si hace falta una corrección excepcional sobre un informe finalizado, el admini
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 patologia-app/
@@ -168,7 +168,7 @@ Las pruebas del frontend están junto a cada componente, en archivos `*.test.jsx
 
 ---
 
-## 📦 Requisitos Previos
+## Requisitos Previos
 
 - **Python** 3.10 o superior ([python.org](https://www.python.org/))
 - **Node.js** 22.12 o superior y **npm** ([nodejs.org](https://nodejs.org/)). Vite funciona con versiones anteriores, pero Vitest 5 (las pruebas) necesita Node 22.12+.
@@ -176,7 +176,7 @@ Las pruebas del frontend están junto a cada componente, en archivos `*.test.jsx
 
 ---
 
-## 🚀 Instalación y Configuración Local
+## Instalación y Configuración Local
 
 ### 1. Clonar el repositorio
 
@@ -273,7 +273,7 @@ Abre una **segunda terminal** en la raíz del proyecto:
 
 ---
 
-## 👥 Usuarios y Cuentas de Prueba
+## Usuarios y Cuentas de Prueba
 
 `python manage.py seed_data` crea un usuario de cada rol:
 
@@ -283,13 +283,13 @@ Abre una **segunda terminal** en la raíz del proyecto:
 | `patologo1` | `patologo1234` | **Patólogo** |
 | `auditor1` | `auditor1234` | **Auditor** |
 
-Los permisos de cada rol están en [Roles y Permisos](#-roles-y-permisos).
+Los permisos de cada rol están en [Roles y Permisos](#roles-y-permisos).
 
-> ⚠️ Son contraseñas de **demostración**: no las uses en un servidor real. Además, la API rechaza contraseñas así de débiles cuando se registra un usuario o se cambia una contraseña, porque aplica los validadores de Django.
+> **Importante:** son contraseñas de **demostración**: no las uses en un servidor real. Además, la API rechaza contraseñas así de débiles cuando se registra un usuario o se cambia una contraseña, porque aplica los validadores de Django.
 
 ---
 
-## 🧪 Pruebas Automáticas
+## Pruebas Automáticas
 
 ```bash
 # Backend (desde backend/, con el entorno virtual activado)
@@ -306,7 +306,7 @@ npm run test:watch                        # se repiten al guardar cambios
 
 ---
 
-## 🏥 Catálogo de Patologías Incluidas
+## Catálogo de Patologías Incluidas
 
 `seed_data` carga plantillas clínicas para 14 tipos de muestra:
 
@@ -327,7 +327,7 @@ npm run test:watch                        # se repiten al guardar cambios
 
 ---
 
-## 🔌 Referencia de la API REST
+## Referencia de la API REST
 
 Todas las rutas exigen la cabecera `Authorization: Bearer <token>`, excepto el login y la renovación del token. Los listados vienen **paginados de 20 en 20**: la respuesta trae `count`, `next`, `previous` y `results`, y se pide otra página con `?page=2`. Con `?page_size=` se puede pedir una página más grande, hasta 1000 elementos.
 
@@ -384,7 +384,7 @@ La colección [`PathoLab_API.postman_collection.json`](PathoLab_API.postman_coll
 
 ---
 
-## 🔄 Flujo de Trabajo del Informe
+## Flujo de Trabajo del Informe
 
 ```mermaid
 graph TD
@@ -405,11 +405,11 @@ graph TD
 
 ---
 
-## 🛡️ Seguridad
+## Seguridad
 
 - **Autenticación JWT** con renovación automática. El token viaja siempre en la cabecera `Authorization`, nunca en la URL.
 - **Cierre de sesión real**: al salir, al cambiar la contraseña y al renovar, el token de renovación anterior pasa a una lista negra y deja de servir. El token de acceso sigue siendo válido hasta que vence (máximo 8 horas), algo normal en JWT.
-- **Permisos por rol y por autor** en el backend (ver [Roles y Permisos](#-roles-y-permisos)). El frontend solo oculta botones; la regla real la aplica la API.
+- **Permisos por rol y por autor** en el backend (ver [Roles y Permisos](#roles-y-permisos)). El frontend solo oculta botones; la regla real la aplica la API.
 - **Límites de peticiones**:
 
   | Tipo de petición | Límite |
@@ -433,7 +433,7 @@ Para publicar la app en un servidor:
 
 ---
 
-## 📚 Documentación del Proyecto
+## Documentación del Proyecto
 
 | Archivo | Contenido |
 |---|---|
@@ -444,7 +444,7 @@ Para publicar la app en un servidor:
 
 ---
 
-## 🗺️ Hoja de Ruta (Roadmap)
+## Hoja de Ruta (Roadmap)
 
 - [ ] **Descripción microscópica**: plantillas de diagnóstico microscópico e inmunohistoquímica (IHQ).
 - [ ] **Imágenes en los informes**: adjuntar microfotografías al informe y al PDF (hoy solo el foro admite imágenes).
@@ -454,7 +454,7 @@ Para publicar la app en un servidor:
 
 ---
 
-## 👨‍💻 Autor y Contacto
+## Autor y Contacto
 
 - **Proyecto**: PathoLab (patologia-app)
 - **Desarrollado por**: Juan Salamanca ([@juansalamanca01-glitch](https://github.com/juansalamanca01-glitch))
