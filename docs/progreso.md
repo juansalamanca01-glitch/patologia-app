@@ -38,12 +38,15 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | I-5 | PDF descargado con Axios (token en la cabecera); se eliminó `/api/descargar-pdf/?token=` | `7886e0c` |
 | I-6 | Límite real de 10 MB y validación de que el archivo sea una imagen (backend); revisión previa y sin publicaciones duplicadas (frontend) | `2bf50e6` |
 | I-8 | Foro: solo un admin fija publicaciones; un comentario no se puede mover a otra publicación | `8c8dac3` |
-| I-11 | El registro y el cambio de contraseña aplican los validadores de Django | ver `git log` |
+| I-11 | El registro y el cambio de contraseña aplican los validadores de Django | `3d5e5cf` |
+| I-9a | `npm audit fix`: producción pasa de 6 vulnerabilidades (2 altas) a 2 moderadas que no afectan a la app | ver `git log` |
 
 ## Siguiente paso
 
 Seguir el orden sugerido en la sección 7 de la auditoría:
-1. **Seguridad restante:** I-9, en dos partes: (a) `npm audit fix` sin cambiar de versión principal, para las vulnerabilidades de producción (axios, react-router); (b) subir Vite 5 → 6+ y Vitest 3 → 5 para las de desarrollo. La parte (b) es un cambio de versión principal: proponerlo aparte.
+1. **Seguridad restante (I-9):**
+   - (b) subir Vite 5 → 6+ y Vitest 3 → 5 para las vulnerabilidades de desarrollo (esbuild, Vite, Vitest). Es un cambio de versión principal: revisar qué cambia y proponerlo antes.
+   - (c) opcional: React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan en producción. Hoy no afectan a la app (ver CHANGELOG). Es un cambio de versión principal.
 2. **I-10:** URL de la API fija en `frontend/src/api/client.js`. Desde I-5 nada usa el proxy `/api` de `vite.config.js`: decidir si `client.js` lo usa (recomendado) o si se elimina.
 3. **Documentación:** I-12 (reescribir el README, incluida la corrección por D-1), actualizar la colección de Postman.
 4. **Limpieza:** hallazgos menores M-1 a M-13 (M-5 ampliado, ver abajo).

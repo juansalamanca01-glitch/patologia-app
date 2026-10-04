@@ -5,6 +5,18 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Seguridad: actualización de dependencias del frontend sin cambiar de versión principal (I-9, parte a)
+
+**Qué se cambió**
+- `frontend/package-lock.json`: se ejecutó `npm audit fix` (sin `--force`). `package.json` no cambió. Versiones de producción actualizadas: `axios` 1.13.6 → 1.20.0, `react-router-dom` y `react-router` 6.30.3 → 6.30.6, `@remix-run/router` 1.23.2 → 1.23.4, `follow-redirects` 1.15.11 → 1.16.1 y `form-data` 4.0.5 → 4.0.6, además de dependencias internas de estos paquetes. También se actualizaron versiones menores de herramientas de desarrollo (Babel, PostCSS, nanoid, browserslist).
+
+**Por qué**
+- `npm audit --omit=dev`, que solo cuenta lo que llega a la app publicada, pasó de **6 vulnerabilidades (2 altas)** a **2 moderadas**. Las altas estaban en `axios` y `form-data`.
+- Las 2 que quedan son de `react-router` y solo se corrigen con React Router 7 (cambio de versión principal). Se revisó que **no afectan a PathoLab**:
+  - [GHSA-wrjc-x8rr-h8h6](https://github.com/advisories/GHSA-wrjc-x8rr-h8h6), redirección abierta en `<Link>`/`useNavigate`: la app solo navega a rutas fijas o con ids numéricos que devuelve la API, nunca a rutas escritas por el usuario.
+  - [GHSA-337j-9hxr-rhxg](https://github.com/advisories/GHSA-337j-9hxr-rhxg): solo afecta a renderizado en servidor (SSR) con `createBrowserRouter`. PathoLab usa `BrowserRouter` sin SSR.
+- Verificado con las 8 pruebas del frontend y con `vite build`.
+
 ### Seguridad: el registro y el cambio de contraseña aplican los validadores de Django (I-11)
 
 **Qué se cambió**
