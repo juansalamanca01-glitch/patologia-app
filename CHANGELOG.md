@@ -5,6 +5,20 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Corrección: los campos obligatorios de los informes se validan siempre (I-2)
+
+**Qué se cambió**
+- `backend/informes/serializers.py`:
+  - `InformeSerializer.validate()` valida los campos obligatorios de la plantilla aunque `datos_ingresados` llegue vacío o no llegue. Si un `PATCH` no trae `datos_ingresados` (por ejemplo, porque solo cambia las notas), valida los datos ya guardados.
+  - Nueva función `esta_vacio()`: solo cuenta como vacío `None`, un texto en blanco o una lista o diccionario vacíos. **`0` y `false` son respuestas válidas.**
+- `backend/informes/tests.py`: nueva clase `CamposObligatoriosTests` con 7 pruebas.
+- `README.md`: vuelve a indicar que los campos obligatorios se validan en el backend; la frase se había quitado en I-12 porque no era cierta.
+
+**Por qué**
+- La condición `if patologia and datos:` saltaba toda la validación si `datos_ingresados` venía vacío. Desde la API se podía crear un informe sin ningún campo obligatorio.
+- `if not valor` trataba el número `0` como "vacío", así que un informe con "Número de ganglios: 0" (un dato clínico real) se rechazaba si llegaba como número por la API.
+- La colección de Postman y `iniciar_y_probar.ps1` siguen funcionando: envían todos los campos obligatorios.
+
 ### Documentación: README reescrito y colección de Postman actualizada (I-12)
 
 **Qué se cambió**

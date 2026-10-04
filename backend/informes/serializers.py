@@ -2,6 +2,20 @@ from rest_framework import serializers
 from .models import Categoria, Patologia, Plantilla, Informe
 
 
+def esta_vacio(valor):
+    """
+    Indica si un campo del formulario quedó sin responder. 0 y False son
+    respuestas válidas (por ejemplo, "0 ganglios" o "No").
+    """
+    if valor is None:
+        return True
+    if isinstance(valor, str):
+        return not valor.strip()
+    if isinstance(valor, (list, dict)):
+        return len(valor) == 0
+    return False
+
+
 class CategoriaSerializer(serializers.ModelSerializer):
     total_patologias = serializers.IntegerField(source='patologias.count', read_only=True)
 
@@ -65,17 +79,22 @@ class InformeSerializer(serializers.ModelSerializer):
         return obj.autor.nombre_completo or obj.autor.username
 
     def validate(self, data):
-        """Validate required fields defined in the Plantilla for this pathology."""
+        """Comprueba que estén llenos los campos obligatorios de la plantilla de la patología."""
         patologia = data.get('patologia') or (self.instance and self.instance.patologia)
-        datos = data.get('datos_ingresados', {})
+        # Si la petición no trae datos_ingresados (p. ej. un PATCH que solo cambia las
+        # notas), se validan los datos ya guardados del informe.
+        if 'datos_ingresados' in data:
+            datos = data['datos_ingresados'] or {}
+        else:
+            datos = self.instance.datos_ingresados if self.instance else {}
 
-        if patologia and datos:
-            campos_obligatorios = patologia.plantillas.filter(obligatorio=True)
-            faltantes = []
-            for campo in campos_obligatorios:
-                valor = datos.get(campo.campo_nombre)
-                if not valor or (isinstance(valor, str) and not valor.strip()):
-                    faltantes.append(campo.campo_label or campo.campo_nombre)
+        # Antes era "if patologia and datos": con datos vacíos no se validaba nada (auditoría I-2).
+        if patologia:
+            faltantes = [
+                campo.campo_label or campo.campo_nombre
+                for campo in patologia.plantillas.filter(obligatorio=True)
+                if esta_vacio(datos.get(campo.campo_nombre))
+            ]
             if faltantes:
                 raise serializers.ValidationError({
                     'datos_ingresados': f'Faltan campos obligatorios: {", ".join(faltantes)}'

@@ -108,6 +108,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### I-2. La validación de campos obligatorios se puede saltar ✅ Comprobado
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`). También se corrigió que el valor `0` se trataba como vacío. Ver `CHANGELOG.md` y `CamposObligatoriosTests` en `backend/informes/tests.py`.
+
 - **Dónde:** `InformeSerializer.validate` en `backend/informes/serializers.py`, línea 72.
 - **Qué pasa:** la validación solo se ejecuta si `datos_ingresados` trae algo (`if patologia and datos:`). Si se envía `{}` o no se envía el campo, el informe se crea **sin ningún campo obligatorio**.
 - **Prueba realizada:** se creó un informe de "Biopsia de Piel" con `datos_ingresados: {}` y la respuesta fue **201 Created**.

@@ -32,7 +32,7 @@
 ## ✨ Características Principales
 
 - 🩺 **14 patologías preconfiguradas**: cada tipo de muestra tiene su propio formulario y su protocolo médico.
-- 📝 **Formularios dinámicos**: los campos (texto, número, lista desplegable, área de texto, sí/no) se generan según la patología elegida, con sus campos obligatorios marcados.
+- 📝 **Formularios dinámicos**: los campos (texto, número, lista desplegable, área de texto, sí/no) se generan según la patología elegida. Los campos obligatorios se validan en el frontend y en el backend (0 y "No" cuentan como respuestas válidas).
 - 🤖 **Descripción macroscópica automática**: al guardar un informe, el backend convierte los datos del formulario en un párrafo redactado en lenguaje natural.
 - 📄 **Exportación a PDF**: genera con **ReportLab** un informe con título, número de caso, metadatos (fecha, patología, tipo de muestra, patólogo y estado), datos clínicos, descripción macroscópica y notas.
 - 🔒 **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
@@ -301,7 +301,7 @@ npm test                                  # todas las pruebas, una vez
 npm run test:watch                        # se repiten al guardar cambios
 ```
 
-- **Backend:** cubre los permisos por rol, el bloqueo de informes finalizados, la validación de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
+- **Backend:** cubre los permisos por rol, el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
 - **Frontend:** cubre la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
 
 ---
@@ -358,7 +358,7 @@ Todas las rutas exigen la cabecera `Authorization: Bearer <token>`, excepto el l
 | Método | Endpoint | Descripción | Acceso |
 |---|---|---|---|
 | GET | `/api/informes/` | Listar informes. Filtros: `q` (caso, patología o tipo de muestra), `fecha_desde`, `fecha_hasta`, `estado`, `patologia` | Todos |
-| POST | `/api/informes/` | Crear un informe y generar su descripción macroscópica | Patólogo / Admin |
+| POST | `/api/informes/` | Crear un informe y generar su descripción macroscópica. Si falta un campo obligatorio de la plantilla → 400 | Patólogo / Admin |
 | GET | `/api/informes/estadisticas/` | Totales `{total, borradores, finalizados}`. Acepta los mismos filtros que el listado | Todos |
 | GET | `/api/informes/{id}/` | Ver un informe completo | Todos |
 | PUT / PATCH | `/api/informes/{id}/` | Editar un borrador (si está finalizado → 400) | Autor / Admin |

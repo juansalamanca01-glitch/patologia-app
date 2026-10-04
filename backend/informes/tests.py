@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import Usuario
-from .models import Informe, Patologia
+from .models import Informe, Patologia, Plantilla
 
 
 class PermisosInformeTests(APITestCase):
@@ -321,3 +321,65 @@ class DescargaPdfTests(APITestCase):
         self.client.force_authenticate(self.patologo)
         respuesta = self.client.get(self.url)
         self.assertEqual(respuesta['Content-Disposition'], 'attachment; filename="informe_PAT_1_x__y.pdf"')
+
+
+class CamposObligatoriosTests(APITestCase):
+    """
+    Hallazgo I-2 de docs/auditoria-inicial.md: la validación de los campos
+    obligatorios de la plantilla se saltaba si datos_ingresados llegaba vacío.
+    """
+
+    def setUp(self):
+        self.patologo = Usuario.objects.create_user(
+            username='patologo_obligatorios', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+        )
+        self.client.force_authenticate(self.patologo)
+        self.patologia = Patologia.objects.create(nombre='Patología con obligatorios')
+        Plantilla.objects.create(patologia=self.patologia, campo_nombre='localizacion',
+                                 campo_label='Localización', tipo_campo='texto', obligatorio=True)
+        Plantilla.objects.create(patologia=self.patologia, campo_nombre='num_ganglios',
+                                 campo_label='Número de ganglios', tipo_campo='numero', obligatorio=True)
+        Plantilla.objects.create(patologia=self.patologia, campo_nombre='color',
+                                 campo_label='Color', tipo_campo='texto', obligatorio=False)
+        self.datos_completos = {'localizacion': 'Axila izquierda', 'num_ganglios': 3}
+
+    def crear(self, **extra):
+        cuerpo = {'numero_caso': f'I2-{Informe.objects.count() + 1}', 'patologia': self.patologia.id, **extra}
+        return self.client.post('/api/informes/', cuerpo, format='json')
+
+    def test_rechaza_datos_vacios(self):
+        respuesta = self.crear(datos_ingresados={})
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('Localización', str(respuesta.data['datos_ingresados']))
+        self.assertEqual(Informe.objects.count(), 0)
+
+    def test_rechaza_si_no_se_envian_datos(self):
+        respuesta = self.crear()
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Informe.objects.count(), 0)
+
+    def test_rechaza_obligatorio_en_blanco(self):
+        respuesta = self.crear(datos_ingresados={'localizacion': '   ', 'num_ganglios': 3})
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_cero_es_un_valor_valido(self):
+        # "0 ganglios" es un dato clínico real, no un campo vacío.
+        respuesta = self.crear(datos_ingresados={'localizacion': 'Axila izquierda', 'num_ganglios': 0})
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+
+    def test_acepta_datos_completos(self):
+        # Control.
+        self.assertEqual(self.crear(datos_ingresados=self.datos_completos).status_code, status.HTTP_201_CREATED)
+
+    def test_patch_de_solo_notas_no_exige_reenviar_los_datos(self):
+        # Control: editar solo las notas no debe fallar por "faltan campos".
+        informe_id = self.crear(datos_ingresados=self.datos_completos).data['id']
+        respuesta = self.client.patch(f'/api/informes/{informe_id}/', {'notas': 'Revisado'}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+
+    def test_patch_que_vacia_un_obligatorio_se_rechaza(self):
+        informe_id = self.crear(datos_ingresados=self.datos_completos).data['id']
+        respuesta = self.client.patch(
+            f'/api/informes/{informe_id}/', {'datos_ingresados': {'num_ganglios': 3}}, format='json',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
