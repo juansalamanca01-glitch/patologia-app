@@ -49,6 +49,10 @@ class PatologiaViewSet(viewsets.ModelViewSet):
         categoria_id = self.request.query_params.get('categoria')
         if categoria_id:
             qs = qs.filter(categoria_id=categoria_id)
+        # ?activa=true / ?activa=false (decisión D-4): "Nuevo informe" pide solo las activas.
+        activa = self.request.query_params.get('activa')
+        if activa in ('true', 'false'):
+            qs = qs.filter(activa=(activa == 'true'))
         return qs
 
     def get_serializer_class(self):

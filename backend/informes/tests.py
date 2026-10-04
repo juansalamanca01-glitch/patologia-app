@@ -528,3 +528,33 @@ class TamanoDePaginaTests(APITestCase):
         from django.utils.module_loading import import_string
         paginacion = import_string(settings.REST_FRAMEWORK['DEFAULT_PAGINATION_CLASS'])
         self.assertEqual(paginacion.max_page_size, 1000)
+
+
+class PatologiasActivasTests(APITestCase):
+    """
+    Decisión D-4 (auditoría M-5): una patología se puede desactivar en lugar de
+    borrarse, y al crear informes solo se ofrecen las activas.
+    """
+
+    def setUp(self):
+        usuario = Usuario.objects.create_user(username='activas', password='x', rol=Usuario.Rol.PATOLOGO)
+        self.client.force_authenticate(usuario)
+        self.activa = Patologia.objects.create(nombre='Activa')
+        self.inactiva = Patologia.objects.create(nombre='Inactiva', activa=False)
+
+    def nombres(self, **params):
+        return [p['nombre'] for p in self.client.get('/api/patologias/', params).data['results']]
+
+    def test_filtro_activa(self):
+        self.assertEqual(self.nombres(activa='true'), ['Activa'])
+        self.assertEqual(self.nombres(activa='false'), ['Inactiva'])
+
+    def test_sin_filtro_devuelve_todas(self):
+        # Al editar un informe viejo hace falta ver también su patología inactiva.
+        self.assertEqual(self.nombres(), ['Activa', 'Inactiva'])
+
+    def test_se_puede_desactivar_una_patologia(self):
+        respuesta = self.client.patch(f'/api/patologias/{self.activa.id}/', {'activa': False}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.activa.refresh_from_db()
+        self.assertFalse(self.activa.activa)

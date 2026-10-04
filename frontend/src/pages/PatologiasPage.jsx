@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import client, { LISTA_COMPLETA, resultados } from '../api/client';
 
 const CATEGORIA_VACIA = { nombre: '', descripcion: '', color: '#2563eb' };
-const PATOLOGIA_VACIA = { nombre: '', categoria: '', descripcion: '', protocolo_medico: '' };
+const PATOLOGIA_VACIA = { nombre: '', categoria: '', descripcion: '', protocolo_medico: '', activa: true };
 
 export default function PatologiasPage() {
   const { canWrite } = useAuth();
@@ -263,6 +263,17 @@ export default function PatologiasPage() {
                   onChange={(e) => setFormPatologia({ ...formPatologia, protocolo_medico: e.target.value })}
                   rows={3}
                 />
+              </div>
+              {/* Desactivar en lugar de borrar (decisión D-4): una patología con informes no se puede borrar. */}
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formPatologia.activa !== false}
+                    onChange={(e) => setFormPatologia({ ...formPatologia, activa: e.target.checked })}
+                  />
+                  <span>Activa (se ofrece al crear informes)</span>
+                </label>
               </div>
               <div className="form-actions">
                 <button type="button" className="btn btn-outline" onClick={() => setFormPatologia(null)}>Cancelar</button>

@@ -32,7 +32,10 @@ export default function InformePage() {
 
   // Carga la lista de patologías
   useEffect(() => {
-    client.get('/patologias/', { params: LISTA_COMPLETA }).then(({ data }) => {
+    // Al crear un informe solo se ofrecen las patologías activas (decisión D-4). Al editar se
+    // piden todas, para que se vea la patología de un informe viejo aunque esté desactivada.
+    const params = isEditing ? LISTA_COMPLETA : { ...LISTA_COMPLETA, activa: 'true' };
+    client.get('/patologias/', { params }).then(({ data }) => {
       setPatologias(resultados(data));
     });
   }, []);

@@ -36,7 +36,7 @@
 - 🤖 **Descripción macroscópica automática**: al guardar un informe, el backend convierte los datos del formulario en un párrafo redactado en lenguaje natural.
 - 📄 **Exportación a PDF**: genera con **ReportLab** un informe con título, número de caso, metadatos (fecha, patología, tipo de muestra, patólogo y estado), datos clínicos, descripción macroscópica y notas.
 - 🔒 **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
-- 🗂️ **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables.
+- 🗂️ **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables. Una patología se puede desactivar: deja de ofrecerse en los informes nuevos sin perder el historial.
 - 🔍 **Búsqueda y filtros**: por número de caso, patología o tipo de muestra, rango de fechas y estado. Resultados paginados de 20 en 20.
 - 📊 **Panel de inicio**: totales de informes (todos, borradores y finalizados) y los 10 más recientes.
 - 💬 **Foro de patólogos**: publicaciones por temas, con hasta 6 imágenes (máximo 10 MB cada una) y comentarios. Un administrador puede fijar publicaciones importantes.
@@ -348,7 +348,7 @@ Todas las rutas exigen la cabecera `Authorization: Bearer <token>`, excepto el l
 |---|---|---|---|
 | GET / POST | `/api/categorias/` | Listar o crear categorías (`?search=`) | Leer: todos · Escribir: patólogo/admin |
 | GET / PUT / PATCH / DELETE | `/api/categorias/{id}/` | Ver, editar o borrar una categoría (no se borra si tiene patologías) | Igual |
-| GET / POST | `/api/patologias/` | Listar o crear patologías (`?categoria=`, `?search=`) | Igual |
+| GET / POST | `/api/patologias/` | Listar o crear patologías (`?categoria=`, `?search=`, `?activa=true`/`false`) | Igual |
 | GET / PUT / PATCH / DELETE | `/api/patologias/{id}/` | Detalle con sus campos de plantilla. No se borra si tiene informes (400) | Igual |
 | GET / POST | `/api/plantillas/` | Listar o crear campos de formulario (`?patologia=`) | Igual |
 | GET / PUT / PATCH / DELETE | `/api/plantillas/{id}/` | Ver, editar o borrar un campo | Igual |

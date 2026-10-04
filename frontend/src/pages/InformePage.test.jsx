@@ -78,14 +78,16 @@ describe('InformePage: exportar PDF', () => {
   });
 });
 
-// Los listados vienen de 20 en 20: el selector de patologías pide la lista completa.
+// El selector de patologías pide la lista completa (no solo 20). Al crear un
+// informe ofrece solo las activas (decisión D-4); al editar, todas, para que se
+// vea la patología de un informe viejo aunque ya esté desactivada.
 describe('InformePage: selector de patologías', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     simularApi();
   });
 
-  it('pide todas las patologías, no solo la primera página de 20', async () => {
+  it('al crear un informe pide todas las patologías activas', async () => {
     render(
       <MemoryRouter initialEntries={['/informes/nuevo']}>
         <Routes>
@@ -93,6 +95,13 @@ describe('InformePage: selector de patologías', () => {
         </Routes>
       </MemoryRouter>,
     );
+    await vi.waitFor(() => {
+      expect(client.get).toHaveBeenCalledWith('/patologias/', { params: { page_size: 1000, activa: 'true' } });
+    });
+  });
+
+  it('al editar un informe pide todas las patologías, también las inactivas', async () => {
+    renderInforme();
     await vi.waitFor(() => {
       expect(client.get).toHaveBeenCalledWith('/patologias/', { params: { page_size: 1000 } });
     });

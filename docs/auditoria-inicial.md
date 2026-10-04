@@ -277,6 +277,8 @@ Esto ya se explicó en la sección 1, pero se repite aquí porque es un problema
 
 ### M-5. `/api/patologias/` también devuelve las patologías inactivas
 
+> **Estado: corregido el 2026-10-04** (rama `seguridad-critica`) según la decisión D-4: filtro `?activa=` y casilla "Activa" en la pantalla Patologías. Ver `CHANGELOG.md`.
+
 La guía y el README dicen "listar patologías **activas**", pero el endpoint devuelve todas. Por eso el selector de "Nuevo informe" ofrece patologías desactivadas. Se puede filtrar `activa=True` cuando la petición viene del formulario de informes.
 
 ### M-6. El foro empieza sin temas y no hay forma de crearlos desde la app

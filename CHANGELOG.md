@@ -5,6 +5,19 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Las patologías se pueden desactivar en lugar de borrarse (M-5, decisión D-4)
+
+**Qué se cambió**
+- `backend/informes/views.py`: `GET /api/patologias/` acepta `?activa=true` o `?activa=false`.
+- `frontend/src/pages/InformePage.jsx`: al **crear** un informe, el selector pide solo las patologías activas. Al **editar** pide todas, para que se vea la patología de un informe viejo aunque esté desactivada.
+- `frontend/src/pages/PatologiasPage.jsx`: casilla **"Activa"** en el formulario de patologías; las nuevas se crean activas.
+- Pruebas: `PatologiasActivasTests` (3, backend), `PatologiasPage.test.jsx` (2, frontend, nuevo) y 2 en `InformePage.test.jsx`.
+- `README.md`: nuevo filtro `?activa=` y una frase en las características.
+
+**Por qué**
+- El selector de "Nuevo informe" ofrecía también las patologías desactivadas, y la app no tenía forma de activarlas o desactivarlas (solo desde `/admin/`).
+- Una patología con informes no se puede borrar (I-1): desactivarla permite retirarla sin perder el historial.
+
 ### Corrección: los menús desplegables muestran todos los elementos, no solo los primeros 20
 
 **Qué se cambió**

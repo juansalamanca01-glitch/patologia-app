@@ -19,7 +19,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` a `seguridad-critica` después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 66 del backend (`cd backend` y luego `python manage.py test`) y 18 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 69 del backend (`cd backend` y luego `python manage.py test`) y 21 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -47,7 +47,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | M-1, M-2 | Limpieza: imports, `LoginSerializer`, campo `campos_requeridos` (migración 0003), `isPatologo`/`isAuditor`, `console.log`, imágenes sobrantes y `dist/` | `f944dd7` |
 | M-3, M-13 | `nombre_visible`, `constants.js`, `EstadoBadge`, `resultados()`; 63 comentarios traducidos | `3dd9c49` |
 | M-4 | Listados de categorías, temas y publicaciones: de 22/22/25 a 2/2/3 consultas, conservando el orden | `6af05d9` |
-| Nuevo | Menús desplegables y tabla de Patologías con todos los elementos (`?page_size=`, máx. 1000) | ver `git log` |
+| Nuevo | Menús desplegables y tabla de Patologías con todos los elementos (`?page_size=`, máx. 1000) | `78d306c` |
+| M-5 / D-4 | Filtro `?activa=`, solo activas al crear informes, casilla "Activa" en Patologías | ver `git log` |
 
 ## Siguiente paso
 
@@ -58,7 +59,7 @@ Seguir el orden sugerido en la sección 7 de la auditoría:
    - Grupo 3, comportamiento: **en curso**. El usuario aprobó todo el 2026-10-03 (decisiones D-4, D-5 y D-6). Orden de trabajo, un commit por punto:
      - [x] M-4: contar con `annotate(Count)` en los listados de categorías, temas y publicaciones (medido: 22, 22 y 25 consultas con 20 elementos).
      - [x] Selectores con más de 20 elementos: `?page_size=` (máximo 1000) en el backend y usarlo en los selectores del frontend.
-     - [ ] M-5 / D-4: ocultar las patologías inactivas al crear un informe y añadir la casilla "Activa" en Patologías.
+     - [x] M-5 / D-4: ocultar las patologías inactivas al crear un informe y añadir la casilla "Activa" en Patologías.
      - [ ] M-6 / D-5: 4 temas iniciales en `seed_data` y botón "+ Tema" en el foro.
      - [ ] M-7: ocultar el formulario de comentarios si el usuario no puede escribir.
      - [ ] M-9: mostrar en pantalla los errores de Dashboard (carga y borrado) e InformePage (patologías y plantillas).
@@ -75,7 +76,7 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 
 ## Pendiente de hacer (anotado para no olvidarlo)
 
-- **M-5 (ampliado):** además de filtrar las patologías inactivas en "Nuevo informe", añadir el campo "activa" al formulario de patologías de `PatologiasPage.jsx`. Así se puede desactivar una patología con informes en lugar de borrarla (relacionado con I-1).
+- **Fallo nuevo (no estaba en la auditoría), encontrado al hacer M-5:** en `PatologiasPage.jsx`, "Editar" abre el formulario con los datos del *listado* (`PatologiaListSerializer`), que no incluye `descripcion` ni `protocolo_medico`. Esos campos aparecen vacíos aunque tengan contenido. Al guardar no se borran, pero si se escribe algo se reemplaza un texto que no se veía. Arreglo posible: pedir `GET /api/patologias/{id}/` al pulsar "Editar". Proponerlo al usuario al terminar el grupo 3.
 - **Producción:** al publicar la app, configurar en el servidor web un límite de tamaño de petición (por ejemplo, `client_max_body_size 60m;` en Nginx). Ver la nota de I-6 en `settings.py`.
 - **Navegador:** probar a mano el dashboard y la paginación del buscador (I-4) con más de 20 informes.
 - **Navegador:** probar a mano el cambio de C-2 en el frontend. Otro patólogo debe ver en solo lectura los informes ajenos. Para la prueba hay que crear un segundo patólogo desde `/admin/`.
