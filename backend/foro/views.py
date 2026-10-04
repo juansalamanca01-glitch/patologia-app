@@ -4,9 +4,8 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.throttling import ScopedRateThrottle
 
-from accounts.permissions import EsPatologoOAdmin
+from accounts.permissions import EsPatologoOAdmin, EsAutorOAdminOSoloLectura
 from .models import TemaForo, Publicacion, ImagenPublicacion, Comentario
-from .permissions import EsAutorOAdminOSoloLectura
 from .serializers import (
     TemaForoSerializer,
     PublicacionSerializer, PublicacionListSerializer,

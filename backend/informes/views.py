@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 
-from accounts.permissions import EsPatologoOAdmin, EsSoloLectura
+from accounts.permissions import EsPatologoOAdmin, EsAutorOAdminOSoloLectura
 from .models import Categoria, Patologia, Plantilla, Informe
 from .serializers import (
     CategoriaSerializer,
@@ -74,9 +74,30 @@ class InformeViewSet(viewsets.ModelViewSet):
     - Auto-assigns the author on creation
     - Generates macroscopic description on save
     - Provides PDF export and search
+
+    Reglas (docs/decisiones.md, D-2 y D-3):
+    - solo el autor o un admin puede editar, borrar o finalizar un informe;
+    - un informe finalizado no se puede editar ni borrar, ni siquiera un admin.
     """
     queryset = Informe.objects.select_related('patologia', 'autor').all()
-    permission_classes = [EsSoloLectura]
+    permission_classes = [EsAutorOAdminOSoloLectura]
+
+    def _rechazar_si_finalizado(self, informe):
+        if informe.estado == Informe.Estado.FINALIZADO:
+            return Response(
+                {'detail': 'El informe está finalizado y no se puede modificar.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return None
+
+    def update(self, request, *args, **kwargs):
+        # get_object() comprueba primero el permiso (autor o admin → si no, 403).
+        rechazo = self._rechazar_si_finalizado(self.get_object())
+        return rechazo or super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        rechazo = self._rechazar_si_finalizado(self.get_object())
+        return rechazo or super().destroy(request, *args, **kwargs)
 
     def get_serializer_class(self):
         if self.action == 'list':

@@ -7,7 +7,7 @@ export default function InformePage() {
   const { id } = useParams();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
-  const { canWrite } = useAuth();
+  const { user, canWrite, isAdmin } = useAuth();
 
   const [patologias, setPatologias] = useState([]);
   const [selectedPatologia, setSelectedPatologia] = useState(null);
@@ -22,6 +22,12 @@ export default function InformePage() {
   const [errors, setErrors] = useState({});
   const [successMsg, setSuccessMsg] = useState('');
   const [confirmFinalizar, setConfirmFinalizar] = useState(false);
+
+  // Un informe nuevo lo puede crear cualquier patólogo o admin; uno existente solo
+  // lo puede editar o finalizar su autor o un admin (decisión D-2).
+  const puedeEditar = isEditing
+    ? canWrite && Boolean(informe) && (isAdmin || informe.autor === user?.id)
+    : canWrite;
 
   // Fetch pathology list
   useEffect(() => {
@@ -172,7 +178,7 @@ export default function InformePage() {
     const { campo_nombre, campo_label, tipo_campo, opciones, obligatorio } = plantilla;
     const value = formData[campo_nombre] || '';
     const error = errors[campo_nombre];
-    const disabled = informe?.estado === 'finalizado' || !canWrite;
+    const disabled = informe?.estado === 'finalizado' || !puedeEditar;
 
     return (
       <div className={`form-group ${error ? 'has-error' : ''}`} key={campo_nombre}>
@@ -267,7 +273,7 @@ export default function InformePage() {
                 </svg>
                 Exportar PDF
               </button>
-              {canWrite && informe?.estado === 'borrador' && (
+              {puedeEditar && informe?.estado === 'borrador' && (
                 confirmFinalizar ? (
                   <>
                     <button className="btn btn-success" onClick={handleFinalizar}>
@@ -289,7 +295,7 @@ export default function InformePage() {
       </div>
 
       {successMsg && <div className="alert alert-success">{successMsg}</div>}
-      {errors.general && <div className="alert alert-error">{errors.general}</div>}
+      {(errors.general || errors.detail) && <div className="alert alert-error">{errors.general || errors.detail}</div>}
 
       <form onSubmit={handleSubmit}>
         <div className="card">
@@ -304,7 +310,7 @@ export default function InformePage() {
                   value={numeroCaso}
                   onChange={(e) => { setNumeroCaso(e.target.value); setErrors(p => ({...p, numeroCaso: null})); }}
                   placeholder="Ej: PAT-2026-0001"
-                  disabled={informe?.estado === 'finalizado' || !canWrite}
+                  disabled={informe?.estado === 'finalizado' || !puedeEditar}
                 />
                 {errors.numeroCaso && <span className="field-error">{errors.numeroCaso}</span>}
               </div>
@@ -320,7 +326,7 @@ export default function InformePage() {
                     if (!isEditing) setFormData({});
                     setErrors(p => ({...p, patologia: null}));
                   }}
-                  disabled={isEditing || !canWrite}
+                  disabled={isEditing || !puedeEditar}
                 >
                   <option value="">— Seleccione patología —</option>
                   {patologias.map((p) => (
@@ -340,7 +346,7 @@ export default function InformePage() {
                   value={tipoMuestra}
                   onChange={(e) => setTipoMuestra(e.target.value)}
                   placeholder="Ej: Biopsia escisional"
-                  disabled={informe?.estado === 'finalizado' || !canWrite}
+                  disabled={informe?.estado === 'finalizado' || !puedeEditar}
                 />
               </div>
             </div>
@@ -370,7 +376,7 @@ export default function InformePage() {
                 onChange={(e) => setNotas(e.target.value)}
                 rows={3}
                 placeholder="Observaciones o notas adicionales..."
-                disabled={informe?.estado === 'finalizado' || !canWrite}
+                disabled={informe?.estado === 'finalizado' || !puedeEditar}
               />
             </div>
           </div>
@@ -388,7 +394,7 @@ export default function InformePage() {
           </div>
         )}
 
-        {canWrite && informe?.estado !== 'finalizado' && (
+        {puedeEditar && informe?.estado !== 'finalizado' && (
           <div className="form-actions">
             <button type="button" className="btn btn-outline" onClick={() => navigate('/')}>
               Cancelar

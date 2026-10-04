@@ -51,10 +51,11 @@ Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234`, `auditor1/
 - `informes` → `/api/`: `Categoria` → `Patologia` → `Plantilla` (campos del formulario dinámico) e `Informe`.
 - `foro` → `/api/foro/`: `TemaForo`, `Publicacion` (con `ImagenPublicacion`, subidas a `media/foro/publicaciones/<id>/`) y `Comentario`.
 
-**Permisos por rol.** DRF exige autenticación por defecto. Las clases están en `accounts/permissions.py` y `foro/permissions.py`, y comparan `request.user.rol` como string:
+**Permisos por rol.** DRF exige autenticación por defecto. Las clases están en `accounts/permissions.py`, y comparan `request.user.rol` como string:
 - `EsPatologoOAdmin`: todos leen; escriben solo admin y patólogo.
-- `EsSoloLectura`: el auditor solo lee.
-- `EsAutorOAdminOSoloLectura` (foro): crear requiere admin o patólogo; editar o borrar, ser el autor o admin.
+- `EsSoloLectura`: el auditor solo lee. Hoy no la usa ninguna vista.
+- `EsAutorOAdminOSoloLectura` (informes y foro): todos leen; crear requiere admin o patólogo; editar, borrar o finalizar requiere ser el autor o admin (decisión D-2).
+- Un `Informe` finalizado no se puede editar ni borrar, ni siquiera por un admin: `InformeViewSet.update` y `destroy` responden 400 (decisión D-3).
 
 En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `canWrite` para ocultar acciones en la UI; la autorización real la hace el backend.
 

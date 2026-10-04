@@ -94,7 +94,7 @@ patologia-app/
 ├── backend/
 │   ├── accounts/              # Módulo de usuarios, roles y autenticación
 │   │   ├── models.py          # Modelo Usuario personalizado con roles
-│   │   ├── permissions.py     # Permisos DRF (EsPatologoOAdmin, EsSoloLectura)
+│   │   ├── permissions.py     # Permisos DRF (EsPatologoOAdmin, EsAutorOAdminOSoloLectura)
 │   │   ├── serializers.py     # Serializadores de login, registro y perfil
 │   │   ├── urls.py            # Endpoints /api/auth/
 │   │   └── views.py           # Vistas de autenticación y JWT
@@ -291,8 +291,9 @@ El sistema incluye plantillas clínicas detalladas para 14 tipos de especímenes
 | GET | /api/informes/ | Listar informes con filtros (q, echa_desde, echa_hasta, estado, patologia) | Todos |
 | POST | /api/informes/ | Crear nuevo informe (genera descripción macroscópica) | Patólogo / Admin |
 | GET | /api/informes/{id}/ | Ver informe completo | Todos |
-| PUT/PATCH| /api/informes/{id}/ | Actualizar informe en estado borrador | Patólogo / Admin |
-| POST | /api/informes/{id}/finalizar/ | Marcar informe como finalizado (bloquea edición) | Patólogo / Admin |
+| PUT/PATCH| /api/informes/{id}/ | Actualizar informe en estado borrador (finalizado → 400) | Autor del informe / Admin |
+| DELETE | /api/informes/{id}/ | Eliminar informe en estado borrador (finalizado → 400) | Autor del informe / Admin |
+| POST | /api/informes/{id}/finalizar/ | Marcar informe como finalizado (bloquea edición) | Autor del informe / Admin |
 | GET | /api/informes/{id}/pdf/ | Generar y descargar informe clínico en formato PDF | Todos |
 
 ---

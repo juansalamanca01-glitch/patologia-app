@@ -92,7 +92,7 @@ class InformeListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Informe
         fields = [
-            'id', 'numero_caso', 'patologia_nombre', 'autor_nombre',
+            'id', 'numero_caso', 'patologia_nombre', 'autor', 'autor_nombre',
             'fecha', 'tipo_muestra', 'estado', 'fecha_creacion',
         ]
 

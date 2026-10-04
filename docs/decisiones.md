@@ -19,3 +19,10 @@ Los códigos como "I-7" o "C-2" remiten a `docs/auditoria-inicial.md`.
 - **Hallazgo relacionado:** C-2 (punto 3)
 - **Decisión:** un informe solo lo puede **editar, borrar o finalizar** su **autor** o un **administrador**. Un patólogo **no** puede finalizar, editar ni borrar informes de otro patólogo, aunque sí puede verlos. El auditor sigue teniendo solo lectura.
 - **Motivo:** cada informe tiene un patólogo responsable. Si otro patólogo pudiera modificarlo o cerrarlo, se perdería la trazabilidad de quién hizo qué en un documento clínico.
+
+## D-3. Un informe finalizado no se puede modificar, ni siquiera por un administrador
+
+- **Fecha:** 2026-10-03
+- **Hallazgo relacionado:** C-2 (punto 1)
+- **Decisión:** cuando un informe está **finalizado**, la API rechaza (400) cualquier intento de editarlo o borrarlo, **también si lo hace un administrador**. Si hiciera falta una corrección excepcional, un administrador puede hacerla desde el panel `/admin/` de Django, que queda fuera de esta regla.
+- **Motivo:** el README establece que finalizar un informe "bloquea la edición". Un documento clínico cerrado no debe cambiar desde la aplicación.

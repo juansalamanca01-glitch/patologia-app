@@ -64,6 +64,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### C-2. Los informes finalizados se pueden editar y borrar, y cualquier patólogo puede tocar informes ajenos ✅ Comprobado
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`), según las decisiones D-2 y D-3 de `docs/decisiones.md`. Ver `CHANGELOG.md` y las pruebas de `backend/informes/tests.py`.
+
 - **Dónde:** `backend/informes/views.py` (`InformeViewSet`) y `backend/accounts/permissions.py` (`EsSoloLectura`).
 - **Qué pasa:** el README dice que finalizar un informe **"bloquea edición"**, pero el código no lo hace. El permiso `EsSoloLectura` solo impide escribir al auditor. Tampoco revisa si el informe pertenece a quien lo modifica.
 - **Prueba realizada:**

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
 
 export default function DashboardPage() {
-  const { user, canWrite } = useAuth();
+  const { user, canWrite, isAdmin } = useAuth();
   const [stats, setStats] = useState({ total: 0, borradores: 0, finalizados: 0 });
   const [recientes, setRecientes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -143,7 +143,7 @@ export default function DashboardPage() {
                       <td>
                         <div className="table-actions">
                           <Link to={`/informes/${inf.id}`} className="btn btn-outline btn-xs">Ver</Link>
-                          {canWrite && inf.estado === 'borrador' && (
+                          {canWrite && (isAdmin || inf.autor === user?.id) && inf.estado === 'borrador' && (
                             confirmDeleteId === inf.id ? (
                               <>
                                 <button className="btn btn-danger btn-xs" onClick={() => handleDelete(inf.id)}>
