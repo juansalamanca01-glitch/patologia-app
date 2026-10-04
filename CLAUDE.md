@@ -32,9 +32,12 @@ Frontend (desde `frontend/`):
 npm install
 npm run dev      # http://localhost:5173
 npm run build
+npm test         # pruebas con Vitest (una vez)
+npm run test:watch  # pruebas en modo observación
+npx vitest run src/pages/PerfilPage.test.jsx  # un solo archivo de pruebas
 ```
 
-Las pruebas del backend están en `backend/*/tests.py`: `APITestCase` de DRF para la API y `SimpleTestCase` en `config/tests.py` para la configuración. El frontend no tiene pruebas. No hay linter configurado. Los hallazgos pendientes de corregir están en `docs/auditoria-inicial.md`. `iniciar_y_probar.ps1` (raíz) instala dependencias, migra, siembra datos, levanta el backend y prueba endpoints con el usuario `patologo1`. `PathoLab_API.postman_collection.json` contiene la colección de la API.
+Las pruebas del backend están en `backend/*/tests.py`: `APITestCase` de DRF para la API y `SimpleTestCase` en `config/tests.py` para la configuración. Las del frontend usan Vitest + React Testing Library + jsdom (configuración en `vite.config.js` y `src/test/setup.js`), en archivos `*.test.jsx` junto al componente, y simulan la API con `vi.mock('../api/client')`. No hay linter configurado. Los hallazgos pendientes de corregir están en `docs/auditoria-inicial.md`. `iniciar_y_probar.ps1` (raíz) instala dependencias, migra, siembra datos, levanta el backend y prueba endpoints con el usuario `patologo1`. `PathoLab_API.postman_collection.json` contiene la colección de la API.
 
 Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234`, `auditor1/auditor1234`.
 

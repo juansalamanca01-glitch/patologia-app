@@ -265,6 +265,8 @@ En `PublicacionDetallePage.jsx`, el formulario de comentarios aparece para todos
 
 ### M-8. La página de perfil se rompe si falla la carga
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`). Ver `CHANGELOG.md` y `frontend/src/pages/PerfilPage.test.jsx`. Con este arreglo el frontend ya tiene pruebas (Vitest), lo que avanza I-13.
+
 En `PerfilPage.jsx`, si `GET /auth/perfil/` falla, `perfil` queda en `null`. Luego el código intenta leer `perfil.nombre_completo` y la página entera falla con un error de JavaScript. Hay que mostrar un mensaje de error cuando `perfil` es `null`.
 
 ### M-9. Algunas peticiones no manejan errores

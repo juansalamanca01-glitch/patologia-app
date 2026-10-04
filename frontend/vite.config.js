@@ -12,4 +12,9 @@ export default defineConfig({
       },
     },
   },
+  // Pruebas del frontend con Vitest (npm test). jsdom simula el navegador.
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.js',
+  },
 })

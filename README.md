@@ -238,6 +238,12 @@ Abre una **segunda terminal** en la raíz del proyecto:
    `
    La aplicación web estará disponible en http://localhost:5173/.
 
+4. **Ejecuta las pruebas** (opcional):
+   ```bash
+   npm test                          # pruebas del frontend (Vitest)
+   cd ../backend && python manage.py test   # pruebas del backend
+   ```
+
 > [!NOTE]
 > Vite incluye un proxy preconfigurado en ite.config.js que redirige automáticamente todas las peticiones /api al backend en el puerto 8000.
 

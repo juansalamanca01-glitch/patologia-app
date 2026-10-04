@@ -5,6 +5,22 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Corrección: la página de perfil ya no queda en blanco si falla la carga (M-8) y primeras pruebas del frontend
+
+**Qué se cambió**
+- `frontend/src/pages/PerfilPage.jsx`: la carga del perfil pasa a la función `cargarPerfil()` y tiene `.catch`. Si falla, se muestra *"No se pudo cargar tu perfil. Intenta de nuevo."* con un botón **Reintentar**, en lugar de dibujar el formulario con `perfil = null`.
+- Herramientas de prueba del frontend, instaladas solo como `devDependencies`: `vitest` 3.2, `@testing-library/react` 16, `@testing-library/dom` 10, `@testing-library/jest-dom` 6 y `jsdom` 26.
+- `frontend/package.json`: scripts `npm test` (`vitest run`) y `npm run test:watch`.
+- `frontend/vite.config.js`: sección `test` (entorno `jsdom`, archivo de preparación `src/test/setup.js`).
+- `frontend/src/test/setup.js` (nuevo): añade las comprobaciones de jest-dom y limpia el DOM entre pruebas.
+- `frontend/src/pages/PerfilPage.test.jsx` (nuevo): 3 pruebas que simulan la API con `vi.mock`. Cubren el error de carga, el botón Reintentar y la carga correcta.
+- Documentación: comandos de prueba en el `README.md` y en `CLAUDE.md`.
+
+**Por qué**
+- Si `GET /auth/perfil/` fallaba (backend caído, error 500), la página leía `perfil.nombre_completo` con `perfil = null`. React lanzaba `TypeError` y, como la app no tiene un Error Boundary, toda la pantalla quedaba en blanco.
+- El frontend no tenía forma de probar errores como este. Ahora tiene Vitest, que también servirá para los próximos hallazgos del frontend.
+- **Nota de seguridad:** `npm audit` marca una vulnerabilidad moderada en Vitest 3 (GHSA-82fw-gwwq-j7x9). Solo afecta al ejecutar las pruebas en local y no llega a la app publicada. La corrige Vitest 5, que exige Vite 6 o superior, así que se resolverá junto con I-9. Las vulnerabilidades de producción no cambiaron (siguen las 6 de I-9).
+
 ### Corrección: estadísticas reales en el dashboard y paginación en el buscador (I-4)
 
 **Qué se cambió**

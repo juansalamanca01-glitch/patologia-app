@@ -14,10 +14,20 @@ export default function PerfilPage() {
   const [passwordMsg, setPasswordMsg] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [cambiandoPassword, setCambiandoPassword] = useState(false);
+  const [errorCarga, setErrorCarga] = useState('');
 
-  useEffect(() => {
-    client.get('/auth/perfil/').then(({ data }) => setPerfil(data)).finally(() => setLoading(false));
-  }, []);
+  // Si la carga falla, se muestra un mensaje con "Reintentar" en lugar de
+  // dibujar el formulario con perfil = null (auditoría M-8).
+  const cargarPerfil = () => {
+    setLoading(true);
+    setErrorCarga('');
+    client.get('/auth/perfil/')
+      .then(({ data }) => setPerfil(data))
+      .catch(() => setErrorCarga('No se pudo cargar tu perfil. Intenta de nuevo.'))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { cargarPerfil(); }, []);
 
   const guardarPerfil = async (e) => {
     e.preventDefault();
@@ -70,6 +80,15 @@ export default function PerfilPage() {
   };
 
   if (loading) return <div className="loading-center"><span className="spinner"></span></div>;
+
+  if (!perfil) {
+    return (
+      <div className="perfil-page">
+        <div className="alert alert-error">{errorCarga || 'No se pudo cargar tu perfil. Intenta de nuevo.'}</div>
+        <button className="btn btn-primary" onClick={cargarPerfil}>Reintentar</button>
+      </div>
+    );
+  }
 
   return (
     <div className="perfil-page">
