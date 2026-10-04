@@ -5,7 +5,7 @@ import client from '../api/client';
 
 export default function PublicacionDetallePage() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, canWrite } = useAuth();
   const navigate = useNavigate();
   const [publicacion, setPublicacion] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -104,18 +104,21 @@ export default function PublicacionDetallePage() {
       <div className="card">
         <div className="card-header"><h2>Comentarios ({publicacion.comentarios?.length || 0})</h2></div>
         <div className="card-body">
-          <form onSubmit={enviarComentario} className="comentario-form">
-            <textarea
-              value={comentario}
-              onChange={(e) => setComentario(e.target.value)}
-              placeholder="Escribe una observación o comentario…"
-              rows={3}
-              maxLength={3000}
-            />
-            <button type="submit" className="btn btn-primary btn-sm" disabled={enviando || !comentario.trim()}>
-              {enviando ? <span className="spinner"></span> : 'Comentar'}
-            </button>
-          </form>
+          {/* El auditor solo lee: la API le rechaza los comentarios (auditoría M-7). */}
+          {canWrite && (
+            <form onSubmit={enviarComentario} className="comentario-form">
+              <textarea
+                value={comentario}
+                onChange={(e) => setComentario(e.target.value)}
+                placeholder="Escribe una observación o comentario…"
+                rows={3}
+                maxLength={3000}
+              />
+              <button type="submit" className="btn btn-primary btn-sm" disabled={enviando || !comentario.trim()}>
+                {enviando ? <span className="spinner"></span> : 'Comentar'}
+              </button>
+            </form>
+          )}
 
           {publicacion.comentarios?.length > 0 ? (
             <ul className="comentario-list">

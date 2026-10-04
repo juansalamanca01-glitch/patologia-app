@@ -5,6 +5,15 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Foro: el auditor ya no ve el formulario para comentar (M-7)
+
+**Qué se cambió**
+- `frontend/src/pages/PublicacionDetallePage.jsx`: el formulario de comentarios solo se muestra si el usuario puede escribir (`canWrite`).
+- `frontend/src/pages/PublicacionDetallePage.test.jsx` (nuevo): 2 pruebas, una para el auditor y otra para el patólogo.
+
+**Por qué**
+- El auditor tiene solo lectura y la API le rechaza los comentarios (403). Aun así veía el formulario, y al usarlo recibía un error.
+
 ### Foro: temas iniciales y botón para crear temas (M-6, decisión D-5)
 
 **Qué se cambió**

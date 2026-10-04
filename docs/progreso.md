@@ -19,7 +19,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` a `seguridad-critica` después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 71 del backend (`cd backend` y luego `python manage.py test`) y 22 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 71 del backend (`cd backend` y luego `python manage.py test`) y 24 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -49,7 +49,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | M-4 | Listados de categorías, temas y publicaciones: de 22/22/25 a 2/2/3 consultas, conservando el orden | `6af05d9` |
 | Nuevo | Menús desplegables y tabla de Patologías con todos los elementos (`?page_size=`, máx. 1000) | `78d306c` |
 | M-5 / D-4 | Filtro `?activa=`, solo activas al crear informes, casilla "Activa" en Patologías | `b99d9f1` |
-| M-6 / D-5 | `seed_data` crea 4 temas del foro; botón "+ Tema" para patólogos y admin | ver `git log` |
+| M-6 / D-5 | `seed_data` crea 4 temas del foro; botón "+ Tema" para patólogos y admin | `91cea02` |
+| M-7 | El auditor ya no ve el formulario de comentarios del foro | ver `git log` |
 
 ## Siguiente paso
 
@@ -62,7 +63,7 @@ Seguir el orden sugerido en la sección 7 de la auditoría:
      - [x] Selectores con más de 20 elementos: `?page_size=` (máximo 1000) en el backend y usarlo en los selectores del frontend.
      - [x] M-5 / D-4: ocultar las patologías inactivas al crear un informe y añadir la casilla "Activa" en Patologías.
      - [x] M-6 / D-5: 4 temas iniciales en `seed_data` y botón "+ Tema" en el foro.
-     - [ ] M-7: ocultar el formulario de comentarios si el usuario no puede escribir.
+     - [x] M-7: ocultar el formulario de comentarios si el usuario no puede escribir.
      - [ ] M-9: mostrar en pantalla los errores de Dashboard (carga y borrado) e InformePage (patologías y plantillas).
      - [ ] M-10: hora del PDF en la zona horaria configurada.
      - [ ] M-11 / D-6: lista negra de tokens, `POST /api/auth/logout/` y token invalidado al cambiar la contraseña.

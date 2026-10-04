@@ -289,6 +289,8 @@ La guía y el README dicen "listar patologías **activas**", pero el endpoint de
 
 ### M-7. El auditor ve el formulario de comentarios aunque no puede comentar
 
+> **Estado: corregido el 2026-10-04** (rama `seguridad-critica`). Ver `CHANGELOG.md`.
+
 En `PublicacionDetallePage.jsx`, el formulario de comentarios aparece para todos los usuarios, pero la API rechaza al auditor (403). Habría que ocultarlo cuando `canWrite` es falso.
 
 ### M-8. La página de perfil se rompe si falla la carga
