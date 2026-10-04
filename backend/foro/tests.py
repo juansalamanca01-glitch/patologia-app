@@ -132,3 +132,25 @@ class CamposProtegidosForoTests(APITestCase):
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         comentario.refresh_from_db()
         self.assertEqual(comentario.contenido, 'Editado')
+
+
+class TemasInicialesTests(APITestCase):
+    """Decisión D-5 (auditoría M-6): seed_data crea los temas iniciales del foro."""
+
+    TEMAS = ['Casos clínicos', 'Dudas y consultas', 'Investigación', 'Técnicas de laboratorio']
+
+    def ejecutar_seed(self):
+        from io import StringIO
+        from django.core.management import call_command
+        call_command('seed_data', stdout=StringIO())
+
+    def test_seed_data_crea_los_temas(self):
+        self.ejecutar_seed()
+        from .models import TemaForo
+        self.assertEqual(sorted(TemaForo.objects.values_list('nombre', flat=True)), self.TEMAS)
+
+    def test_ejecutar_seed_dos_veces_no_duplica(self):
+        self.ejecutar_seed()
+        self.ejecutar_seed()
+        from .models import TemaForo
+        self.assertEqual(TemaForo.objects.count(), 4)

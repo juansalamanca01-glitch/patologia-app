@@ -39,7 +39,7 @@
 - 🗂️ **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables. Una patología se puede desactivar: deja de ofrecerse en los informes nuevos sin perder el historial.
 - 🔍 **Búsqueda y filtros**: por número de caso, patología o tipo de muestra, rango de fechas y estado. Resultados paginados de 20 en 20.
 - 📊 **Panel de inicio**: totales de informes (todos, borradores y finalizados) y los 10 más recientes.
-- 💬 **Foro de patólogos**: publicaciones por temas, con hasta 6 imágenes (máximo 10 MB cada una) y comentarios. Un administrador puede fijar publicaciones importantes.
+- 💬 **Foro de patólogos**: publicaciones por temas (los patólogos y administradores pueden crear temas nuevos), con hasta 6 imágenes (máximo 10 MB cada una) y comentarios. Un administrador puede fijar publicaciones importantes.
 - 👤 **Perfil de usuario**: edición de datos personales y cambio de contraseña.
 
 ---
@@ -231,7 +231,7 @@ cd patologia-app
    ```bash
    python manage.py seed_data
    ```
-   Se puede ejecutar varias veces sin duplicar datos. No crea categorías ni temas del foro: esos se crean desde la aplicación o desde `/admin/`.
+   También crea 4 temas para el foro (*Casos clínicos*, *Técnicas de laboratorio*, *Investigación* y *Dudas y consultas*). Se puede ejecutar varias veces sin duplicar datos. No crea categorías: esas se crean desde la pantalla Patologías.
 
 7. **Inicia el servidor:**
    ```bash

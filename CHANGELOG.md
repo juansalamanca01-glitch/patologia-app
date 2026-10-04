@@ -5,6 +5,18 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Foro: temas iniciales y botón para crear temas (M-6, decisión D-5)
+
+**Qué se cambió**
+- `backend/informes/management/commands/seed_data.py`: crea 4 temas del foro: *Casos clínicos*, *Técnicas de laboratorio*, *Investigación* y *Dudas y consultas*. Usa `get_or_create`, así que ejecutarlo varias veces no duplica nada.
+- `frontend/src/pages/ForoPage.jsx`: botón **"+ Tema"** (solo para patólogos y administradores, según D-1) con un formulario de nombre y descripción.
+- Pruebas: `TemasInicialesTests` (2, backend) y una nueva en `ForoPage.test.jsx`.
+- `README.md`: `seed_data` y la descripción del foro.
+
+**Por qué**
+- El foro empezaba sin temas, y la app no tenía forma de crearlos: solo se podía desde `/admin/`.
+- Para tener los temas en una base de datos que ya existe, basta con volver a ejecutar `python manage.py seed_data`.
+
 ### Las patologías se pueden desactivar en lugar de borrarse (M-5, decisión D-4)
 
 **Qué se cambió**

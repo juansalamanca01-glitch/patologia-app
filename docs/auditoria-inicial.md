@@ -283,6 +283,8 @@ La guía y el README dicen "listar patologías **activas**", pero el endpoint de
 
 ### M-6. El foro empieza sin temas y no hay forma de crearlos desde la app
 
+> **Estado: corregido el 2026-10-04** (rama `seguridad-critica`) según la decisión D-5. Ver `CHANGELOG.md`.
+
 `seed_data` no crea temas del foro ni categorías, y el frontend no tiene una pantalla para crear temas. Solo se pueden crear desde `/admin/` o con Postman.
 
 ### M-7. El auditor ve el formulario de comentarios aunque no puede comentar

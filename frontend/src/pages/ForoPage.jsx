@@ -35,6 +35,10 @@ export default function ForoPage() {
   // Errores del formulario: se muestran dentro del modal, no detrás de él.
   const [errorFormulario, setErrorFormulario] = useState('');
 
+  // Crear temas desde el foro (decisión D-5): patólogos y administradores.
+  const [nuevoTema, setNuevoTema] = useState(null); // null = formulario cerrado
+  const [errorTema, setErrorTema] = useState('');
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -100,6 +104,18 @@ export default function ForoPage() {
     }
   };
 
+  const crearTema = async (e) => {
+    e.preventDefault();
+    setErrorTema('');
+    try {
+      await client.post('/foro/temas/', nuevoTema);
+      setNuevoTema(null);
+      fetchData();
+    } catch (err) {
+      setErrorTema(err.response?.data?.nombre?.[0] || err.response?.data?.detail || 'No se pudo crear el tema.');
+    }
+  };
+
   const cerrarFormulario = () => {
     setMostrarForm(false);
     setNuevo({ titulo: '', contenido: '', tema: '' });
@@ -115,9 +131,14 @@ export default function ForoPage() {
           <p className="text-muted">Comparte investigaciones, observaciones y casos con tus colegas</p>
         </div>
         {canWrite && (
-          <button className="btn btn-primary" onClick={() => { setErrorFormulario(''); setMostrarForm(true); }}>
-            + Nueva publicación
-          </button>
+          <div className="header-actions">
+            <button className="btn btn-outline" onClick={() => { setErrorTema(''); setNuevoTema({ nombre: '', descripcion: '' }); }}>
+              + Tema
+            </button>
+            <button className="btn btn-primary" onClick={() => { setErrorFormulario(''); setMostrarForm(true); }}>
+              + Nueva publicación
+            </button>
+          </div>
         )}
       </div>
 
@@ -166,6 +187,38 @@ export default function ForoPage() {
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {nuevoTema && (
+        <div className="modal-overlay" onClick={() => setNuevoTema(null)}>
+          <div className="modal-card modal-card-sm" onClick={(e) => e.stopPropagation()}>
+            <h2>Nuevo tema</h2>
+            {errorTema && <div className="alert alert-error">{errorTema}</div>}
+            <form onSubmit={crearTema}>
+              <div className="form-group">
+                <label>Nombre</label>
+                <input
+                  value={nuevoTema.nombre}
+                  onChange={(e) => setNuevoTema({ ...nuevoTema, nombre: e.target.value })}
+                  required
+                  maxLength={150}
+                />
+              </div>
+              <div className="form-group">
+                <label>Descripción</label>
+                <textarea
+                  value={nuevoTema.descripcion}
+                  onChange={(e) => setNuevoTema({ ...nuevoTema, descripcion: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn btn-outline" onClick={() => setNuevoTema(null)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary">Crear tema</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

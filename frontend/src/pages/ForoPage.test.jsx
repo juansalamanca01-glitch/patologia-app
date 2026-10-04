@@ -73,3 +73,22 @@ describe('ForoPage: imágenes de una nueva publicación', () => {
     expect(client.post.mock.calls[1][0]).toBe('/foro/publicaciones/7/imagenes/');
   });
 });
+
+// Decisión D-5 (auditoría M-6): los temas se pueden crear desde el foro.
+describe('ForoPage: crear temas', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    client.get.mockResolvedValue({ data: { results: [] } });
+    client.post.mockResolvedValue({ data: { id: 3, nombre: 'Citología' } });
+  });
+
+  it('el botón "+ Tema" crea un tema nuevo', async () => {
+    const { container } = render(<MemoryRouter><ForoPage /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: /\+ Tema/i }));
+    fireEvent.change(container.querySelector('.modal-card input'), { target: { value: 'Citología' } });
+    fireEvent.submit(container.querySelector('.modal-card form'));
+    await vi.waitFor(() => expect(client.post).toHaveBeenCalled());
+    expect(client.post.mock.calls[0][0]).toBe('/foro/temas/');
+    expect(client.post.mock.calls[0][1]).toMatchObject({ nombre: 'Citología' });
+  });
+});

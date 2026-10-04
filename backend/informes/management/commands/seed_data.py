@@ -4,6 +4,7 @@ Uso: python manage.py seed_data (se puede ejecutar varias veces sin duplicar dat
 """
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from foro.models import TemaForo
 from informes.models import Patologia, Plantilla
 
 Usuario = get_user_model()
@@ -299,5 +300,17 @@ class Command(BaseCommand):
                     Plantilla.objects.create(patologia=pat, **c)
             else:
                 self.stdout.write(f'  Patologia "{pat.nombre}" ya existe, omitida.')
+
+        # ── Temas iniciales del foro (decisión D-5) ─────
+        temas_foro = [
+            ('Casos clínicos', 'Casos de interés para discutir con los colegas.'),
+            ('Técnicas de laboratorio', 'Procesamiento de muestras, tinciones e inmunohistoquímica.'),
+            ('Investigación', 'Notas, artículos y hallazgos de investigación.'),
+            ('Dudas y consultas', 'Preguntas a otros patólogos.'),
+        ]
+        for nombre, descripcion in temas_foro:
+            _, creado = TemaForo.objects.get_or_create(nombre=nombre, defaults={'descripcion': descripcion})
+            if creado:
+                self.stdout.write(self.style.SUCCESS(f'[OK] Tema del foro "{nombre}" creado'))
 
         self.stdout.write(self.style.SUCCESS('\n[DONE] Seed data completo.'))
