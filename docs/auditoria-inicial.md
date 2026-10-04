@@ -205,6 +205,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### I-12. El README tiene partes dañadas y está desactualizado
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`). README reescrito (incluye la corrección por la decisión D-1 de I-7) y colección de Postman rehecha y probada. Ver `CHANGELOG.md`.
+
 - **Texto dañado:** **15 líneas** del README tienen caracteres invisibles de control. Probablemente se generó desde PowerShell, donde el acento grave (`` ` ``) es un carácter especial: por ejemplo, `` `b `` se convirtió en un "retroceso". Por eso:
   - Los bloques de código salen rotos: se ve `` `ash `` en lugar de ```` ```bash ````.
   - En la tabla de usuarios aparece "dmin" en lugar de `admin`, "uditor1" en lugar de `auditor1`, e "ite.config.js" en lugar de `vite.config.js`.

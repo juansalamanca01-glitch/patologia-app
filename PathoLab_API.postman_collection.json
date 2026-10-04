@@ -1,9 +1,19 @@
-﻿{
+{
 	"info": {
 		"_postman_id": "8bbc54a1-patologia-app-collection",
 		"name": "PathoLab API - Informes de Patología",
-		"description": "Colección de endpoints para demostración en clase del proyecto PathoLab.",
+		"description": "Colección para probar la API de PathoLab.\n\nUso: 1) ejecuta \"Login (patólogo)\", que guarda el token en {{access_token}}. 2) Ejecuta las demás peticiones en orden: \"Crear informe\" guarda {{informe_id}} y \"Crear publicación\" guarda {{publicacion_id}}.\n\nTodas las peticiones usan el token de la colección (Authorization: Bearer), excepto el login. Los listados vienen paginados de 20 en 20 (?page=2).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
 	},
 	"variable": [
 		{
@@ -15,174 +25,477 @@
 			"key": "access_token",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "informe_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "publicacion_id",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"item": [
 		{
-			"name": "1. Autenticación - Login (Patólogo)",
-			"event": [
+			"name": "1. Autenticación",
+			"item": [
 				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"var jsonData = pm.response.json();",
-							"if (jsonData.access) {",
-							"    pm.collectionVariables.set('access_token', jsonData.access);",
-							"    console.log('Token guardado automáticamente en {{access_token}}');",
-							"}"
+					"name": "Login (patólogo)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
-						"type": "text/javascript"
-					}
+						"url": {
+							"raw": "{{base_url}}/api/auth/login/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login",
+								""
+							]
+						},
+						"description": "Inicia sesión con el usuario de prueba patologo1 y guarda el token en {{access_token}}. Para probar otros roles usa admin/admin1234 o auditor1/auditor1234.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"patologo1\",\n  \"password\": \"patologo1234\"\n}"
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    pm.collectionVariables.set('access_token', pm.response.json().access);",
+									"    console.log('Guardado en access_token: ' + pm.response.json().access);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Ver mi perfil",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/auth/perfil/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"perfil",
+								""
+							]
+						},
+						"description": "Datos del usuario autenticado, incluido su rol."
+					},
+					"response": []
 				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"username\": \"patologo1\",\n  \"password\": \"patologo1234\"\n}"
-				},
-				"url": {
-					"raw": "{{base_url}}/api/auth/login/",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"login",
-						""
-					]
-				},
-				"description": "Inicia sesión con el usuario patólogo y almacena automáticamente el token JWT para los demás endpoints."
-			},
-			"response": []
+			]
 		},
 		{
-			"name": "2. Informes - Crear Informe (Biopsia de Piel)",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
+			"name": "2. Catálogo",
+			"item": [
+				{
+					"name": "Listar patologías",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/patologias/?categoria=&search=",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"patologias",
+								""
+							],
+							"query": [
+								{
+									"key": "categoria",
+									"value": "",
+									"description": "Id de una categoría",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "",
+									"description": "Texto a buscar en el nombre",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Lista las patologías (las 14 de seed_data). Filtros opcionales en la pestaña Params."
+					},
+					"response": []
+				},
+				{
+					"name": "Ver patología con sus campos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/patologias/1/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"patologias",
+								"1",
+								""
+							]
+						},
+						"description": "Detalle de una patología con sus plantillas (los campos del formulario). Cambia el 1 por otro id."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar categorías",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/categorias/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categorias",
+								""
+							]
+						},
+						"description": "Categorías que agrupan las patologías. seed_data no crea ninguna."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Informes",
+			"item": [
+				{
+					"name": "Crear informe (Biopsia de Piel)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/informes/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"informes",
+								""
+							]
+						},
+						"description": "Crea un informe en estado borrador. El backend genera la descripción macroscópica en texto_generado. El número de caso usa {{$timestamp}} para no repetirse. Supone que la patología 1 es \"Biopsia de Piel\", como ocurre con una base de datos nueva y seed_data. Guarda el id en {{informe_id}}.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"numero_caso\": \"PAT-{{$timestamp}}\",\n  \"patologia\": 1,\n  \"tipo_muestra\": \"Biopsia escisional\",\n  \"datos_ingresados\": {\n    \"localizacion\": \"Espalda región escapular derecha\",\n    \"tipo_muestra\": \"Escisional\",\n    \"dimensiones\": \"2.5 x 1.8 x 0.6 cm\",\n    \"color\": \"Pigmentado\",\n    \"bordes\": \"Irregulares\",\n    \"superficie\": \"Rugosa con ulceración central\",\n    \"hallazgos_adicionales\": \"Lesión nodular hiperpigmentada sin sangrado activo\"\n  },\n  \"notas\": \"Muestra fijada en formol al 10% remitida por Dermatología\"\n}"
+						}
+					},
+					"response": [],
+					"event": [
 						{
-							"key": "token",
-							"value": "{{access_token}}",
-							"type": "string"
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    pm.collectionVariables.set('informe_id', pm.response.json().id);",
+									"    console.log('Guardado en informe_id: ' + pm.response.json().id);",
+									"}"
+								]
+							}
 						}
 					]
 				},
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"numero_caso\": \"PAT-2026-EXP-01\",\n  \"patologia\": 1,\n  \"tipo_muestra\": \"Biopsia escisional\",\n  \"datos_ingresados\": {\n    \"localizacion\": \"Espalda región escapular derecha\",\n    \"tipo_muestra\": \"Escisional\",\n    \"dimensiones\": \"2.5 x 1.8 x 0.6 cm\",\n    \"color\": \"Pigmentado\",\n    \"bordes\": \"Irregulares\",\n    \"superficie\": \"Rugosa con ulceración central\",\n    \"hallazgos_adicionales\": \"Lesión nodular hiperpigmentada sin sangrado activo\"\n  },\n  \"notas\": \"Muestra fijada en formol al 10% remitida por Dermatología\"\n}"
+				{
+					"name": "Listar informes (con filtros)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/informes/?q=&estado=&fecha_desde=&fecha_hasta=&patologia=&page=",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"informes",
+								""
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "",
+									"description": "Número de caso, patología o tipo de muestra",
+									"disabled": true
+								},
+								{
+									"key": "estado",
+									"value": "",
+									"description": "borrador o finalizado",
+									"disabled": true
+								},
+								{
+									"key": "fecha_desde",
+									"value": "",
+									"description": "AAAA-MM-DD",
+									"disabled": true
+								},
+								{
+									"key": "fecha_hasta",
+									"value": "",
+									"description": "AAAA-MM-DD",
+									"disabled": true
+								},
+								{
+									"key": "patologia",
+									"value": "",
+									"description": "Id de la patología",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "",
+									"description": "Número de página (20 informes por página)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Lista paginada de informes. Activa los filtros que quieras en la pestaña Params."
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "{{base_url}}/api/informes/",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"api",
-						"informes",
-						""
-					]
+				{
+					"name": "Estadísticas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/informes/estadisticas/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"informes",
+								"estadisticas",
+								""
+							]
+						},
+						"description": "Totales {total, borradores, finalizados}. Acepta los mismos filtros que el listado."
+					},
+					"response": []
 				},
-				"description": "Crea un informe histopatológico. El backend autogenera la descripción macroscópica en texto_generado."
-			},
-			"response": []
+				{
+					"name": "Ver informe",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/informes/{{informe_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"informes",
+								"{{informe_id}}",
+								""
+							]
+						},
+						"description": "Detalle completo del informe creado."
+					},
+					"response": []
+				},
+				{
+					"name": "Finalizar informe",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/informes/{{informe_id}}/finalizar/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"informes",
+								"{{informe_id}}",
+								"finalizar",
+								""
+							]
+						},
+						"description": "Marca el informe como finalizado. Después ya no se puede editar ni borrar (400). Solo el autor o un admin."
+					},
+					"response": []
+				},
+				{
+					"name": "Descargar PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/informes/{{informe_id}}/pdf/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"informes",
+								"{{informe_id}}",
+								"pdf",
+								""
+							]
+						},
+						"description": "Genera el PDF del informe. En Postman usa \"Send and Download\" para guardarlo como archivo."
+					},
+					"response": []
+				}
+			]
 		},
 		{
-			"name": "3. Informes - Listar Informes (Filtros)",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
+			"name": "4. Foro",
+			"item": [
+				{
+					"name": "Listar publicaciones",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/foro/publicaciones/?tema=&search=",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"foro",
+								"publicaciones",
+								""
+							],
+							"query": [
+								{
+									"key": "tema",
+									"value": "",
+									"description": "Id del tema",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "",
+									"description": "Texto en el título o el contenido",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Publicaciones del foro (las fijadas primero). Filtros opcionales en la pestaña Params."
+					},
+					"response": []
+				},
+				{
+					"name": "Crear publicación",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/foro/publicaciones/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"foro",
+								"publicaciones",
+								""
+							]
+						},
+						"description": "Crea una publicación (patólogo o admin). El campo fijado solo lo puede cambiar un admin. Guarda el id en {{publicacion_id}}. Para adjuntar imágenes: POST a /api/foro/publicaciones/{{publicacion_id}}/imagenes/ con form-data, campo \"imagenes\" de tipo File (máximo 6, de hasta 10 MB cada una).",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"titulo\": \"Caso de interés: lesión pigmentada\",\n  \"contenido\": \"Comparto este caso para discusión.\",\n  \"tema\": null\n}"
+						}
+					},
+					"response": [],
+					"event": [
 						{
-							"key": "token",
-							"value": "{{access_token}}",
-							"type": "string"
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    pm.collectionVariables.set('publicacion_id', pm.response.json().id);",
+									"    console.log('Guardado en publicacion_id: ' + pm.response.json().id);",
+									"}"
+								]
+							}
 						}
 					]
 				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/api/informes/",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"api",
-						"informes",
-						""
-					]
-				},
-				"description": "Lista los informes creados con soporte para filtros de búsqueda."
-			},
-			"response": []
-		},
-		{
-			"name": "4. Informes - Descargar PDF Clínico",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{access_token}}",
-							"type": "string"
+				{
+					"name": "Comentar publicación",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/foro/comentarios/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"foro",
+								"comentarios",
+								""
+							]
+						},
+						"description": "Añade un comentario a la publicación creada (máximo 3000 caracteres).",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"publicacion\": {{publicacion_id}},\n  \"contenido\": \"Interesante, ¿se hizo inmunohistoquímica?\"\n}"
 						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/api/informes/1/pdf/",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"api",
-						"informes",
-						"1",
-						"pdf",
-						""
-					]
-				},
-				"description": "Genera y descarga el reporte en formato PDF médico con ReportLab."
-			},
-			"response": []
-		},
-		{
-			"name": "5. Catálogo - Listar Patologías Activas",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/api/patologias/",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"api",
-						"patologias",
-						""
-					]
-				},
-				"description": "Consulta las 14 patologías clínicas preconfiguradas."
-			},
-			"response": []
+					},
+					"response": []
+				}
+			]
 		}
 	]
 }

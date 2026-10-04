@@ -5,6 +5,27 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Documentación: README reescrito y colección de Postman actualizada (I-12)
+
+**Qué se cambió**
+- `README.md`, reescrito por completo:
+  - Se eliminaron las líneas con caracteres de control dañados y los bloques de código rotos.
+  - Nueva sección **Roles y Permisos**, con una tabla según las decisiones D-1, D-2 y D-3. Corrige que el administrador no es el único que gestiona el catálogo.
+  - Referencia de la API completa, sacada de las rutas reales: autenticación, catálogo (con categorías), informes (con estadísticas) y foro.
+  - Nuevas secciones de **Pruebas Automáticas**, **Seguridad** y **Documentación del Proyecto**.
+  - Estructura del proyecto actualizada (foro, pruebas, `docs/`).
+  - Se corrigieron afirmaciones que no eran ciertas: el PDF no lleva "firma del patólogo", sino su nombre; la búsqueda no es "en tiempo real"; las pruebas exigen Node 22.12+, no Node 18; y `GET /api/plantillas/` lo puede leer cualquier usuario autenticado.
+- `PathoLab_API.postman_collection.json`, rehecha:
+  - 14 peticiones en 4 carpetas: autenticación, catálogo, informes y foro.
+  - El token se configura a nivel de colección y el login lo guarda automáticamente.
+  - "Crear informe" y "Crear publicación" guardan su `id` para las peticiones siguientes.
+  - El número de caso usa `{{$timestamp}}` para no repetirse.
+
+**Por qué**
+- El README tenía 15 líneas dañadas (por ejemplo, "dmin" en lugar de `admin`), no mencionaba el foro ni las categorías, y su tabla de la API estaba incompleta.
+- En la colección de Postman, "Listar patologías" no enviaba el token y siempre respondía 401, "Descargar PDF" usaba el informe 1 escrito a mano y "Crear informe" fallaba la segunda vez por repetir el número de caso.
+- La colección nueva se ejecutó completa contra una copia de la base de datos: las 14 peticiones respondieron 200 o 201.
+
 ### Corrección: la dirección del backend ya no está fija en el código del frontend (I-10)
 
 **Qué se cambió**

@@ -41,12 +41,13 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | I-11 | El registro y el cambio de contraseña aplican los validadores de Django | `3d5e5cf` |
 | I-9a | `npm audit fix`: producción pasa de 6 vulnerabilidades (2 altas) a 2 moderadas que no afectan a la app | `ee92a38` |
 | I-9b | Vite 5 → 6.4 y Vitest 3 → 5: quedan solo las 2 vulnerabilidades moderadas de react-router | `da69796` |
-| I-10 | `client.js` usa `VITE_API_URL` (vacía en desarrollo → proxy de Vite) en lugar de `localhost:8000` fijo | ver `git log` |
+| I-10 | `client.js` usa `VITE_API_URL` (vacía en desarrollo → proxy de Vite) en lugar de `localhost:8000` fijo | `1a1822e` |
+| I-12 | README reescrito (permisos, API completa, pruebas, seguridad) y colección de Postman rehecha y probada | ver `git log` |
 
 ## Siguiente paso
 
 Seguir el orden sugerido en la sección 7 de la auditoría:
-1. **Documentación:** I-12 (reescribir el README, incluida la corrección por D-1), actualizar la colección de Postman.
+1. **I-2 (olvidado hasta ahora):** la validación de campos obligatorios de los informes se salta si `datos_ingresados` llega vacío. Estaba en la auditoría, pero no entró en esta lista al armarla; se detectó al revisar el README (I-12). Cuando se corrija, devolver al README la frase "los campos obligatorios se validan en el backend".
 2. **Limpieza:** hallazgos menores M-1 a M-13 (M-5 ampliado, ver abajo).
 3. **Opcional, al final (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal que obliga a revisar la navegación de todas las páginas.
 
@@ -58,7 +59,6 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 
 ## Pendiente de hacer (anotado para no olvidarlo)
 
-- **README:** corregir que el administrador no es el único que gestiona el catálogo (decisión D-1). Se hará junto con I-12 (reescribir el README, que tiene 15 líneas con caracteres de control dañados).
 - **M-5 (ampliado):** además de filtrar las patologías inactivas en "Nuevo informe", añadir el campo "activa" al formulario de patologías de `PatologiasPage.jsx`. Así se puede desactivar una patología con informes en lugar de borrarla (relacionado con I-1).
 - **Producción:** al publicar la app, configurar en el servidor web un límite de tamaño de petición (por ejemplo, `client_max_body_size 60m;` en Nginx). Ver la nota de I-6 en `settings.py`.
 - **Navegador:** probar a mano el dashboard y la paginación del buscador (I-4) con más de 20 informes.

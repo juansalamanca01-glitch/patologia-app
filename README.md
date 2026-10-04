@@ -1,352 +1,454 @@
-﻿# 🔬 PathoLab — Sistema de Gestión de Informes de Patología Clínica
+# 🔬 PathoLab — Sistema de Gestión de Informes de Patología Clínica
 
-[![Django](https://img.shields.io/badge/Django-4.2+-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![Django](https://img.shields.io/badge/Django-4.2-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![Django REST Framework](https://img.shields.io/badge/DRF-3.14+-red?style=for-the-badge&logo=django&logoColor=white)](https://www.django-rest-framework.org/)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-6.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![JWT](https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 
-**PathoLab** es una plataforma web moderna diseñada para la captura, generación automatizada, gestión y auditoría de informes histopatológicos clínicos. El sistema acelera el flujo de trabajo de los patólogos transformando entradas estructuradas de laboratorio en descripciones macroscópicas en lenguaje natural y generando informes en PDF de calidad médica listos para impresión.
+**PathoLab** es una plataforma web para capturar, generar, gestionar y auditar informes histopatológicos. El patólogo llena un formulario estructurado según el tipo de muestra. El sistema redacta automáticamente la descripción macroscópica en lenguaje natural y genera el informe en PDF. Además, incluye un foro para que los patólogos compartan casos y observaciones.
 
 ---
 
 ## 📋 Tabla de Contenidos
 
 - [Características Principales](#-características-principales)
-- [Arquitectura y Tecnologías](#-arquitectura-y-tecnologías)
+- [Roles y Permisos](#-roles-y-permisos)
+- [Arquitectura y Tecnologías](#️-arquitectura-y-tecnologías)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Requisitos Previos](#-requisitos-previos)
 - [Instalación y Configuración Local](#-instalación-y-configuración-local)
-  - [1. Clonar el Repositorio](#1-clonar-el-repositorio)
-  - [2. Configuración del Backend (Django)](#2-configuración-del-backend-django)
-  - [3. Configuración del Frontend (React + Vite)](#3-configuración-del-frontend-react--vite)
 - [Usuarios y Cuentas de Prueba](#-usuarios-y-cuentas-de-prueba)
+- [Pruebas Automáticas](#-pruebas-automáticas)
 - [Catálogo de Patologías Incluidas](#-catálogo-de-patologías-incluidas)
 - [Referencia de la API REST](#-referencia-de-la-api-rest)
 - [Flujo de Trabajo del Informe](#-flujo-de-trabajo-del-informe)
-- [Hoja de Ruta (Roadmap)](#-hoja-de-ruta-roadmap)
+- [Seguridad](#-seguridad)
+- [Documentación del Proyecto](#-documentación-del-proyecto)
+- [Hoja de Ruta (Roadmap)](#️-hoja-de-ruta-roadmap)
 
 ---
 
 ## ✨ Características Principales
 
-- 🩺 **14 Patologías Clínicas Preconfiguradas**: Formularios especializados por tipo de espécimen con protocolos médicos integrados.
-- 📝 **Formularios Dinámicos Basados en Esquemas**: Los campos (textos, números, listas desplegables, áreas de texto) se renderizan dinámicamente según la patología seleccionada.
-- 🤖 **Generador Automático de Descripción Macroscópica**: Transforma instantáneamente las mediciones y observaciones estructuradas en párrafos clínicos redactados en lenguaje natural.
-- 📄 **Exportación de Informes a PDF**: Generación con **ReportLab** de informes formales con encabezado institucional, número de caso, metadatos, tabla de hallazgos y firma del patólogo.
-- 🔐 **Control de Acceso Basado en Roles (RBAC)**:
-  - **Administrador**: Gestión completa de usuarios, patologías y plantillas.
-  - **Patólogo**: Creación, edición, redacción y finalización de informes histopatológicos.
-  - **Auditor**: Búsqueda avanzada, consulta y descarga de informes (modo solo lectura).
-- 🔍 **Búsqueda y Filtros Avanzados**: Búsqueda en tiempo real por número de caso, patología, tipo de muestra, rango de fechas y estado del informe.
+- 🩺 **14 patologías preconfiguradas**: cada tipo de muestra tiene su propio formulario y su protocolo médico.
+- 📝 **Formularios dinámicos**: los campos (texto, número, lista desplegable, área de texto, sí/no) se generan según la patología elegida, con sus campos obligatorios marcados.
+- 🤖 **Descripción macroscópica automática**: al guardar un informe, el backend convierte los datos del formulario en un párrafo redactado en lenguaje natural.
+- 📄 **Exportación a PDF**: genera con **ReportLab** un informe con título, número de caso, metadatos (fecha, patología, tipo de muestra, patólogo y estado), datos clínicos, descripción macroscópica y notas.
+- 🔒 **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
+- 🗂️ **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables.
+- 🔍 **Búsqueda y filtros**: por número de caso, patología o tipo de muestra, rango de fechas y estado. Resultados paginados de 20 en 20.
+- 📊 **Panel de inicio**: totales de informes (todos, borradores y finalizados) y los 10 más recientes.
+- 💬 **Foro de patólogos**: publicaciones por temas, con hasta 6 imágenes (máximo 10 MB cada una) y comentarios. Un administrador puede fijar publicaciones importantes.
+- 👤 **Perfil de usuario**: edición de datos personales y cambio de contraseña.
+
+---
+
+## 🔐 Roles y Permisos
+
+| Acción | Administrador | Patólogo | Auditor |
+|---|:---:|:---:|:---:|
+| Ver informes, buscar y descargar PDF | ✅ | ✅ | ✅ |
+| Crear informes | ✅ | ✅ | ❌ |
+| Editar, borrar o finalizar un informe | ✅ (cualquiera) | Solo los suyos | ❌ |
+| Editar o borrar un informe **finalizado** | ❌ | ❌ | ❌ |
+| Administrar patologías, plantillas, categorías y temas del foro | ✅ | ✅ | ❌ |
+| Publicar y comentar en el foro | ✅ | ✅ | ❌ (solo lectura) |
+| Editar o borrar publicaciones y comentarios | ✅ (moderación) | Solo los suyos | ❌ |
+| Fijar publicaciones del foro | ✅ | ❌ | ❌ |
+| Registrar usuarios y ver la lista de usuarios | ✅ | ❌ | ❌ |
+| Editar su perfil y cambiar su contraseña | ✅ | ✅ | ✅ |
+
+Estas reglas responden a decisiones del proyecto registradas en [`docs/decisiones.md`](docs/decisiones.md):
+- **D-1:** los patólogos también administran el catálogo.
+- **D-2:** solo el autor o un administrador modifica un informe.
+- **D-3:** un informe finalizado no se modifica, ni siquiera por un administrador.
+
+Si hace falta una corrección excepcional sobre un informe finalizado, el administrador puede hacerla desde el panel de Django (`/admin/`).
 
 ---
 
 ## 🛠️ Arquitectura y Tecnologías
 
-`
+```
 ┌────────────────────────────────────────────────────────┐
 │                   Cliente (Navegador)                  │
 │             React 18 + Vite + React Router             │
 └──────────────────────────┬─────────────────────────────┘
                            │ HTTP / JSON (Axios)
-                           │ JWT Bearer Token
+                           │ Token JWT en la cabecera Authorization
 ┌──────────────────────────▼─────────────────────────────┐
-│                 API REST Backend (Django)               │
-│  ┌─────────────────────────┐ ┌───────────────────────┐ │
-│  │    App: accounts        │ │     App: informes     │ │
-│  │  - Auth JWT             │ │  - Catálogo Patología │ │
-│  │  - Roles (RBAC)         │ │  - Plantillas Dinámicas││
-│  │  - Gestión de usuarios  │ │  - Informes & Filtros │ │
-│  └─────────────────────────┘ └───────────┬───────────┘ │
-│                                          │             │
-│                     ┌────────────────────▼───────────┐ │
-│                     │  Motor de Generación PDF       │ │
-│                     │  ReportLab (Letter, Styles)    │ │
-│                     └────────────────────────────────┘ │
+│                API REST (Django + DRF)                 │
+│  ┌──────────────┐  ┌────────────────┐  ┌────────────┐  │
+│  │  accounts    │  │   informes     │  │    foro    │  │
+│  │ - Login JWT  │  │ - Categorías   │  │ - Temas    │  │
+│  │ - Roles      │  │ - Patologías   │  │ - Publica- │  │
+│  │ - Perfil     │  │ - Plantillas   │  │   ciones   │  │
+│  │ - Usuarios   │  │ - Informes     │  │ - Imágenes │  │
+│  │              │  │ - PDF          │  │ - Comenta- │  │
+│  │              │  │   (ReportLab)  │  │   rios     │  │
+│  └──────────────┘  └────────────────┘  └────────────┘  │
 └──────────────────────────┬─────────────────────────────┘
                            │ ORM
 ┌──────────────────────────▼─────────────────────────────┐
-│                 Base de Datos (SQLite / PostgreSQL)     │
+│          Base de datos (SQLite / PostgreSQL)           │
 └────────────────────────────────────────────────────────┘
-`
+```
 
 - **Backend**:
   - Python 3.10+
   - Django 4.2 LTS
-  - Django REST Framework (DRF) 3.14+
-  - SimpleJWT (Autenticación por tokens con rotación)
+  - Django REST Framework 3.14+
+  - SimpleJWT (tokens de acceso de 8 horas y de renovación de 7 días, con rotación)
   - django-cors-headers
-  - ReportLab 4.1+ (Generación de PDF)
+  - python-decouple (configuración desde `.env`)
+  - ReportLab (PDF) y Pillow (validación de imágenes)
+  - SQLite en desarrollo; PostgreSQL si se define `DB_NAME` en el `.env`
 - **Frontend**:
-  - React 18
-  - Vite 6.4 (pruebas con Vitest 5)
-  - React Router DOM 6
-  - Axios (con interceptores para adjuntar automáticamente el token JWT)
-  - CSS modular responsive
+  - React 18 y React Router 6
+  - Vite 6.4
+  - Axios (añade el token JWT a cada petición y lo renueva automáticamente si vence)
+  - Estilos propios en `src/index.css`, sin librería de componentes
+  - Pruebas con Vitest 5 y React Testing Library
 
 ---
 
 ## 📁 Estructura del Proyecto
 
-`
+```
 patologia-app/
 ├── backend/
-│   ├── accounts/              # Módulo de usuarios, roles y autenticación
-│   │   ├── models.py          # Modelo Usuario personalizado con roles
-│   │   ├── permissions.py     # Permisos DRF (EsPatologoOAdmin, EsAutorOAdminOSoloLectura)
-│   │   ├── serializers.py     # Serializadores de login, registro y perfil
-│   │   ├── urls.py            # Endpoints /api/auth/
-│   │   └── views.py           # Vistas de autenticación y JWT
-│   ├── config/                # Configuración principal de Django
-│   │   ├── settings.py        # Settings, JWT, CORS e internacionalización
-│   │   ├── urls.py            # Enrutador general
-│   │   └── wsgi.py / asgi.py
-│   ├── informes/              # Módulo principal de patología
-│   │   ├── management/
-│   │   │   └── commands/
-│   │   │       └── seed_data.py # Población inicial (usuarios + 14 patologías)
-│   │   ├── models.py          # Modelos Patologia, Plantilla, Informe
-│   │   ├── serializers.py     # Serializadores de informes y esquemas
-│   │   ├── urls.py            # Endpoints /api/
-│   │   ├── utils.py           # Generador de descripción y constructor PDF
-│   │   └── views.py           # ViewSets para CRUD de informes y descarga PDF
+│   ├── accounts/              # Usuarios, roles, login JWT, perfil y contraseñas
+│   │   ├── models.py          # Modelo Usuario con rol (admin, patologo, auditor)
+│   │   ├── permissions.py     # Permisos: EsAdmin, EsPatologoOAdmin, EsAutorOAdminOSoloLectura
+│   │   ├── serializers.py     # Perfil, registro y cambio de contraseña (con validadores)
+│   │   ├── throttles.py       # Límites de intentos de login y de registro
+│   │   ├── views.py / urls.py # Endpoints /api/auth/
+│   │   └── tests.py
+│   ├── config/
+│   │   ├── settings.py        # Configuración (lee el .env), JWT, CORS, límites de peticiones
+│   │   ├── urls.py            # Rutas principales
+│   │   └── tests.py           # Pruebas de la configuración (SECRET_KEY y DEBUG)
+│   ├── informes/
+│   │   ├── management/commands/seed_data.py  # Datos iniciales: usuarios + 14 patologías
+│   │   ├── models.py          # Categoria, Patologia, Plantilla, Informe
+│   │   ├── serializers.py
+│   │   ├── utils.py           # Generador de la descripción macroscópica y del PDF
+│   │   ├── views.py / urls.py # Endpoints /api/ (catálogo, informes, estadísticas, PDF)
+│   │   └── tests.py
+│   ├── foro/
+│   │   ├── models.py          # TemaForo, Publicacion, ImagenPublicacion, Comentario
+│   │   ├── serializers.py
+│   │   ├── views.py / urls.py # Endpoints /api/foro/
+│   │   └── tests.py
 │   ├── manage.py
 │   ├── requirements.txt
-│   └── .env.example
+│   └── .env.example           # Plantilla del .env (SECRET_KEY obligatoria)
 ├── frontend/
-│   ├── public/
-│   │   ├── favicon.svg
-│   │   └── icons.svg
 │   ├── src/
-│   │   ├── api/
-│   │   │   └── client.js      # Cliente Axios configurado con base URL y JWT
-│   │   ├── assets/
-│   │   ├── components/
-│   │   │   └── Navbar.jsx     # Barra de navegación con datos del usuario y rol
-│   │   ├── context/
-│   │   │   └── AuthContext.jsx# Contexto global de sesión y permisos
-│   │   ├── pages/
-│   │   │   ├── LoginPage.jsx     # Inicio de sesión con validación
-│   │   │   ├── DashboardPage.jsx # Panel principal con métricas e historial
-│   │   │   ├── InformePage.jsx   # Formulario dinámico, vista previa y guardado
-│   │   │   └── BuscarPage.jsx    # Búsqueda multicriterio y exportación
-│   │   ├── App.jsx            # Enrutador principal y rutas protegidas
-│   │   ├── index.css          # Estilos globales y componentes UI
-│   │   └── main.jsx
-│   ├── index.html
+│   │   ├── api/client.js      # Cliente Axios: dirección de la API (VITE_API_URL) y token JWT
+│   │   ├── context/AuthContext.jsx  # Sesión y rol del usuario
+│   │   ├── components/        # Navbar y Footer
+│   │   ├── pages/             # Login, Dashboard, Informe, Buscar, Patologías, Foro,
+│   │   │                      # Detalle de publicación, Perfil y páginas legales
+│   │   ├── test/setup.js      # Configuración de las pruebas
+│   │   ├── App.jsx            # Rutas (protegidas, públicas y legales)
+│   │   └── index.css          # Estilos globales
 │   ├── package.json
-│   ├── vite.config.js         # Configuración Vite con proxy hacia backend
-│   └── .env.example
-├── .gitignore
-└── README.md
-`
+│   ├── vite.config.js         # Proxy /api → backend y configuración de Vitest
+│   └── .env.example           # Plantilla del .env (VITE_API_URL)
+├── docs/                      # Auditoría, decisiones y estado del trabajo
+├── CHANGELOG.md               # Registro de cambios
+├── CLAUDE.md                  # Guía para el asistente de código
+├── iniciar_y_probar.ps1       # Arranque rápido del backend y prueba de endpoints (Windows)
+└── PathoLab_API.postman_collection.json
+```
+
+Las pruebas del frontend están junto a cada componente, en archivos `*.test.jsx`.
 
 ---
 
 ## 📦 Requisitos Previos
 
-Asegúrate de tener instaladas las siguientes herramientas en tu entorno:
-
-- **Python**: 3.10 o superior ([python.org](https://www.python.org/))
-- **Node.js**: 18 o superior y **npm** ([nodejs.org](https://nodejs.org/))
-- **Git**: 2.30 o superior ([git-scm.com](https://git-scm.com/))
+- **Python** 3.10 o superior ([python.org](https://www.python.org/))
+- **Node.js** 22.12 o superior y **npm** ([nodejs.org](https://nodejs.org/)). Vite funciona con versiones anteriores, pero Vitest 5 (las pruebas) necesita Node 22.12+.
+- **Git** ([git-scm.com](https://git-scm.com/))
 
 ---
 
 ## 🚀 Instalación y Configuración Local
 
-### 1. Clonar el Repositorio
+### 1. Clonar el repositorio
 
-`ash
+```bash
 git clone https://github.com/juansalamanca01-glitch/patologia-app.git
 cd patologia-app
-`
+```
 
----
+> **Atajo en Windows:** el script `iniciar_y_probar.ps1` hace los pasos 3 a 7 del backend. Instala las dependencias, crea el `.env` con una clave nueva si no existe, migra, carga los datos de prueba, levanta el servidor y prueba el login y la creación de un informe. Necesita el entorno virtual creado y activado (pasos 1 y 2).
 
-### 2. Configuración del Backend (Django)
+### 2. Backend (Django)
 
-1. **Navega al directorio backend**:
-   `ash
-   cd backend
-   `
-
-2. **Crea y activa un entorno virtual**:
-   - En Windows (PowerShell):
-     `powershell
-     python -m venv venv
-     .\venv\Scripts\Activate.ps1
-     `
-   - En Linux / macOS:
-     `ash
-     python3 -m venv venv
-     source venv/bin/activate
-     `
-
-3. **Instala las dependencias**:
-   `ash
-   pip install -r requirements.txt
-   `
-
-4. **Crea el archivo de variables de entorno (obligatorio)**:
+1. **Entra en la carpeta del backend:**
    ```bash
-   copy .env.example .env     # En Windows
-   # cp .env.example .env      # En Linux/macOS
+   cd backend
+   ```
+
+2. **Crea y activa un entorno virtual:**
+   ```powershell
+   # Windows (PowerShell)
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   ```
+   ```bash
+   # Linux / macOS
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **Instala las dependencias:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Crea el archivo `.env` (obligatorio):**
+   ```bash
+   copy .env.example .env     # Windows
+   # cp .env.example .env     # Linux/macOS
    ```
    Luego genera una clave secreta propia y pégala en `SECRET_KEY=` dentro de `.env`:
    ```bash
    python -c "import secrets; print(secrets.token_urlsafe(50))"
    ```
-   > Sin `SECRET_KEY` el backend no arranca, y si no se define `DEBUG` queda en `False`. El `.env.example` trae `DEBUG=True` para desarrollo. El script `iniciar_y_probar.ps1` crea el `.env` con una clave nueva si no existe.
+   > Sin `SECRET_KEY` el backend no arranca. Si no se define `DEBUG`, queda en `False` (modo producción). El `.env.example` trae `DEBUG=True` para desarrollo.
 
-5. **Aplica las migraciones de base de datos**:
-   `ash
+5. **Aplica las migraciones:**
+   ```bash
    python manage.py migrate
-   `
+   ```
 
-6. **Puebla la base de datos con las 14 patologías y los usuarios de prueba**:
-   `ash
+6. **Carga los usuarios de prueba y las 14 patologías:**
+   ```bash
    python manage.py seed_data
-   `
+   ```
+   Se puede ejecutar varias veces sin duplicar datos. No crea categorías ni temas del foro: esos se crean desde la aplicación o desde `/admin/`.
 
-7. **Inicia el servidor de desarrollo**:
-   `ash
+7. **Inicia el servidor:**
+   ```bash
    python manage.py runserver
-   `
-   El backend estará disponible en http://127.0.0.1:8000/.
+   ```
+   El backend queda disponible en http://127.0.0.1:8000/ y el panel de administración en http://127.0.0.1:8000/admin/.
 
----
-
-### 3. Configuración del Frontend (React + Vite)
+### 3. Frontend (React + Vite)
 
 Abre una **segunda terminal** en la raíz del proyecto:
 
-1. **Navega al directorio frontend**:
-   `ash
+1. **Entra en la carpeta del frontend:**
+   ```bash
    cd frontend
-   `
+   ```
 
-2. **Instala las dependencias de Node**:
+2. **Instala las dependencias:**
    ```bash
    npm install
    ```
 
-3. **Crea el archivo de variables de entorno**:
+3. **Crea el archivo `.env`:**
    ```bash
-   copy .env.example .env     # En Windows
-   # cp .env.example .env      # En Linux/macOS
+   copy .env.example .env     # Windows
+   # cp .env.example .env     # Linux/macOS
    ```
    En desarrollo deja `VITE_API_URL` **vacía**. El archivo `.env.example` explica cuándo hay que darle un valor.
 
-4. **Inicia el servidor de desarrollo Vite**:
+4. **Inicia el servidor de desarrollo:**
    ```bash
    npm run dev
    ```
-   La aplicación web estará disponible en http://localhost:5173/.
-
-5. **Ejecuta las pruebas** (opcional):
-   ```bash
-   npm test                          # pruebas del frontend (Vitest)
-   cd ../backend && python manage.py test   # pruebas del backend
-   ```
+   La aplicación queda disponible en http://localhost:5173/.
 
 > [!NOTE]
-> El frontend llama a la API con rutas relativas (`/api/...`). En desarrollo, el proxy de `vite.config.js` las reenvía al backend en `http://localhost:8000`. En producción hay dos opciones: el mismo servidor web sirve el frontend y el backend (y `VITE_API_URL` queda vacía), o se compila con `VITE_API_URL=https://dirección-del-backend`.
+> El frontend llama a la API con rutas relativas (`/api/...`). En desarrollo, el proxy de `vite.config.js` las reenvía al backend en `http://localhost:8000`. En producción hay dos opciones:
+> - el mismo servidor web sirve el frontend y el backend, y `VITE_API_URL` queda vacía;
+> - o se compila con `VITE_API_URL=https://dirección-del-backend`.
 
 ---
 
 ## 👥 Usuarios y Cuentas de Prueba
 
-El comando python manage.py seed_data crea automáticamente tres usuarios para pruebas de cada rol del sistema:
+`python manage.py seed_data` crea un usuario de cada rol:
 
-| Usuario | Contraseña | Rol | Permisos Principales |
-|---|---|---|---|
-| dmin | dmin1234 | **Administrador** | Acceso al panel Django Admin, gestión de usuarios, creación de patologías y plantillas. |
-| patologo1 | patologo1234 | **Patólogo** | Creación y edición de informes, generación de descripciones, finalización de casos y descarga PDF. |
-| uditor1 | uditor1234 | **Auditor** | Acceso de solo lectura al dashboard, buscador de informes y descarga de PDF para auditorías. |
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `admin` | `admin1234` | **Administrador** (también tiene acceso a `/admin/`) |
+| `patologo1` | `patologo1234` | **Patólogo** |
+| `auditor1` | `auditor1234` | **Auditor** |
+
+Los permisos de cada rol están en [Roles y Permisos](#-roles-y-permisos).
+
+> ⚠️ Son contraseñas de **demostración**: no las uses en un servidor real. Además, la API rechaza contraseñas así de débiles cuando se registra un usuario o se cambia una contraseña, porque aplica los validadores de Django.
+
+---
+
+## 🧪 Pruebas Automáticas
+
+```bash
+# Backend (desde backend/, con el entorno virtual activado)
+python manage.py test                     # todas las pruebas
+python manage.py test informes            # las de una app
+
+# Frontend (desde frontend/)
+npm test                                  # todas las pruebas, una vez
+npm run test:watch                        # se repiten al guardar cambios
+```
+
+- **Backend:** cubre los permisos por rol, el bloqueo de informes finalizados, la validación de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
+- **Frontend:** cubre la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
 
 ---
 
 ## 🏥 Catálogo de Patologías Incluidas
 
-El sistema incluye plantillas clínicas detalladas para 14 tipos de especímenes:
+`seed_data` carga plantillas clínicas para 14 tipos de muestra:
 
-1. **Biopsia de Piel** (Localización, punch/escisional/shave, dimensiones, bordes, color).
-2. **Biopsia de Mama** (Lateralidad, tipo muestra, márgenes quirúrgicos, tamaño tumor, ganglios).
-3. **Apéndice Cecal** (Longitud, diámetro, superficie serosa, consistencia, color).
-4. **Vesícula Biliar** (Dimensiones, pared/espesor, mucosa, cálculos y conteo).
-5. **Biopsia de Próstata** (Número de cilindros, localización anatómica, longitud agregada, PSA).
-6. **Tiroides** (Lateralidad, nódulos, cápsula, dimensiones, peso).
-7. **Colon y Recto** (Localización anatómica, morfología lesional, márgenes, ganglios).
-8. **Útero y Cérvix** (Dimensiones uterinas, miomas, grosor endometrial, cuello y anexos).
-9. **Ganglio Linfático** (Tipo biopsia, localización, número, necrosis, cápsula).
-10. **Biopsia Gástrica** (Región gástrica, conteo de fragmentos, sospecha de *H. pylori*).
-11. **Pulmón** (Lateralidad, lóbulo, márgenes bronquial y vascular, compromiso pleural).
-12. **Riñón** (Nefrectomía/biopsia, tamaño tumoral, cápsula y vena renal).
-13. **Amígdalas y Adenoides** (Dimensiones bilaterales, criptas, exudado, consistencia).
-14. **Tejido Blando** (Lesión sospechada: lipoma/quiste/etc., planos anatómicos, márgenes).
+1. **Biopsia de Piel**: localización, tipo de muestra (punch/escisional/incisional/shave), dimensiones, color, bordes y superficie.
+2. **Biopsia de Mama**: lateralidad, tipo de muestra, dimensiones, peso, tamaño del tumor, márgenes, ganglios y necrosis.
+3. **Apéndice Cecal**: longitud, diámetro, superficie serosa, consistencia y color.
+4. **Vesícula Biliar**: dimensiones, espesor de la pared, mucosa y cálculos.
+5. **Biopsia de Próstata**: número de cilindros, localización, longitud y PSA.
+6. **Tiroides**: lateralidad, nódulos, cápsula, dimensiones y peso.
+7. **Colon y Recto**: localización, morfología de la lesión, márgenes y ganglios.
+8. **Útero y Cérvix**: dimensiones, miomas, grosor endometrial, cuello y anexos.
+9. **Ganglio Linfático**: tipo de biopsia, localización, número, necrosis y cápsula.
+10. **Biopsia Gástrica**: región, número de fragmentos y sospecha de *H. pylori*.
+11. **Pulmón**: lateralidad, lóbulo, márgenes y compromiso pleural.
+12. **Riñón**: nefrectomía o biopsia, tamaño del tumor, cápsula y vena renal.
+13. **Amígdalas y Adenoides**: dimensiones, criptas, exudado y consistencia.
+14. **Tejido Blando**: lesión sospechada, planos anatómicos y márgenes.
 
 ---
 
 ## 🔌 Referencia de la API REST
 
-### Autenticación (/api/auth/)
-| Método | Endpoint | Descripción | Acceso |
-|---|---|---|---|
-| POST | /api/auth/login/ | Iniciar sesión y obtener token JWT (access + refresh) | Público |
-| POST | /api/auth/refresh/ | Refrescar token de acceso | Público |
-| GET | /api/auth/perfil/ | Obtener datos del usuario autenticado | Autenticado |
-| POST | /api/auth/cambiar-password/ | Cambio de contraseña | Autenticado |
-| GET | /api/auth/usuarios/ | Listar usuarios del sistema | Solo Admin |
+Todas las rutas exigen la cabecera `Authorization: Bearer <token>`, excepto el login y la renovación del token. Los listados vienen **paginados de 20 en 20**: la respuesta trae `count`, `next`, `previous` y `results`, y se pide otra página con `?page=2`.
 
-### Informes y Patología (/api/)
+### Autenticación y usuarios (`/api/auth/`)
+
 | Método | Endpoint | Descripción | Acceso |
 |---|---|---|---|
-| GET | /api/patologias/ | Listar tipos de patología activas | Todos |
-| GET | /api/patologias/{id}/ | Detalle de patología con sus campos de plantilla | Todos |
-| GET | /api/plantillas/?patologia={id} | Obtener campos dinámicos de una patología | Patólogo / Admin |
-| GET | /api/informes/ | Listar informes con filtros (q, echa_desde, echa_hasta, estado, patologia) | Todos |
-| GET | /api/informes/estadisticas/ | Totales de informes: `{total, borradores, finalizados}` (acepta los mismos filtros que el listado) | Todos |
-| POST | /api/informes/ | Crear nuevo informe (genera descripción macroscópica) | Patólogo / Admin |
-| GET | /api/informes/{id}/ | Ver informe completo | Todos |
-| PUT/PATCH| /api/informes/{id}/ | Actualizar informe en estado borrador (finalizado → 400) | Autor del informe / Admin |
-| DELETE | /api/informes/{id}/ | Eliminar informe en estado borrador (finalizado → 400) | Autor del informe / Admin |
-| POST | /api/informes/{id}/finalizar/ | Marcar informe como finalizado (bloquea edición) | Autor del informe / Admin |
-| GET | /api/informes/{id}/pdf/ | Generar y descargar informe clínico en formato PDF | Todos |
+| POST | `/api/auth/login/` | Iniciar sesión. Devuelve `access`, `refresh` y los datos del usuario | Público (máx. 10 intentos/min) |
+| POST | `/api/auth/refresh/` | Renovar el token de acceso | Público |
+| GET / PATCH | `/api/auth/perfil/` | Ver o editar el perfil propio (nombre, email, teléfono, especialidad). El rol y el usuario no se pueden cambiar | Autenticado |
+| POST | `/api/auth/cambiar-password/` | Cambiar la contraseña (`old_password`, `new_password`) | Autenticado |
+| POST | `/api/auth/registro/` | Crear un usuario con su rol | Admin |
+| GET | `/api/auth/usuarios/` | Listar usuarios | Admin |
+
+### Catálogo (`/api/`)
+
+| Método | Endpoint | Descripción | Acceso |
+|---|---|---|---|
+| GET / POST | `/api/categorias/` | Listar o crear categorías (`?search=`) | Leer: todos · Escribir: patólogo/admin |
+| GET / PUT / PATCH / DELETE | `/api/categorias/{id}/` | Ver, editar o borrar una categoría (no se borra si tiene patologías) | Igual |
+| GET / POST | `/api/patologias/` | Listar o crear patologías (`?categoria=`, `?search=`) | Igual |
+| GET / PUT / PATCH / DELETE | `/api/patologias/{id}/` | Detalle con sus campos de plantilla. No se borra si tiene informes (400) | Igual |
+| GET / POST | `/api/plantillas/` | Listar o crear campos de formulario (`?patologia=`) | Igual |
+| GET / PUT / PATCH / DELETE | `/api/plantillas/{id}/` | Ver, editar o borrar un campo | Igual |
+
+### Informes (`/api/informes/`)
+
+| Método | Endpoint | Descripción | Acceso |
+|---|---|---|---|
+| GET | `/api/informes/` | Listar informes. Filtros: `q` (caso, patología o tipo de muestra), `fecha_desde`, `fecha_hasta`, `estado`, `patologia` | Todos |
+| POST | `/api/informes/` | Crear un informe y generar su descripción macroscópica | Patólogo / Admin |
+| GET | `/api/informes/estadisticas/` | Totales `{total, borradores, finalizados}`. Acepta los mismos filtros que el listado | Todos |
+| GET | `/api/informes/{id}/` | Ver un informe completo | Todos |
+| PUT / PATCH | `/api/informes/{id}/` | Editar un borrador (si está finalizado → 400) | Autor / Admin |
+| DELETE | `/api/informes/{id}/` | Borrar un borrador (si está finalizado → 400) | Autor / Admin |
+| POST | `/api/informes/{id}/finalizar/` | Finalizar el informe (después ya no se puede editar) | Autor / Admin |
+| GET | `/api/informes/{id}/pdf/` | Descargar el informe en PDF | Todos |
+
+### Foro (`/api/foro/`)
+
+| Método | Endpoint | Descripción | Acceso |
+|---|---|---|---|
+| GET / POST | `/api/foro/temas/` | Listar o crear temas | Leer: todos · Escribir: patólogo/admin |
+| GET / PUT / PATCH / DELETE | `/api/foro/temas/{id}/` | Ver, editar o borrar un tema | Igual |
+| GET / POST | `/api/foro/publicaciones/` | Listar (`?tema=`, `?search=`) o crear publicaciones | Leer: todos · Crear: patólogo/admin (máx. 10/min) |
+| GET / PUT / PATCH / DELETE | `/api/foro/publicaciones/{id}/` | Ver (con imágenes y comentarios), editar o borrar. `fijado` solo lo cambia un admin | Autor / Admin |
+| POST | `/api/foro/publicaciones/{id}/imagenes/` | Subir imágenes (campo `imagenes`, multipart). Máx. 6 por publicación y 10 MB cada una; deben ser imágenes reales | Autor / Admin |
+| DELETE | `/api/foro/imagenes/{id}/` | Borrar una imagen | Autor de la publicación / Admin |
+| GET / POST | `/api/foro/comentarios/` | Listar (`?publicacion=`) o crear comentarios (máx. 3000 caracteres) | Leer: todos · Crear: patólogo/admin (máx. 20/min) |
+| GET / PUT / PATCH / DELETE | `/api/foro/comentarios/{id}/` | Editar o borrar un comentario. No se puede mover a otra publicación | Autor / Admin |
+
+La colección [`PathoLab_API.postman_collection.json`](PathoLab_API.postman_collection.json) se puede importar en Postman para probar los endpoints principales.
 
 ---
 
 ## 🔄 Flujo de Trabajo del Informe
 
-`mermaid
+```mermaid
 graph TD
-    A[Inicio de Sesión] --> B{Rol del Usuario}
-    B -->|Patólogo / Admin| C[Crear Nuevo Informe]
-    B -->|Auditor| D[Buscador / Dashboard]
-    C --> E[Seleccionar Patología Clínica]
-    E --> F[Carga de Plantilla Dinámica]
-    F --> G[Llenar Datos Macroscópicos]
-    G --> H[Guardar como Borrador]
-    H --> I[Generador Automático de Texto Macroscópico]
-    I --> J{¿Revisión Satisfactoria?}
+    A[Inicio de sesión] --> B{Rol del usuario}
+    B -->|Patólogo / Admin| C[Crear nuevo informe]
+    B -->|Auditor| D[Buscador / Panel de inicio]
+    C --> E[Seleccionar patología]
+    E --> F[Se carga el formulario de la plantilla]
+    F --> G[Llenar los datos macroscópicos]
+    G --> H[Guardar como borrador]
+    H --> I[El backend genera la descripción macroscópica]
+    I --> J{¿Revisión satisfactoria?}
     J -->|No| G
-    J -->|Sí| K[Finalizar Informe]
-    K --> L[Generar y Descargar PDF Formal]
+    J -->|Sí| K[Finalizar informe: queda bloqueado]
+    K --> L[Descargar PDF]
     D --> L
-`
+```
+
+---
+
+## 🛡️ Seguridad
+
+- **Autenticación JWT** con renovación automática. El token viaja siempre en la cabecera `Authorization`, nunca en la URL.
+- **Permisos por rol y por autor** en el backend (ver [Roles y Permisos](#-roles-y-permisos)). El frontend solo oculta botones; la regla real la aplica la API.
+- **Límites de peticiones**:
+
+  | Tipo de petición | Límite |
+  |---|---|
+  | Anónimas | 30/min |
+  | Usuarios autenticados | 120/min |
+  | Login | 10/min |
+  | Registro | 5/min |
+  | Publicaciones del foro | 10/min |
+  | Comentarios del foro | 20/min |
+
+- **Contraseñas** validadas con los validadores de Django: longitud mínima, que no sean comunes, que no sean solo números y que no se parezcan al usuario.
+- **Configuración segura por defecto**: sin `SECRET_KEY` la app no arranca, y `DEBUG` es `False` si no se define. Con `DEBUG=False` se activan HTTPS, cookies seguras y HSTS, y CORS solo acepta los orígenes de `CORS_ALLOWED_ORIGINS`.
+- **PDF**: el texto escrito por el usuario se escapa, así que no puede romper ni alterar el documento.
+- **Imágenes del foro**: se comprueban el tamaño y que sean imágenes reales.
+
+Para publicar la app en un servidor:
+- Define una `SECRET_KEY` propia, `DEBUG=False`, `ALLOWED_HOSTS` y `CORS_ALLOWED_ORIGINS`.
+- Configura en el servidor web un límite de tamaño de petición (por ejemplo, `client_max_body_size 60m;` en Nginx).
+- Sirve la carpeta `media/`, porque Django solo la sirve en modo desarrollo.
+
+---
+
+## 📚 Documentación del Proyecto
+
+| Archivo | Contenido |
+|---|---|
+| [`CHANGELOG.md`](CHANGELOG.md) | Registro de cada cambio: fecha, qué se cambió y por qué |
+| [`docs/auditoria-inicial.md`](docs/auditoria-inicial.md) | Auditoría del código, con el estado de cada hallazgo |
+| [`docs/decisiones.md`](docs/decisiones.md) | Decisiones de diseño y de reglas de negocio |
+| [`docs/progreso.md`](docs/progreso.md) | Estado actual del trabajo y próximos pasos |
 
 ---
 
 ## 🗺️ Hoja de Ruta (Roadmap)
 
-Para continuar con el desarrollo en el nuevo semestre:
-
-- [ ] **Módulo de Descripción Microscópica**: Integrar plantillas de diagnóstico microscópico e inmunohistoquímica (IHQ).
-- [ ] **Carga de Imágenes Macroscópicas/Microscópicas**: Adjuntar microfotografías directamente al informe y al PDF.
-- [ ] **Firma Digital Biométrica**: Firma electrónica de patólogos con certificado o trazo digital.
-- [ ] **Integración HL7 / FHIR**: Interoperabilidad con Sistemas de Información Hospitalaria (HIS/LIS).
-- [ ] **Contenedorización Docker**: Creación de Dockerfile y docker-compose.yml para despliegue en un clic.
+- [ ] **Descripción microscópica**: plantillas de diagnóstico microscópico e inmunohistoquímica (IHQ).
+- [ ] **Imágenes en los informes**: adjuntar microfotografías al informe y al PDF (hoy solo el foro admite imágenes).
+- [ ] **Firma digital**: firma electrónica del patólogo con certificado o trazo digital.
+- [ ] **Integración HL7 / FHIR**: interoperabilidad con sistemas de información hospitalaria (HIS/LIS).
+- [ ] **Contenedores Docker**: `Dockerfile` y `docker-compose.yml` para desplegar en un solo paso.
 
 ---
 
