@@ -186,6 +186,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### I-10. La URL de la API está fija en el código del frontend
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`) con la propuesta de este punto: `VITE_API_URL` + proxy de Vite. Ver `CHANGELOG.md` y `frontend/src/api/client.test.js`.
+
 - **Dónde:** `frontend/src/api/client.js`, línea 3.
 - **Qué pasa:** `API_URL = 'http://localhost:8000/api'` está escrita directamente en el código. Hay tres consecuencias:
   - La variable `VITE_API_URL` del `.env` **no se usa en ningún lado**.

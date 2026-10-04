@@ -77,7 +77,7 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
 **Rate limiting.** En `settings.REST_FRAMEWORK` están los throttles globales (`anon`, `user`) y otros por scope (`login`, `registro`, `foro_publicacion`, `foro_comentario`). Los de scope se asignan en `accounts/throttles.py` y en `get_throttles()` de las vistas del foro. Si un endpoint nuevo usa un scope nuevo, hay que agregarlo a `DEFAULT_THROTTLE_RATES`.
 
 **Frontend.**
-- `src/api/client.js` es la instancia Axios con `baseURL` **fija** en `http://localhost:8000/api`. No usa `VITE_API_URL`, y desde I-5 nada usa el proxy `/api` de `vite.config.js` (pendiente de I-10). Agrega el `Bearer` desde `localStorage` (`access_token`) y, ante un 401, intenta refrescar con `refresh_token`; si falla, redirige a `/login`.
+- `src/api/client.js` es la instancia Axios. Su `baseURL` es `VITE_API_URL + "/api"` (`frontend/.env`). En desarrollo `VITE_API_URL` va vacía: las peticiones a `/api/...` las reenvía el proxy de `vite.config.js` a `localhost:8000`. No escribas direcciones fijas del backend en el código (auditoría I-10). Agrega el `Bearer` desde `localStorage` (`access_token`) y, ante un 401, intenta refrescar con `refresh_token`; si falla, redirige a `/login`.
 - Las rutas están en `App.jsx` con tres wrappers:
   - `ProtectedRoute`: requiere sesión y añade Navbar y Footer.
   - `PublicRoute`: solo para `/login`.

@@ -5,6 +5,20 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Corrección: la dirección del backend ya no está fija en el código del frontend (I-10)
+
+**Qué se cambió**
+- `frontend/src/api/client.js`: `API_URL` deja de ser `'http://localhost:8000/api'` y pasa a ser `VITE_API_URL + '/api'` (se quita una posible barra final). Con `VITE_API_URL` vacía, el frontend llama a `/api/...` en el mismo sitio que la página; en desarrollo esas peticiones las reenvía el proxy de `vite.config.js` al backend. La renovación del token usa la misma dirección.
+- `frontend/.env.example`: `VITE_API_URL` vacía, con comentarios sobre cuándo darle valor.
+- El `frontend/.env` local del usuario también se dejó con `VITE_API_URL` vacía, con su permiso. Ese archivo no está en git.
+- `frontend/src/api/client.test.js` (nuevo): 3 pruebas (sin variable, con variable y con barra final).
+- Documentación: pasos de instalación del frontend en el `README.md` (incluido crear el `.env`, y una nota corregida sobre el proxy) y sección del frontend en `CLAUDE.md`.
+
+**Por qué**
+- Con la dirección fija en `localhost:8000`, la app solo funcionaba en el computador del desarrollador. Publicada en un servidor, el navegador de cada visitante buscaría el backend en su propio equipo.
+- `VITE_API_URL` y el proxy de Vite ya existían, pero el código no los usaba.
+- Verificado con las 11 pruebas del frontend, con `vite build` (el resultado ya no contiene `localhost:8000`) y con un login real a través del proxy (Vite en 5199 → Django en 8000: respuesta 200 con token).
+
 ### Seguridad: Vite 5 → 6.4 y Vitest 3 → 5 (I-9, parte b)
 
 **Qué se cambió**
