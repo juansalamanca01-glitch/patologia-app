@@ -11,7 +11,10 @@ PathoLab: app web para crear, gestionar y exportar a PDF informes histopatológi
 3. **Documentación al día.** Si un cambio afecta la arquitectura, el backend, el frontend o la base de datos (modelos o migraciones), actualizar también la documentación correspondiente: `docs/`, `README.md` (estructura, endpoints de la API, usuarios de prueba, roadmap) y, si aplica, este `CLAUDE.md`.
 4. **Idioma.** Los comentarios del código, los docstrings, la documentación y las entradas del CHANGELOG se escriben en español.
 5. **Respetar `docs/decisiones.md`.** Las decisiones registradas ahí son definitivas: el código y la documentación deben cumplirlas aunque contradigan una recomendación de `docs/auditoria-inicial.md` u otro documento. Si un cambio pedido entra en conflicto con una decisión, avisar al usuario antes de hacerlo. Las decisiones nuevas se agregan a ese archivo con fecha, decisión y motivo.
-6. **Estado del trabajo en `docs/progreso.md`.** Al empezar una sesión, leer `docs/progreso.md` para saber en qué rama se trabaja, qué está hecho, qué sigue y qué preguntas esperan respuesta del usuario. Actualizarlo al terminar cada tarea (en el mismo commit) y cada vez que quede algo pendiente de confirmar, para que el trabajo se pueda retomar aunque la conversación se corte.
+6. **Estado del trabajo en `docs/progreso.md`.**
+   - **Al empezar cada conversación nueva**, antes de cualquier otra cosa, leer `docs/progreso.md` para saber qué se hizo, qué falta, cuál es la siguiente tarea, en qué rama se trabaja y qué preguntas esperan respuesta del usuario.
+   - **Al terminar cada tarea o etapa**, actualizar `docs/progreso.md` **antes de hacer el commit**, para que vaya en el mismo commit.
+   - Actualizarlo también cada vez que quede algo pendiente de confirmar, para que el trabajo se pueda retomar aunque la conversación se corte.
 
 ## Comandos
 

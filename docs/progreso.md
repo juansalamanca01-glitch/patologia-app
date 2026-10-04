@@ -11,8 +11,9 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 ## Dónde estamos
 
-- **Rama de trabajo:** `desarrollo-un-comando`, creada el 2026-10-04 desde `main` (`f70d2ba`). La rama anterior, `seguridad-critica`, tiene toda la auditoría y quedó igual que `main`. Historial de uniones a `main`: Se unió a `main` el 2026-10-03 en dos ocasiones: hasta `958c2f0` (C-1, C-2, C-3, I-1, I-3, I-4, M-8) luego hasta `da69796` (I-5, I-6, I-8, I-11, I-9a, I-9b). Se hizo con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado. El 2026-10-03 también se unió hasta `0d94a56` (I-10, I-12, I-2), y el 2026-10-04 hasta `bbf8386` (limpieza completa y decisiones D-4 a D-6) y luego hasta el commit que registra esta unión (README sin emojis y arreglo del formulario de Patologías). `main` y `seguridad-critica` quedan iguales. El trabajo sigue en esta rama y se volverá a unir a `main` cuando el usuario lo pida.
-- **Tarea actual:** ninguna en curso. Sesión cerrada el 2026-10-04. La auditoría está completa y `npm run dev` funciona (lo confirmó el usuario). `desarrollo-un-comando` se unió a `main`, así que `main` tiene todo.
+- **Ubicación del proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`. El 2026-10-03 se movió de Descargas al Escritorio.
+- **Rama de trabajo:** `informe-v2`, creada el 2026-10-04 desde `main` (`267e91b`) para el informe de anatomía patológica v2. Las ramas anteriores, `desarrollo-un-comando` y `seguridad-critica`, quedaron iguales que `main`. Historial de uniones a `main`: Se unió a `main` el 2026-10-03 en dos ocasiones: hasta `958c2f0` (C-1, C-2, C-3, I-1, I-3, I-4, M-8) luego hasta `da69796` (I-5, I-6, I-8, I-11, I-9a, I-9b). Se hizo con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado. El 2026-10-03 también se unió hasta `0d94a56` (I-10, I-12, I-2), y el 2026-10-04 hasta `bbf8386` (limpieza completa y decisiones D-4 a D-6) y luego hasta el commit que registra esta unión (README sin emojis y arreglo del formulario de Patologías). `main` y `seguridad-critica` quedan iguales. El trabajo sigue en esta rama y se volverá a unir a `main` cuando el usuario lo pida.
+- **Tarea actual:** propuesta del informe de anatomía patológica v2 (`docs/propuesta-informe-v2.md`), escrita el 2026-10-04 **sin tocar código**. Espera las respuestas del usuario (sección 10 de la propuesta) antes de empezar la etapa 1. La auditoría está completa y `main` tiene todo lo anterior.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
   1. Escribir una prueba que demuestre el fallo y mostrar que falla.
   2. Explicar el arreglo y esperar confirmación.
@@ -73,8 +74,7 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 
 ## Pendiente de respuesta del usuario
 
-- Nada por ahora.
-
+- Preguntas P-1 a P-9 de `docs/propuesta-informe-v2.md` (sección 10): qué hacer con `numero_caso`, formato del consecutivo, opciones de género, permisos de catálogos y pacientes, renombrar `notas`, quién asigna el registro médico, requisitos para finalizar, EPS de `seed_data` y encabezado del PDF.
 ## Pendiente de hacer (anotado para no olvidarlo)
 
 - **Producción:** al publicar la app, configurar en el servidor web un límite de tamaño de petición (por ejemplo, `client_max_body_size 60m;` en Nginx). Ver la nota de I-6 en `settings.py`.
