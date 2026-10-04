@@ -5,6 +5,15 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Corrección: borrar una patología con informes ya no da error 500 (I-1)
+
+**Qué se cambió**
+- `backend/informes/views.py`: `PatologiaViewSet.destroy()` captura `ProtectedError` y responde **400** con el mensaje *"No se puede eliminar: esta patología tiene N informe(s) asociado(s)."*. Antes la petición fallaba con un error 500. Los informes siguen protegidos por `on_delete=PROTECT`.
+- `backend/informes/tests.py`: nueva clase `BorrarPatologiaTests` con 2 pruebas. Una comprueba que con informes se responde 400 y la patología no se borra; la otra, que sin informes se borra normalmente (204).
+
+**Por qué**
+- Al borrar desde la pantalla de Patologías una patología que ya tenía informes, el servidor fallaba con un error interno y el usuario veía un mensaje genérico. `PatologiasPage.jsx` ya mostraba el campo `detail` de la respuesta, así que el frontend no necesitó cambios.
+
 ### Seguridad: SECRET_KEY obligatoria y DEBUG desactivado por defecto (C-3)
 
 **Qué se cambió**

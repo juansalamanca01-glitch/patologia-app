@@ -137,3 +137,30 @@ class PermisosInformeTests(APITestCase):
         self.client.force_authenticate(self.auditor)
         respuesta = self.client.patch(self.url(informe), {'notas': 'cambiado'}, format='json')
         self.assertEqual(respuesta.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class BorrarPatologiaTests(APITestCase):
+    """
+    Hallazgo I-1 de docs/auditoria-inicial.md: borrar una patología que ya tiene
+    informes debe responder 400 con un mensaje claro, no un error 500.
+    """
+
+    def setUp(self):
+        self.patologo = Usuario.objects.create_user(
+            username='patologo_prueba', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+        )
+        self.client.force_authenticate(self.patologo)
+        self.patologia = Patologia.objects.create(nombre='Patología con informes')
+
+    def test_no_se_puede_borrar_patologia_con_informes(self):
+        Informe.objects.create(numero_caso='I1-1', patologia=self.patologia, autor=self.patologo)
+        respuesta = self.client.delete(f'/api/patologias/{self.patologia.id}/')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('informe', respuesta.data['detail'])
+        self.assertTrue(Patologia.objects.filter(id=self.patologia.id).exists())
+
+    def test_si_se_puede_borrar_patologia_sin_informes(self):
+        # Control: sin informes asociados, el borrado funciona como antes.
+        respuesta = self.client.delete(f'/api/patologias/{self.patologia.id}/')
+        self.assertEqual(respuesta.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Patologia.objects.filter(id=self.patologia.id).exists())

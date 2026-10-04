@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Q
+from django.db.models import Q, ProtectedError
 
 from accounts.permissions import EsPatologoOAdmin, EsAutorOAdminOSoloLectura
 from .models import Categoria, Patologia, Plantilla, Informe
@@ -52,6 +52,19 @@ class PatologiaViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return PatologiaListSerializer
         return PatologiaSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        # Informe.patologia usa PROTECT: si hay informes, Django lanza ProtectedError
+        # antes de borrar nada. Se responde 400 en lugar de un error 500 (auditoría I-1).
+        patologia = self.get_object()
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            total = patologia.informes.count()
+            return Response(
+                {'detail': f'No se puede eliminar: esta patología tiene {total} informe(s) asociado(s).'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class PlantillaViewSet(viewsets.ModelViewSet):

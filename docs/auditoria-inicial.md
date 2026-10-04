@@ -100,6 +100,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### I-1. Borrar una patología que ya tiene informes da error 500 ✅ Comprobado
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`). Ver `CHANGELOG.md` y `BorrarPatologiaTests` en `backend/informes/tests.py`. La alternativa de *desactivar* en lugar de borrar queda para M-5.
+
 - **Dónde:** `PatologiaViewSet` en `backend/informes/views.py`.
 - **Qué pasa:** `Informe.patologia` usa `on_delete=PROTECT`, que es correcto porque evita perder informes. Pero la vista no captura el error `ProtectedError` y el servidor responde **500 Internal Server Error**. En el frontend (`PatologiasPage.jsx`) el usuario ve un mensaje genérico.
 - **Cómo arreglarlo:** hacer lo mismo que ya hace `CategoriaViewSet.destroy`: comprobar antes si hay informes y responder 400 con un mensaje claro. Otra opción es desactivar la patología (`activa=False`) en lugar de borrarla.

@@ -18,7 +18,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   2. Explicar el arreglo y esperar confirmación.
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
-- **Pruebas:** 20 en total (`cd backend` y luego `python manage.py test`). Todas pasan.
+- **Pruebas:** 22 en total (`cd backend` y luego `python manage.py test`). Todas pasan.
 
 ## Hecho
 
@@ -30,11 +30,11 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | C-2 | Informes finalizados bloqueados; solo el autor o un admin los modifica (D-2, D-3) | `e56174d` |
 | C-3 | `SECRET_KEY` obligatoria, `DEBUG=False` por defecto; el script crea el `.env` | `455cff0` |
 | — | Borrada la clase `EsSoloLectura`, que ya no se usaba | `455cff0` |
+| I-1 | Borrar una patología con informes responde 400 en vez de un error 500 | ver `git log` |
 
 ## Siguiente paso
 
 Seguir con los hallazgos **importantes**, en el orden sugerido en la sección 7 de la auditoría:
-- I-1: error 500 al borrar una patología con informes.
 - I-3: el PDF se rompe con textos como `<b`.
 - I-4: el dashboard y el buscador solo ven 20 informes.
 - M-8: la página de perfil se rompe si falla la carga.
@@ -48,4 +48,5 @@ Más adelante hay que decidir cuándo unir `seguridad-critica` a `main` (con un 
 ## Pendiente de hacer (anotado para no olvidarlo)
 
 - **README:** corregir que el administrador no es el único que gestiona el catálogo (decisión D-1). Se hará junto con I-12 (reescribir el README, que tiene 15 líneas con caracteres de control dañados).
+- **M-5 (ampliado):** además de filtrar las patologías inactivas en "Nuevo informe", añadir el campo "activa" al formulario de patologías de `PatologiasPage.jsx`. Así se puede desactivar una patología con informes en lugar de borrarla (relacionado con I-1).
 - **Navegador:** probar a mano el cambio de C-2 en el frontend. Otro patólogo debe ver en solo lectura los informes ajenos. Para la prueba hay que crear un segundo patólogo desde `/admin/`.
