@@ -19,7 +19,10 @@ const PIEL = { id: 1, nombre: 'Biopsia de Piel', categoria: null, categoria_nomb
 describe('PatologiasPage: activar y desactivar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    client.get.mockImplementation((url) => Promise.resolve({ data: { results: url === '/patologias/' ? [PIEL] : [] } }));
+    client.get.mockImplementation((url) => Promise.resolve({
+      // "Editar" pide la patología completa (/patologias/1/); el resto son listados.
+      data: url === '/patologias/1/' ? PIEL : { results: url === '/patologias/' ? [PIEL] : [] },
+    }));
     client.patch.mockResolvedValue({ data: {} });
     client.post.mockResolvedValue({ data: {} });
   });
@@ -27,7 +30,7 @@ describe('PatologiasPage: activar y desactivar', () => {
   it('el formulario de edición permite desactivar una patología', async () => {
     const { container } = render(<PatologiasPage />);
     fireEvent.click(await screen.findByRole('button', { name: 'Editar' }));
-    const casilla = screen.getByRole('checkbox', { name: /Activa/i });
+    const casilla = await screen.findByRole('checkbox', { name: /Activa/i });
     expect(casilla).toBeChecked();
     fireEvent.click(casilla);
     fireEvent.submit(container.querySelector('.modal-card form'));
@@ -44,5 +47,27 @@ describe('PatologiasPage: activar y desactivar', () => {
     fireEvent.submit(container.querySelector('.modal-card form'));
     await vi.waitFor(() => expect(client.post).toHaveBeenCalled());
     expect(client.post.mock.calls[0][1]).toMatchObject({ nombre: 'Nueva', activa: true });
+  });
+});
+
+// Fallo encontrado al hacer M-5: "Editar" abría el formulario con los datos del
+// listado, que no trae la descripción ni el protocolo médico, y esos campos
+// aparecían vacíos aunque tuvieran contenido.
+describe('PatologiasPage: editar muestra todos los datos', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    client.get.mockImplementation((url) => {
+      if (url === '/patologias/1/') {
+        return Promise.resolve({ data: { ...PIEL, descripcion: 'Estudio de tejido cutáneo.', protocolo_medico: 'Fijar en formol al 10%.' } });
+      }
+      return Promise.resolve({ data: { results: url === '/patologias/' ? [PIEL] : [] } });
+    });
+  });
+
+  it('al pulsar Editar se ven la descripción y el protocolo guardados', async () => {
+    render(<PatologiasPage />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar' }));
+    expect(await screen.findByDisplayValue('Estudio de tejido cutáneo.')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Fijar en formol al 10%.')).toBeInTheDocument();
   });
 });

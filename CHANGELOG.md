@@ -5,6 +5,16 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Corrección: al editar una patología se ven su descripción y su protocolo
+
+**Qué se cambió**
+- `frontend/src/pages/PatologiasPage.jsx`: el botón "Editar" pide la patología completa (`GET /api/patologias/{id}/`) antes de abrir el formulario. Si falla, muestra un aviso.
+- `frontend/src/pages/PatologiasPage.test.jsx`: prueba nueva. Las pruebas de D-4 se adaptaron a que el formulario se abre después de recibir la respuesta.
+
+**Por qué**
+- Fallo encontrado al hacer M-5; no estaba en la auditoría. El formulario se llenaba con los datos del listado, que no incluyen `descripcion` ni `protocolo_medico`. Esos campos aparecían vacíos aunque tuvieran contenido, y al escribir algo se reemplazaba un texto que no se veía.
+- No se añadieron esos campos al listado porque también alimenta el selector de "Nuevo informe" (hasta 1000 patologías): se enviarían todos los protocolos sin necesidad.
+
 ### Seguridad: cerrar sesión y cambiar la contraseña invalidan el token de renovación (M-11, decisión D-6)
 
 **Qué se cambió**

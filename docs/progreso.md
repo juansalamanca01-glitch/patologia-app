@@ -19,7 +19,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` a `seguridad-critica` después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 77 del backend (`cd backend` y luego `python manage.py test`) y 31 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 77 del backend (`cd backend` y luego `python manage.py test`) y 32 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -55,13 +55,14 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | M-10 | El pie del PDF usa la hora de Bogotá (`timezone.localtime()`) | `df4ab5f` |
 | M-11 / D-6 | Lista negra de tokens, `POST /api/auth/logout/`, cambio de contraseña cierra otras sesiones, el interceptor guarda el `refresh` rotado | `ced62eb` |
 | M-12 | Resuelto con documentación (README, sección Seguridad); sin cambios de código | — |
+| — | README sin emojis (salvo el título), a pedido del usuario | `f6ccaa7` |
+| Nuevo | "Editar" en Patologías pide la patología completa (antes no se veían la descripción ni el protocolo) | ver `git log` |
 
 ## Siguiente paso
 
 **La auditoría está completa:** todos los hallazgos críticos, importantes y menores están corregidos o resueltos con documentación, salvo el opcional I-9c. Quedan:
-1. **Fallo nuevo del formulario de patologías** (ver "Pendiente de hacer"): proponerlo al usuario.
-2. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal que obliga a revisar la navegación de todas las páginas.
-3. **Opcional:** añadir "Cerrar sesión" (`POST /api/auth/logout/`) a la colección de Postman.
+1. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal que obliga a revisar la navegación de todas las páginas.
+2. **Opcional:** añadir "Cerrar sesión" (`POST /api/auth/logout/`) a la colección de Postman.
 
 Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejecutar `git switch main`, luego `git merge --ff-only seguridad-critica` y `git push origin main`, y volver con `git switch seguridad-critica`. Siempre preguntar antes al usuario.
 
@@ -71,7 +72,6 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 
 ## Pendiente de hacer (anotado para no olvidarlo)
 
-- **Fallo nuevo (no estaba en la auditoría), encontrado al hacer M-5:** en `PatologiasPage.jsx`, "Editar" abre el formulario con los datos del *listado* (`PatologiaListSerializer`), que no incluye `descripcion` ni `protocolo_medico`. Esos campos aparecen vacíos aunque tengan contenido. Al guardar no se borran, pero si se escribe algo se reemplaza un texto que no se veía. Arreglo posible: pedir `GET /api/patologias/{id}/` al pulsar "Editar". Proponerlo al usuario al terminar el grupo 3.
 - **Producción:** al publicar la app, configurar en el servidor web un límite de tamaño de petición (por ejemplo, `client_max_body_size 60m;` en Nginx). Ver la nota de I-6 en `settings.py`.
 - **Navegador:** probar a mano el dashboard y la paginación del buscador (I-4) con más de 20 informes.
 - **Navegador:** probar a mano el cambio de C-2 en el frontend. Otro patólogo debe ver en solo lectura los informes ajenos. Para la prueba hay que crear un segundo patólogo desde `/admin/`.

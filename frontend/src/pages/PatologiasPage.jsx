@@ -52,6 +52,17 @@ export default function PatologiasPage() {
     }
   };
 
+  // El listado no trae la descripción ni el protocolo médico: al editar se pide la
+  // patología completa para no mostrar esos campos vacíos.
+  const editarPatologia = async (id) => {
+    try {
+      const { data } = await client.get(`/patologias/${id}/`);
+      setFormPatologia(data);
+    } catch {
+      setError('No se pudo cargar la patología para editarla.');
+    }
+  };
+
   const guardarPatologia = async (e) => {
     e.preventDefault();
     try {
@@ -164,7 +175,7 @@ export default function PatologiasPage() {
                       {canWrite && (
                         <td>
                           <div className="table-actions">
-                            <button className="btn btn-outline btn-xs" onClick={() => setFormPatologia(p)}>Editar</button>
+                            <button className="btn btn-outline btn-xs" onClick={() => editarPatologia(p.id)}>Editar</button>
                             <button
                               className="btn btn-danger-outline btn-xs"
                               onClick={() => setConfirmDelete({ tipo: 'patologias', id: p.id })}
