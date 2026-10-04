@@ -46,7 +46,7 @@ class PatologiaSerializer(serializers.ModelSerializer):
         model = Patologia
         fields = [
             'id', 'nombre', 'categoria', 'categoria_nombre', 'descripcion',
-            'campos_requeridos', 'protocolo_medico', 'activa', 'plantillas',
+            'protocolo_medico', 'activa', 'plantillas',
             'fecha_creacion', 'fecha_actualizacion',
         ]
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']

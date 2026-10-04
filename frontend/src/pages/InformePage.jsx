@@ -141,9 +141,7 @@ export default function InformePage() {
     setSuccessMsg('');
     setErrors({});
     try {
-      console.log('Finalizando informe', id);
       const { data } = await client.post(`/informes/${id}/finalizar/`);
-      console.log('Respuesta finalizar:', data);
       setInforme(data);
       setSuccessMsg('Informe finalizado correctamente.');
     } catch (err) {

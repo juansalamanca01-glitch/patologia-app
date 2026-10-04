@@ -237,6 +237,8 @@ Esto ya se explicó en la sección 1, pero se repite aquí porque es un problema
 
 ### M-1. Código que no se usa
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`). Ver `CHANGELOG.md` (limpieza M-1, M-2).
+
 | Qué | Dónde | Comentario |
 |---|---|---|
 | `LoginSerializer` | `accounts/serializers.py:45` | No se usa en ninguna parte; el login lo hace `CustomTokenSerializer`. |
@@ -247,6 +249,8 @@ Esto ya se explicó en la sección 1, pero se repite aquí porque es un problema
 | `console.log` / `console.error` | 5 apariciones (por ejemplo, `InformePage.jsx:138-140`) | Mensajes de depuración que quedaron en el código. |
 
 ### M-2. Archivos sobrantes
+
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`). Ver `CHANGELOG.md` (limpieza M-1, M-2).
 
 - `frontend/public/favicon.svg`, `frontend/public/icons.svg`, `frontend/src/assets/hero.png`, `typescript.svg` y `vite.svg`: **ningún archivo los usa**. Son restos de la plantilla inicial de Vite; el ícono real está incrustado en `index.html`. `typescript.svg` sobra además porque el proyecto no usa TypeScript.
 - `frontend/.gitignore` repite reglas que ya están en el `.gitignore` de la raíz. No hace daño, pero es redundante.

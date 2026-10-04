@@ -69,12 +69,6 @@ class RegistroSerializer(serializers.ModelSerializer):
         return user
 
 
-class LoginSerializer(serializers.Serializer):
-    """Login request serializer (for docs / validation only; JWT handled by SimpleJWT)."""
-    username = serializers.CharField()
-    password = serializers.CharField()
-
-
 class CambiarPasswordSerializer(serializers.Serializer):
     """Change password serializer."""
     old_password = serializers.CharField()

@@ -37,12 +37,10 @@ export function AuthProvider({ children }) {
   };
 
   const isAdmin = user?.rol === 'admin';
-  const isPatologo = user?.rol === 'patologo';
-  const isAuditor = user?.rol === 'auditor';
-  const canWrite = isAdmin || isPatologo;
+  const canWrite = isAdmin || user?.rol === 'patologo';
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, isPatologo, isAuditor, canWrite }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, canWrite }}>
       {children}
     </AuthContext.Provider>
   );

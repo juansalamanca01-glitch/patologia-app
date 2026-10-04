@@ -35,11 +35,6 @@ class Patologia(models.Model):
         verbose_name='Categoría',
     )
     descripcion = models.TextField(blank=True, verbose_name='Descripción')
-    campos_requeridos = models.JSONField(
-        default=list,
-        verbose_name='Campos requeridos',
-        help_text='Lista JSON de los campos requeridos para esta patología.',
-    )
     protocolo_medico = models.TextField(
         blank=True,
         verbose_name='Protocolo médico',

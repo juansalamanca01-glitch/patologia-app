@@ -2,12 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const ROL_LABELS = {
-  admin: 'Administrador',
-  patologo: 'Patólogo',
-  auditor: 'Auditor',
-};
-
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -21,7 +15,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const user = await login(username, password);
+      await login(username, password);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.detail || 'Credenciales inválidas. Intente de nuevo.');

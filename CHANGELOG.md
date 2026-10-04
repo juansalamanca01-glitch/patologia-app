@@ -5,6 +5,26 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Limpieza: código y archivos sin usar (M-1, M-2)
+
+**Qué se cambió**
+- Backend:
+  - Importaciones sin usar: `status` y `permissions` en `accounts/views.py`, `os` en `config/settings.py`, y `inch` y `TA_LEFT` en `informes/utils.py`.
+  - Se borró la clase `LoginSerializer` (`accounts/serializers.py`), que no se usaba.
+  - Se quitó el campo **`Patologia.campos_requeridos`** del modelo y del serializer, con la migración `informes/migrations/0003_quitar_campos_requeridos.py`. La API ya no devuelve ese campo.
+- Frontend:
+  - `LoginPage.jsx`: se quitaron `ROL_LABELS` y la variable `user`, que no se usaban.
+  - `AuthContext.jsx`: se quitaron `isPatologo` e `isAuditor`. `canWrite` ahora compara directamente el rol.
+  - `InformePage.jsx`: se quitaron dos `console.log` de depuración.
+- Archivos borrados: `frontend/public/favicon.svg`, `frontend/public/icons.svg`, `frontend/src/assets/hero.png`, `typescript.svg` y `vite.svg` (restos de la plantilla de Vite que nadie usaba). También se borró la carpeta local `frontend/dist/`, que no está en git.
+- `frontend/src/context/AuthContext.test.jsx` (nuevo): 3 pruebas que comprueban qué roles pueden escribir.
+
+**Por qué**
+- El código que no se usa confunde a quien lee el proyecto. `campos_requeridos` parecía definir los campos obligatorios, pero nunca se leía ni se llenaba (estaba vacío en las 14 patologías). Los obligatorios se definen en `Plantilla.obligatorio`.
+- `frontend/dist/` tenía compilada una versión vieja del frontend, todavía con el token en la URL del PDF (I-5). Se regenera con `npm run build`.
+- Al quitar `isPatologo` se detectó que `canWrite` dependía de él. Sin el ajuste, los patólogos habrían perdido el permiso de escritura en la interfaz. La prueba nueva de `AuthContext` cubre ese caso: se comprobó que falla si se reintroduce el error.
+- **En otros computadores** hay que ejecutar `python manage.py migrate` para aplicar la migración 0003. En el del autor ya se aplicó, después de guardar una copia de seguridad de `db.sqlite3`.
+
 ### Corrección: los campos obligatorios de los informes se validan siempre (I-2)
 
 **Qué se cambió**
