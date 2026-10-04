@@ -11,7 +11,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 ## Dónde estamos
 
-- **Rama de trabajo:** `seguridad-critica`. Está subida a GitHub (`origin/seguridad-critica`) pero **no** se ha unido a `main`.
+- **Rama de trabajo:** `seguridad-critica`, subida a GitHub. El 2026-10-03 se unió a `main` hasta el commit `958c2f0` (C-1, C-2, C-3, I-1, I-3, I-4, M-8). Se hizo con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado. El trabajo sigue en esta rama y se volverá a unir a `main` cuando el usuario lo pida.
 - **Tarea actual:** corregir los hallazgos de la auditoría, empezando por los críticos.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
   1. Escribir una prueba que demuestre el fallo y mostrar que falla.
@@ -34,7 +34,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | I-1 | Borrar una patología con informes responde 400 en vez de un error 500 | `bd35f2f` |
 | I-3 | El PDF escapa el texto del usuario (sin error 500 ni etiquetas inyectadas) y respeta los saltos de línea | `8ebf17b` |
 | I-4 | Endpoint `/api/informes/estadisticas/` para el dashboard y paginación en el buscador | `4938f2d` |
-| M-8 | El perfil muestra un error con "Reintentar" en lugar de quedar en blanco; se instala Vitest en el frontend | ver `git log` |
+| M-8 | El perfil muestra un error con "Reintentar" en lugar de quedar en blanco; se instala Vitest en el frontend | `958c2f0` |
 
 ## Siguiente paso
 
@@ -44,7 +44,7 @@ Seguir el orden sugerido en la sección 7 de la auditoría:
 3. **Documentación:** I-12 (reescribir el README, incluida la corrección por D-1), actualizar la colección de Postman.
 4. **Limpieza:** hallazgos menores M-1 a M-13 (M-5 ampliado, ver abajo).
 
-Más adelante hay que decidir cuándo unir `seguridad-critica` a `main` (con un pull request en GitHub o con `git merge`).
+Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejecutar `git switch main`, luego `git merge --ff-only seguridad-critica` y `git push origin main`, y volver con `git switch seguridad-critica`. Siempre preguntar antes al usuario.
 
 ## Pendiente de respuesta del usuario
 
