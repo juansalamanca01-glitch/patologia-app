@@ -10,7 +10,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import Usuario
-from .models import ImagenPublicacion, Publicacion
+from .models import Comentario, ImagenPublicacion, Publicacion
 
 CARPETA_MEDIA_PRUEBAS = tempfile.mkdtemp(prefix='patolab-media-pruebas-')
 
@@ -74,3 +74,61 @@ class LimitePorDefectoTests(APITestCase):
     def test_el_limite_por_defecto_es_10_mb(self):
         from django.conf import settings
         self.assertEqual(getattr(settings, 'FORO_MAX_TAMANO_IMAGEN', None), 10 * 1024 * 1024)
+
+
+class CamposProtegidosForoTests(APITestCase):
+    """
+    Hallazgo I-8 de docs/auditoria-inicial.md:
+    - solo un admin puede fijar publicaciones (lo dice el propio modelo);
+    - un comentario no se puede mover a otra publicación editándolo.
+    """
+
+    def setUp(self):
+        self.autor = Usuario.objects.create_user(
+            username='patologo_autor_foro', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+        )
+        self.admin = Usuario.objects.create_user(
+            username='admin_foro', password='ClaveSegura-2026', rol=Usuario.Rol.ADMIN,
+        )
+        self.publicacion = Publicacion.objects.create(autor=self.autor, titulo='Caso', contenido='Texto')
+        self.otra_publicacion = Publicacion.objects.create(autor=self.admin, titulo='Otro', contenido='Texto')
+
+    def test_patologo_no_puede_crear_publicacion_fijada(self):
+        self.client.force_authenticate(self.autor)
+        respuesta = self.client.post(
+            '/api/foro/publicaciones/', {'titulo': 'Nuevo', 'contenido': 'Texto', 'fijado': True}, format='json',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertFalse(Publicacion.objects.get(id=respuesta.data['id']).fijado)
+
+    def test_autor_no_puede_fijar_su_publicacion(self):
+        self.client.force_authenticate(self.autor)
+        self.client.patch(f'/api/foro/publicaciones/{self.publicacion.id}/', {'fijado': True}, format='json')
+        self.publicacion.refresh_from_db()
+        self.assertFalse(self.publicacion.fijado)
+
+    def test_admin_si_puede_fijar_publicaciones(self):
+        # Control: la moderación del admin sigue funcionando.
+        self.client.force_authenticate(self.admin)
+        respuesta = self.client.patch(f'/api/foro/publicaciones/{self.publicacion.id}/', {'fijado': True}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.publicacion.refresh_from_db()
+        self.assertTrue(self.publicacion.fijado)
+
+    def test_autor_no_puede_mover_su_comentario_a_otra_publicacion(self):
+        comentario = Comentario.objects.create(publicacion=self.publicacion, autor=self.autor, contenido='Hola')
+        self.client.force_authenticate(self.autor)
+        self.client.patch(
+            f'/api/foro/comentarios/{comentario.id}/', {'publicacion': self.otra_publicacion.id}, format='json',
+        )
+        comentario.refresh_from_db()
+        self.assertEqual(comentario.publicacion_id, self.publicacion.id)
+
+    def test_autor_si_puede_editar_el_texto_de_su_comentario(self):
+        # Control: editar el contenido sigue permitido.
+        comentario = Comentario.objects.create(publicacion=self.publicacion, autor=self.autor, contenido='Hola')
+        self.client.force_authenticate(self.autor)
+        respuesta = self.client.patch(f'/api/foro/comentarios/{comentario.id}/', {'contenido': 'Editado'}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        comentario.refresh_from_db()
+        self.assertEqual(comentario.contenido, 'Editado')

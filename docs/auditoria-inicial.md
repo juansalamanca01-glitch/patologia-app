@@ -170,6 +170,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### I-8. Un autor puede fijar su propia publicación en el foro ✅ Comprobado
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`), junto con el problema de mover comentarios. Ver `CHANGELOG.md` y `CamposProtegidosForoTests` en `backend/foro/tests.py`.
+
 - **Dónde:** `PublicacionSerializer` en `backend/foro/serializers.py`.
 - **Qué pasa:** el modelo dice que **"Los administradores pueden fijar publicaciones importantes"**, pero `fijado` no es de solo lectura. Al crear una publicación con `"fijado": true`, el patólogo la dejó fijada arriba de todo (**201**, `fijado: True`).
 - **Problema parecido:** en `ComentarioSerializer` el autor puede cambiar el campo `publicacion` con un `PATCH` y mover su comentario a otra publicación.

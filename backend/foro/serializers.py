@@ -26,6 +26,14 @@ class ComentarioSerializer(serializers.ModelSerializer):
         fields = ['id', 'publicacion', 'autor', 'autor_nombre', 'contenido', 'fecha_creacion']
         read_only_fields = ['id', 'autor', 'fecha_creacion']
 
+    def get_fields(self):
+        campos = super().get_fields()
+        # La publicación se elige al crear el comentario; al editarlo no se puede
+        # cambiar, para que nadie mueva su comentario a otra publicación (auditoría I-8).
+        if self.instance is not None:
+            campos['publicacion'].read_only = True
+        return campos
+
     def get_autor_nombre(self, obj):
         return obj.autor.nombre_completo or obj.autor.username
 
@@ -52,6 +60,15 @@ class PublicacionSerializer(serializers.ModelSerializer):
             'fecha_creacion', 'fecha_actualizacion',
         ]
         read_only_fields = ['id', 'autor', 'fecha_creacion', 'fecha_actualizacion']
+
+    def get_fields(self):
+        campos = super().get_fields()
+        # Solo un admin puede fijar o desfijar publicaciones (auditoría I-8).
+        # Depende de quién hace la petición, por eso no va en read_only_fields.
+        request = self.context.get('request')
+        if not (request and request.user.is_authenticated and request.user.rol == 'admin'):
+            campos['fijado'].read_only = True
+        return campos
 
     def get_autor_nombre(self, obj):
         return obj.autor.nombre_completo or obj.autor.username

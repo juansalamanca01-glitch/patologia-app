@@ -5,6 +5,21 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Seguridad: en el foro solo un admin fija publicaciones y los comentarios no se pueden mover (I-8)
+
+**Qué se cambió**
+- `backend/foro/serializers.py`:
+  - `PublicacionSerializer.get_fields()` vuelve `fijado` de solo lectura si quien hace la petición no es admin.
+  - `ComentarioSerializer.get_fields()` vuelve `publicacion` de solo lectura al editar un comentario existente.
+  - Como en C-1, los valores no permitidos se ignoran en silencio (comportamiento estándar de DRF).
+- `backend/foro/tests.py`: nueva clase `CamposProtegidosForoTests` con 5 pruebas.
+- Documentación: sección de permisos de `CLAUDE.md`.
+
+**Por qué**
+- El modelo dice que "los administradores pueden fijar publicaciones importantes", pero cualquier patólogo podía crear o editar su publicación con `"fijado": true` y dejarla siempre arriba del foro.
+- El autor de un comentario podía cambiar su campo `publicacion` con un `PATCH` y moverlo a otra publicación.
+- El frontend no necesitó cambios: no tiene botón para fijar y solo envía `publicacion` al crear un comentario.
+
 ### Seguridad: límite real de tamaño y validación de las imágenes del foro (I-6)
 
 **Qué se cambió**
