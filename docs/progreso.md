@@ -11,7 +11,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 ## Dónde estamos
 
-- **Rama de trabajo:** `seguridad-critica`, subida a GitHub. Se unió a `main` el 2026-10-03 en dos ocasiones: hasta `958c2f0` (C-1, C-2, C-3, I-1, I-3, I-4, M-8) y luego hasta `da69796` (I-5, I-6, I-8, I-11, I-9a, I-9b). Se hizo con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado. El 2026-10-03 también se unió hasta `0d94a56` (I-10, I-12, I-2). El trabajo sigue en esta rama y se volverá a unir a `main` cuando el usuario lo pida.
+- **Rama de trabajo:** `seguridad-critica`, subida a GitHub. Se unió a `main` el 2026-10-03 en dos ocasiones: hasta `958c2f0` (C-1, C-2, C-3, I-1, I-3, I-4, M-8) luego hasta `da69796` (I-5, I-6, I-8, I-11, I-9a, I-9b). Se hizo con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado. El 2026-10-03 también se unió hasta `0d94a56` (I-10, I-12, I-2), y el 2026-10-04 hasta `bbf8386` (limpieza completa y decisiones D-4 a D-6). El trabajo sigue en esta rama y se volverá a unir a `main` cuando el usuario lo pida.
 - **Tarea actual:** corregir los hallazgos de la auditoría, empezando por los críticos.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
   1. Escribir una prueba que demuestre el fallo y mostrar que falla.
@@ -59,10 +59,9 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 ## Siguiente paso
 
 **La auditoría está completa:** todos los hallazgos críticos, importantes y menores están corregidos o resueltos con documentación, salvo el opcional I-9c. Quedan:
-1. **Unir `seguridad-critica` a `main`.** La última unión fue hasta `0d94a56`; desde entonces van la limpieza completa (grupos 1, 2 y 3) y las decisiones D-4 a D-6. Preguntar al usuario.
-2. **Fallo nuevo del formulario de patologías** (ver "Pendiente de hacer"): proponerlo al usuario.
-3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal que obliga a revisar la navegación de todas las páginas.
-4. **Opcional:** añadir "Cerrar sesión" (`POST /api/auth/logout/`) a la colección de Postman.
+1. **Fallo nuevo del formulario de patologías** (ver "Pendiente de hacer"): proponerlo al usuario.
+2. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal que obliga a revisar la navegación de todas las páginas.
+3. **Opcional:** añadir "Cerrar sesión" (`POST /api/auth/logout/`) a la colección de Postman.
 
 Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejecutar `git switch main`, luego `git merge --ff-only seguridad-critica` y `git push origin main`, y volver con `git switch seguridad-critica`. Siempre preguntar antes al usuario.
 
