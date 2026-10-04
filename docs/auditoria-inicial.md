@@ -193,6 +193,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### I-11. Las contraseñas no pasan por los validadores de Django
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`). Ver `CHANGELOG.md` y `ValidacionContrasenasTests` en `backend/accounts/tests.py`.
+
 - **Dónde:** `RegistroSerializer` y `CambiarPasswordSerializer` en `backend/accounts/serializers.py`.
 - **Qué pasa:** `settings.py` configura validadores para rechazar contraseñas comunes, solo numéricas o parecidas al usuario. Pero esos validadores solo se aplican si se llama a `validate_password()`, y ningún serializer lo hace. Por eso `12345678` se acepta como contraseña nueva.
 - **Cómo arreglarlo:** llamar a `django.contrib.auth.password_validation.validate_password(value, user)` dentro de la validación de la contraseña nueva.

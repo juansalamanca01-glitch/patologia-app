@@ -1,7 +1,21 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 Usuario = get_user_model()
+
+
+def validar_contrasena(clave, usuario):
+    """
+    Aplica los validadores de AUTH_PASSWORD_VALIDATORS (settings.py): longitud
+    mínima, contraseñas comunes, solo números y parecido con los datos del usuario
+    (auditoría I-11). Convierte el error de Django en un error de DRF (400).
+    """
+    try:
+        validate_password(clave, user=usuario)
+    except DjangoValidationError as error:
+        raise serializers.ValidationError(list(error.messages))
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
@@ -34,6 +48,17 @@ class RegistroSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data['password'] != data.pop('password_confirm'):
             raise serializers.ValidationError({'password_confirm': 'Las contraseñas no coinciden.'})
+        # Usuario temporal SIN guardar: el validador de "parecida al usuario"
+        # necesita sus datos, y el usuario todavía no existe.
+        usuario_temporal = Usuario(
+            username=data.get('username', ''),
+            email=data.get('email', ''),
+            nombre_completo=data.get('nombre_completo', ''),
+        )
+        try:
+            validar_contrasena(data['password'], usuario_temporal)
+        except serializers.ValidationError as error:
+            raise serializers.ValidationError({'password': error.detail})
         return data
 
     def create(self, validated_data):
@@ -59,6 +84,10 @@ class CambiarPasswordSerializer(serializers.Serializer):
         user = self.context['request'].user
         if not user.check_password(value):
             raise serializers.ValidationError('La contraseña actual es incorrecta.')
+        return value
+
+    def validate_new_password(self, value):
+        validar_contrasena(value, self.context['request'].user)
         return value
 
     def save(self):

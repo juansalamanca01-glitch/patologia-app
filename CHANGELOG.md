@@ -5,6 +5,20 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Seguridad: el registro y el cambio de contraseña aplican los validadores de Django (I-11)
+
+**Qué se cambió**
+- `backend/accounts/serializers.py`:
+  - Nueva función `validar_contrasena()`, que llama a `validate_password()` de Django y convierte su error en un 400 de DRF.
+  - `CambiarPasswordSerializer` la usa en `validate_new_password()`.
+  - `RegistroSerializer` la usa en `validate()`, con un `Usuario` temporal sin guardar para poder detectar contraseñas parecidas al usuario. Los errores salen en el campo `password`.
+- `backend/accounts/tests.py`: nueva clase `ValidacionContrasenasTests` con 5 pruebas.
+- Documentación: nota en `CLAUDE.md` sobre los usuarios de `seed_data`.
+
+**Por qué**
+- `settings.py` define 4 validadores (longitud mínima, contraseñas comunes, solo números y parecido al usuario), pero ningún serializer los aplicaba. Se aceptaban contraseñas como `12345678` o `password123`.
+- Los mensajes salen en español (`LANGUAGE_CODE = 'es'`), y la página de perfil ya los muestra sin cambios en el frontend.
+
 ### Seguridad: en el foro solo un admin fija publicaciones y los comentarios no se pueden mover (I-8)
 
 **Qué se cambió**
