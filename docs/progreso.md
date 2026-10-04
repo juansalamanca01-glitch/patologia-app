@@ -53,7 +53,16 @@ Seguir el orden sugerido en la sección 7 de la auditoría:
 1. **Limpieza** (en 3 grupos, cada uno con su lista exacta y confirmación del usuario):
    - Grupo 1, código y archivos sin usar (M-1, M-2): **hecho**.
    - Grupo 2, código duplicado y comentarios (M-3, M-13): **hecho**.
-   - Grupo 3, comportamiento (M-4 a M-12; M-5 ampliado, ver abajo): siguiente. Incluye un fallo nuevo, que no estaba en la auditoría: los menús desplegables (patologías en "Nuevo informe", categorías, temas del foro) solo cargan la primera página de 20 resultados. Con más de 20 patologías, las demás no se podrían elegir.
+   - Grupo 3, comportamiento: **en curso**. El usuario aprobó todo el 2026-10-03 (decisiones D-4, D-5 y D-6). Orden de trabajo, un commit por punto:
+     - [ ] M-4: contar con `annotate(Count)` en los listados de categorías, temas y publicaciones (medido: 22, 22 y 25 consultas con 20 elementos).
+     - [ ] Selectores con más de 20 elementos: `?page_size=` (máximo 1000) en el backend y usarlo en los selectores del frontend.
+     - [ ] M-5 / D-4: ocultar las patologías inactivas al crear un informe y añadir la casilla "Activa" en Patologías.
+     - [ ] M-6 / D-5: 4 temas iniciales en `seed_data` y botón "+ Tema" en el foro.
+     - [ ] M-7: ocultar el formulario de comentarios si el usuario no puede escribir.
+     - [ ] M-9: mostrar en pantalla los errores de Dashboard (carga y borrado) e InformePage (patologías y plantillas).
+     - [ ] M-10: hora del PDF en la zona horaria configurada.
+     - [ ] M-11 / D-6: lista negra de tokens, `POST /api/auth/logout/` y token invalidado al cambiar la contraseña.
+     - [ ] M-12: marcar como resuelto con documentación (ya está en la sección Seguridad del README).
 2. **Opcional, al final (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal que obliga a revisar la navegación de todas las páginas.
 
 Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejecutar `git switch main`, luego `git merge --ff-only seguridad-critica` y `git push origin main`, y volver con `git switch seguridad-critica`. Siempre preguntar antes al usuario.
