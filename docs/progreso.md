@@ -11,7 +11,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 ## Dónde estamos
 
-- **Rama de trabajo:** `seguridad-critica`, subida a GitHub. El 2026-10-03 se unió a `main` hasta el commit `958c2f0` (C-1, C-2, C-3, I-1, I-3, I-4, M-8). Se hizo con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado. El trabajo sigue en esta rama y se volverá a unir a `main` cuando el usuario lo pida.
+- **Rama de trabajo:** `seguridad-critica`, subida a GitHub. Se unió a `main` el 2026-10-03 en dos ocasiones: hasta `958c2f0` (C-1, C-2, C-3, I-1, I-3, I-4, M-8) y luego hasta `da69796` (I-5, I-6, I-8, I-11, I-9a, I-9b). Se hizo con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado. El trabajo sigue en esta rama y se volverá a unir a `main` cuando el usuario lo pida.
 - **Tarea actual:** corregir los hallazgos de la auditoría, empezando por los críticos.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
   1. Escribir una prueba que demuestre el fallo y mostrar que falla.
@@ -40,7 +40,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | I-8 | Foro: solo un admin fija publicaciones; un comentario no se puede mover a otra publicación | `8c8dac3` |
 | I-11 | El registro y el cambio de contraseña aplican los validadores de Django | `3d5e5cf` |
 | I-9a | `npm audit fix`: producción pasa de 6 vulnerabilidades (2 altas) a 2 moderadas que no afectan a la app | `ee92a38` |
-| I-9b | Vite 5 → 6.4 y Vitest 3 → 5: quedan solo las 2 vulnerabilidades moderadas de react-router | ver `git log` |
+| I-9b | Vite 5 → 6.4 y Vitest 3 → 5: quedan solo las 2 vulnerabilidades moderadas de react-router | `da69796` |
 
 ## Siguiente paso
 
