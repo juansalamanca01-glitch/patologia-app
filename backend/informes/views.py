@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Q, ProtectedError
+from django.db.models import Count, Q, ProtectedError
 
 from accounts.permissions import EsPatologoOAdmin, EsAutorOAdminOSoloLectura
 from .models import Categoria, Patologia, Plantilla, Informe
@@ -165,6 +165,25 @@ class InformeViewSet(viewsets.ModelViewSet):
         )
         informe.texto_generado = texto
         informe.save(update_fields=['texto_generado'])
+
+    @action(detail=False, methods=['get'], url_path='estadisticas')
+    def estadisticas(self, request):
+        """
+        Totales de informes por estado, contando todos los informes y no solo
+        una página del listado (auditoría I-4). Respeta los mismos filtros que
+        el listado (q, fechas, estado, patologia).
+        """
+        por_estado = dict(
+            self.get_queryset()
+            .order_by()  # sin el orden por fecha, para que el GROUP BY sea solo por estado
+            .values_list('estado')
+            .annotate(total=Count('id'))
+        )
+        return Response({
+            'total': sum(por_estado.values()),
+            'borradores': por_estado.get(Informe.Estado.BORRADOR, 0),
+            'finalizados': por_estado.get(Informe.Estado.FINALIZADO, 0),
+        })
 
     @action(detail=True, methods=['get'], url_path='pdf')
     def exportar_pdf(self, request, pk=None):

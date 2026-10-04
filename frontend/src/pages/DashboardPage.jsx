@@ -12,14 +12,15 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     try {
-      const { data } = await client.get('/informes/');
-      const informes = data.results || data;
-      setRecientes(Array.isArray(informes) ? informes.slice(0, 10) : []);
-      setStats({
-        total: Array.isArray(informes) ? informes.length : (data.count || 0),
-        borradores: Array.isArray(informes) ? informes.filter(i => i.estado === 'borrador').length : 0,
-        finalizados: Array.isArray(informes) ? informes.filter(i => i.estado === 'finalizado').length : 0,
-      });
+      // Las estadísticas vienen del backend, que cuenta todos los informes y no
+      // solo la primera página del listado (auditoría I-4).
+      const [estadisticas, listado] = await Promise.all([
+        client.get('/informes/estadisticas/'),
+        client.get('/informes/'),
+      ]);
+      setStats(estadisticas.data);
+      const informes = listado.data.results || listado.data;
+      setRecientes(informes.slice(0, 10));
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {

@@ -126,6 +126,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### I-4. El panel de inicio y el buscador solo ven los primeros 20 informes
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`): endpoint `/api/informes/estadisticas/` y paginación en el buscador. Ver `CHANGELOG.md` y `EstadisticasYPaginacionTests` en `backend/informes/tests.py`.
+
 - **Dónde:** `DashboardPage.jsx` (líneas 12–22) y `BuscarPage.jsx`.
 - **Qué pasa:** la API devuelve los resultados por páginas de 20 (`PAGE_SIZE: 20`). El dashboard calcula "Total", "Borradores" y "Finalizados" contando solo esa primera página, y el buscador muestra "Resultados (20)" aunque haya 300.
 - **Por qué importa:** cuando haya más de 20 informes, las estadísticas mostrarán **números falsos** y algunos informes no se podrán encontrar desde la interfaz.

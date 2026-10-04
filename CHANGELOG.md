@@ -5,6 +5,19 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Corrección: estadísticas reales en el dashboard y paginación en el buscador (I-4)
+
+**Qué se cambió**
+- `backend/informes/views.py`: nuevo endpoint `GET /api/informes/estadisticas/` (acción `estadisticas` de `InformeViewSet`). Devuelve `{total, borradores, finalizados}` contando todos los informes en una sola consulta (`Count` agrupado por estado) y respeta los mismos filtros que el listado.
+- `frontend/src/pages/DashboardPage.jsx`: las tarjetas de totales usan el endpoint nuevo. "Informes recientes" sigue mostrando los 10 más nuevos del listado.
+- `frontend/src/pages/BuscarPage.jsx`: paginación con botones "Anterior" y "Siguiente", el texto "Mostrando X–Y de Z" y el total real en el título. Al cambiar de página se conservan los filtros de la última búsqueda.
+- `frontend/src/index.css`: estilo `.paginacion`.
+- `backend/informes/tests.py`: nueva clase `EstadisticasYPaginacionTests` con 5 pruebas sobre los totales, los permisos, la segunda página y los filtros.
+- Documentación: endpoint nuevo en la tabla de la API del README y en `CLAUDE.md`.
+
+**Por qué**
+- La API devuelve los informes de 20 en 20, pero el dashboard contaba solo la primera página. Con 25 informes mostraba "Total 20" y "Finalizados 10" en lugar de 25 y 15. El buscador mostraba "Resultados (20)" y no permitía ver el resto.
+
 ### Corrección: el PDF muestra literal el texto del usuario y respeta los saltos de línea (I-3)
 
 **Qué se cambió**

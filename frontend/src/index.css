@@ -480,6 +480,16 @@ textarea { resize: vertical; min-height: 80px; }
 }
 .empty-state p { margin-bottom: 1rem; }
 
+/* ── Paginación (buscador) ─────────────────────────────── */
+.paginacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
 /* ── Spinners ──────────────────────────────────────────── */
 .spinner {
   display: inline-block;

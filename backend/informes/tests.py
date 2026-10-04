@@ -217,3 +217,57 @@ class PdfConTextoDelUsuarioTests(APITestCase):
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         textos = [str(llamada.args[0]) for llamada in espia.call_args_list]
         self.assertIn('Primera línea<br/>Segunda línea<br/>Tercera &lt; línea', textos)
+
+
+class EstadisticasYPaginacionTests(APITestCase):
+    """
+    Hallazgo I-4 de docs/auditoria-inicial.md: el dashboard y el buscador solo
+    veían la primera página (20 informes). Con 25 informes, el dashboard decía
+    "total 20" y el buscador no permitía ver los otros 5.
+    """
+
+    def setUp(self):
+        self.patologo = Usuario.objects.create_user(
+            username='patologo_stats', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+        )
+        patologia = Patologia.objects.create(nombre='Patología estadísticas')
+        for i in range(25):
+            Informe.objects.create(
+                numero_caso=f'I4-{i}',
+                patologia=patologia,
+                autor=self.patologo,
+                estado=Informe.Estado.FINALIZADO if i < 15 else Informe.Estado.BORRADOR,
+            )
+        self.client.force_authenticate(self.patologo)
+
+    def test_estadisticas_cuentan_todos_los_informes(self):
+        respuesta = self.client.get('/api/informes/estadisticas/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data, {'total': 25, 'borradores': 10, 'finalizados': 15})
+
+    def test_auditor_puede_ver_estadisticas(self):
+        auditor = Usuario.objects.create_user(
+            username='auditor_stats', password='ClaveSegura-2026', rol=Usuario.Rol.AUDITOR,
+        )
+        self.client.force_authenticate(auditor)
+        self.assertEqual(self.client.get('/api/informes/estadisticas/').status_code, status.HTTP_200_OK)
+
+    def test_estadisticas_requieren_autenticacion(self):
+        self.client.force_authenticate(None)
+        self.assertEqual(self.client.get('/api/informes/estadisticas/').status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_la_segunda_pagina_trae_los_informes_restantes(self):
+        # Lo que usa la paginación del buscador: count, next y previous.
+        primera = self.client.get('/api/informes/').data
+        self.assertEqual(primera['count'], 25)
+        self.assertEqual(len(primera['results']), 20)
+        self.assertIsNotNone(primera['next'])
+        segunda = self.client.get('/api/informes/', {'page': 2}).data
+        self.assertEqual(len(segunda['results']), 5)
+        self.assertIsNone(segunda['next'])
+        self.assertIsNotNone(segunda['previous'])
+
+    def test_la_paginacion_respeta_los_filtros(self):
+        respuesta = self.client.get('/api/informes/', {'estado': 'borrador', 'page': 1}).data
+        self.assertEqual(respuesta['count'], 10)
+        self.assertTrue(all(i['estado'] == 'borrador' for i in respuesta['results']))

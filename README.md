@@ -294,6 +294,7 @@ El sistema incluye plantillas clínicas detalladas para 14 tipos de especímenes
 | GET | /api/patologias/{id}/ | Detalle de patología con sus campos de plantilla | Todos |
 | GET | /api/plantillas/?patologia={id} | Obtener campos dinámicos de una patología | Patólogo / Admin |
 | GET | /api/informes/ | Listar informes con filtros (q, echa_desde, echa_hasta, estado, patologia) | Todos |
+| GET | /api/informes/estadisticas/ | Totales de informes: `{total, borradores, finalizados}` (acepta los mismos filtros que el listado) | Todos |
 | POST | /api/informes/ | Crear nuevo informe (genera descripción macroscópica) | Patólogo / Admin |
 | GET | /api/informes/{id}/ | Ver informe completo | Todos |
 | PUT/PATCH| /api/informes/{id}/ | Actualizar informe en estado borrador (finalizado → 400) | Autor del informe / Admin |

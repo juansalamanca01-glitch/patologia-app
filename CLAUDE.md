@@ -69,6 +69,7 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
   - `/api/informes/{id}/pdf/`: acción del ViewSet, autenticada por header JWT.
   - `/api/descargar-pdf/<id>/<filename>?token=<access>`: vista Django `csrf_exempt` que valida el token recibido por query string. Es la que usa el frontend, mediante un formulario o navegación.
 - `POST /api/informes/{id}/finalizar/` cambia el estado `borrador` → `finalizado`.
+- `GET /api/informes/estadisticas/` devuelve los totales por estado calculados en el backend. El listado está paginado de 20 en 20 (`PAGE_SIZE`): el frontend usa `count`, `next` y `previous` y nunca debe contar los resultados de una sola página. `BuscarPage.jsx` tiene `TAMANO_PAGINA = 20`, que debe coincidir con `PAGE_SIZE`.
 
 **Rate limiting.** En `settings.REST_FRAMEWORK` están los throttles globales (`anon`, `user`) y otros por scope (`login`, `registro`, `foro_publicacion`, `foro_comentario`). Los de scope se asignan en `accounts/throttles.py` y en `get_throttles()` de las vistas del foro. Si un endpoint nuevo usa un scope nuevo, hay que agregarlo a `DEFAULT_THROTTLE_RATES`.
 
