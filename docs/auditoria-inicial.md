@@ -269,6 +269,8 @@ Esto ya se explicó en la sección 1, pero se repite aquí porque es un problema
 
 ### M-4. Consultas repetidas a la base de datos (problema "N+1")
 
+> **Estado: corregido el 2026-10-04** (rama `seguridad-critica`): de 22/22/25 consultas a 2/2/3 con 20 elementos. Ver `CHANGELOG.md` y `ConsultasPorListadoTests`.
+
 - **Dónde:** `CategoriaSerializer.total_patologias`, `TemaForoSerializer.total_publicaciones` y `PublicacionListSerializer` (`get_portada` usa `imagenes.first()`).
 - **Qué pasa:** en cada fila del listado se hace una consulta extra. Con 20 publicaciones son unas 20 consultas más de las necesarias.
 - **Cómo arreglarlo:** usar `annotate(total=Count(...))` en el `queryset`. Para la portada, usar las imágenes ya precargadas (`obj.imagenes.all()[0]`), porque `first()` ignora la precarga.

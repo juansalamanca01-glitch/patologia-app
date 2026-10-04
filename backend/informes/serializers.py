@@ -17,7 +17,7 @@ def esta_vacio(valor):
 
 
 class CategoriaSerializer(serializers.ModelSerializer):
-    total_patologias = serializers.IntegerField(source='patologias.count', read_only=True)
+    total_patologias = serializers.SerializerMethodField()
 
     class Meta:
         model = Categoria
@@ -26,6 +26,12 @@ class CategoriaSerializer(serializers.ModelSerializer):
             'total_patologias', 'fecha_creacion',
         ]
         read_only_fields = ['id', 'fecha_creacion']
+
+    def get_total_patologias(self, obj):
+        # En el listado viene contado en la misma consulta (annotate, auditoría M-4);
+        # al crear o editar una sola categoría se cuenta aparte.
+        anotado = getattr(obj, 'num_patologias', None)
+        return anotado if anotado is not None else obj.patologias.count()
 
 
 class PlantillaSerializer(serializers.ModelSerializer):

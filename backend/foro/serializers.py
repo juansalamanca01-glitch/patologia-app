@@ -3,12 +3,17 @@ from .models import TemaForo, Publicacion, ImagenPublicacion, Comentario
 
 
 class TemaForoSerializer(serializers.ModelSerializer):
-    total_publicaciones = serializers.IntegerField(source='publicaciones.count', read_only=True)
+    total_publicaciones = serializers.SerializerMethodField()
 
     class Meta:
         model = TemaForo
         fields = ['id', 'nombre', 'descripcion', 'activo', 'total_publicaciones', 'fecha_creacion']
         read_only_fields = ['id', 'fecha_creacion']
+
+    def get_total_publicaciones(self, obj):
+        # En el listado viene contado en la misma consulta (annotate, auditoría M-4).
+        anotado = getattr(obj, 'num_publicaciones', None)
+        return anotado if anotado is not None else obj.publicaciones.count()
 
 
 class ImagenPublicacionSerializer(serializers.ModelSerializer):
@@ -82,8 +87,9 @@ class PublicacionListSerializer(serializers.ModelSerializer):
     """Versión resumida para el listado del foro."""
     autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
     tema_nombre = serializers.CharField(source='tema.nombre', read_only=True, default=None)
-    total_comentarios = serializers.IntegerField(source='comentarios.count', read_only=True)
-    total_imagenes = serializers.IntegerField(source='imagenes.count', read_only=True)
+    # Contados en la misma consulta del listado (annotate en PublicacionViewSet, auditoría M-4).
+    total_comentarios = serializers.IntegerField(source='num_comentarios', read_only=True)
+    total_imagenes = serializers.IntegerField(source='num_imagenes', read_only=True)
     portada = serializers.SerializerMethodField()
 
     class Meta:
@@ -94,9 +100,11 @@ class PublicacionListSerializer(serializers.ModelSerializer):
         ]
 
     def get_portada(self, obj):
-        primera = obj.imagenes.first()
-        if not primera:
+        # Usa las imágenes ya precargadas; .first() haría una consulta nueva por publicación.
+        imagenes = list(obj.imagenes.all())
+        if not imagenes:
             return None
+        primera = min(imagenes, key=lambda imagen: imagen.id)
         request = self.context.get('request')
         url = primera.imagen.url
         return request.build_absolute_uri(url) if request else url

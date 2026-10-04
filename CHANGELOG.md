@@ -3,7 +3,24 @@
 Todos los cambios de código del proyecto se documentan aquí, del más reciente al más antiguo.
 Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1" remiten a `docs/auditoria-inicial.md`.
 
-## 2026-10-03
+## 2026-10-04
+
+### Rendimiento: los listados ya no hacen una consulta por fila (M-4)
+
+**Qué se cambió**
+- `backend/informes/views.py` y `backend/foro/views.py`: los listados de categorías, temas y publicaciones cuentan sus totales en la misma consulta, con `annotate(Count(...))`. El de publicaciones ya no precarga los comentarios completos, solo las imágenes, que se usan para la portada.
+- `backend/informes/serializers.py` y `backend/foro/serializers.py`:
+  - `total_patologias` y `total_publicaciones` usan el valor contado y, si no existe (al crear o editar un solo elemento), cuentan aparte.
+  - La portada del listado se toma de las imágenes ya precargadas; antes `.first()` hacía una consulta por publicación.
+- Se indica el orden de forma explícita (`order_by`) en esos tres listados. Al usar `annotate(Count)`, Django ignora el `Meta.ordering` del modelo: sin esto, el foro habría dejado de mostrar primero las publicaciones fijadas.
+- `backend/informes/tests.py`: nueva clase `ConsultasPorListadoTests` con 4 pruebas:
+  - el número de consultas no crece al pasar de 5 a 20 elementos;
+  - crear una categoría o un tema devuelve su total;
+  - los totales y la portada son correctos;
+  - los listados conservan su orden.
+
+**Por qué**
+- Medido con 20 elementos, los listados de categorías y temas hacían 22 consultas y el de publicaciones 25. Ahora hacen 2, 2 y 3.
 
 ### Limpieza: código duplicado y comentarios en español (M-3, M-13)
 

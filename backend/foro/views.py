@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Count
 from rest_framework import viewsets, mixins, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -22,7 +23,9 @@ MAX_IMAGENES_POR_PUBLICACION = 6
 
 class TemaForoViewSet(viewsets.ModelViewSet):
     """Temas del foro. Todos leen; crear, editar o borrar requiere patólogo o admin."""
-    queryset = TemaForo.objects.all()
+    # El total de publicaciones se cuenta en la misma consulta (auditoría M-4).
+    # Con annotate(Count), Django ignora Meta.ordering: el orden se indica aquí.
+    queryset = TemaForo.objects.annotate(num_publicaciones=Count('publicaciones')).order_by('nombre')
     serializer_class = TemaForoSerializer
     permission_classes = [EsPatologoOAdmin]
     filter_backends = [filters.SearchFilter]
@@ -53,6 +56,13 @@ class PublicacionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        if self.action == 'list':
+            # El listado solo necesita los totales y la primera imagen, no los
+            # comentarios completos (auditoría M-4).
+            qs = Publicacion.objects.select_related('autor', 'tema').prefetch_related('imagenes').annotate(
+                num_comentarios=Count('comentarios', distinct=True),
+                num_imagenes=Count('imagenes', distinct=True),
+            ).order_by('-fijado', '-fecha_creacion')  # annotate ignora Meta.ordering
         tema_id = self.request.query_params.get('tema')
         if tema_id:
             qs = qs.filter(tema_id=tema_id)

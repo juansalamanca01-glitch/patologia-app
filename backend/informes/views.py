@@ -19,7 +19,9 @@ from .utils import generar_descripcion_macroscopica, generar_pdf_informe
 
 class CategoriaViewSet(viewsets.ModelViewSet):
     """Categorías de patologías. Todos leen; crear, editar o borrar requiere patólogo o admin."""
-    queryset = Categoria.objects.all()
+    # El total de patologías se cuenta en la misma consulta (auditoría M-4).
+    # Con annotate(Count), Django ignora Meta.ordering: el orden se indica aquí.
+    queryset = Categoria.objects.annotate(num_patologias=Count('patologias')).order_by('nombre')
     serializer_class = CategoriaSerializer
     permission_classes = [EsPatologoOAdmin]
     filter_backends = [filters.SearchFilter]
