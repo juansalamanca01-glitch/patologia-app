@@ -5,6 +5,14 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Se elimina `iniciar_y_probar.ps1`
+
+**Qué se cambió**
+- Se borró el script `iniciar_y_probar.ps1` de la raíz y sus menciones en `README.md` y `CLAUDE.md`. Las entradas anteriores de este CHANGELOG y de la auditoría lo siguen nombrando porque describen cómo estaba el proyecto en su momento.
+
+**Por qué**
+- A pedido del autor: no se usaba. Para el día a día está `npm run dev`. Para la primera instalación, el README explica paso a paso cómo crear el entorno virtual y el `.env` (con el comando para generar la `SECRET_KEY`), migrar y cargar los datos de prueba.
+
 ### Desarrollo: arrancar backend y frontend con un solo comando (`npm run dev`)
 
 **Qué se cambió**

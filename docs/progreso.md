@@ -57,7 +57,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | M-12 | Resuelto con documentación (README, sección Seguridad); sin cambios de código | — |
 | — | README sin emojis (salvo el título), a pedido del usuario | `f6ccaa7` |
 | Nuevo | "Editar" en Patologías pide la patología completa (antes no se veían la descripción ni el protocolo) | `dac13ef` |
-| — | `npm run dev` en la raíz: comprueba el entorno y arranca backend y frontend juntos (rama `desarrollo-un-comando`) | ver `git log` |
+| — | `npm run dev` en la raíz: comprueba el entorno y arranca backend y frontend juntos (rama `desarrollo-un-comando`) | `c44d7ec` |
+| — | Se borra `iniciar_y_probar.ps1` (no se usaba; lo reemplaza `npm run dev`) | ver `git log` |
 
 ## Siguiente paso
 

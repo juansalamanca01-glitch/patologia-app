@@ -163,7 +163,6 @@ patologia-app/
 ├── scripts/                   # "npm run dev": comprobaciones y arranque de backend + frontend
 ├── package.json               # Comandos de la raíz (npm run dev, npm test)
 ├── CLAUDE.md                  # Guía para el asistente de código
-├── iniciar_y_probar.ps1       # Primera instalación del backend y prueba de endpoints (Windows)
 └── PathoLab_API.postman_collection.json
 ```
 
@@ -187,8 +186,6 @@ Las pruebas del frontend están junto a cada componente, en archivos `*.test.jsx
 git clone https://github.com/juansalamanca01-glitch/patologia-app.git
 cd patologia-app
 ```
-
-> **Atajo en Windows para la primera instalación:** el script `iniciar_y_probar.ps1` hace los pasos 3 a 7 del backend. Instala las dependencias, crea el `.env` con una clave nueva si no existe, migra, carga los datos de prueba, levanta el servidor y prueba el login y la creación de un informe. Necesita el entorno virtual creado y activado (pasos 1 y 2).
 
 ### 2. Backend (Django)
 
