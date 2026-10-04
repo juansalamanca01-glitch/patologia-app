@@ -75,6 +75,7 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
   1. En `perform_update` y `perform_destroy` (o con un permiso a nivel de objeto, `has_object_permission`), rechazar con 400 o 403 los cambios cuando `estado == 'finalizado'`.
   2. Permitir editar y borrar solo al autor del informe o a un admin.
   3. Decidir si un patólogo puede finalizar informes de otros (la acción `finalizar` tampoco lo revisa).
+     **Decidido (2026-10-03), ver D-2 en `docs/decisiones.md`:** solo el autor o un admin puede editar, borrar o finalizar un informe.
 
 ### C-3. Valores por defecto inseguros: DEBUG activado y clave secreta publicada en GitHub
 
@@ -145,6 +146,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 - **Cómo arreglarlo:** validar `archivo.size` en `subir_imagenes` (`foro/views.py`) o crear un validador en `ImagenPublicacion.imagen`, y corregir el comentario.
 
 ### I-7. Los patólogos pueden administrar el catálogo, aunque la documentación dice que es tarea del admin
+
+> **Estado: resuelto por decisión (2026-10-03).** Ver la decisión D-1 en `docs/decisiones.md`: por criterio del profesor, los patólogos **sí** pueden administrar el catálogo. El código de permisos no cambia. Solo queda corregir el README para que lo diga, y eso se hará junto con I-12.
 
 - **Dónde:** `CategoriaViewSet`, `PatologiaViewSet` y `PlantillaViewSet` (`informes/views.py`) y `TemaForoViewSet` (`foro/views.py`). Todos usan `EsPatologoOAdmin`.
 - **Qué pasa:** el README dice que el **Administrador** se encarga de la "gestión de patologías y plantillas". En el código, cualquier patólogo puede crear, editar y **borrar** patologías, plantillas (los campos de los formularios), categorías y temas del foro.
@@ -286,7 +289,7 @@ En `config/urls.py`, los archivos de `/media/` solo se sirven si `DEBUG=True`. E
 |---|---|---|
 | Finalizar un informe "bloquea edición" (README) | Se puede editar y borrar (C-2) | ❌ |
 | Si falta un campo obligatorio, la API responde 400 (guía, pregunta 1) | Se salta si `datos_ingresados` está vacío (I-2) | ❌ Parcial |
-| El Admin gestiona patologías y plantillas (README) | Los patólogos también pueden (I-7) | ❌ |
+| El Admin gestiona patologías y plantillas (README) | Los patólogos también pueden (I-7) | ✅ El código queda así por decisión D-1; falta corregir el README |
 | `GET /api/patologias/` lista patologías **activas** | Lista todas (M-5) | ❌ |
 | El proxy de Vite redirige `/api` al backend (README) | `client.js` llama directo a `localhost:8000`; el proxy solo se usa para el PDF (I-10) | ❌ Parcial |
 | Usuarios `admin`, `patologo1`, `auditor1` (README) | Correcto en el código, pero el README muestra "dmin" y "uditor1" por el texto dañado (I-12) | ⚠️ |
@@ -323,7 +326,7 @@ También conviene saber qué ya está bien hecho, para no cambiarlo por error:
 1. **Seguridad crítica:** C-1, C-2 y C-3. Son cambios pequeños, casi todos en serializers y vistas.
 2. **Pruebas:** escribir pruebas para C-1, C-2, I-2 e I-3 (I-13), para que esos errores no vuelvan.
 3. **Errores que el usuario ve:** I-1, I-3, I-4 y M-8.
-4. **Seguridad restante:** I-5, I-6, I-8, I-9 e I-11, y definir la regla de permisos del catálogo (I-7).
+4. **Seguridad restante:** I-5, I-6, I-8, I-9 e I-11. (I-7 ya está resuelto por la decisión D-1.)
 5. **Configuración del frontend:** I-10.
 6. **Documentación:** arreglar el README (I-12), actualizar la guía y la colección de Postman, y crear `CHANGELOG.md`.
 7. **Limpieza:** los puntos menores M-1 a M-13.

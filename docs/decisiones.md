@@ -1,0 +1,21 @@
+# Decisiones del proyecto
+
+Aquí se registran las decisiones de diseño y de reglas de negocio ya tomadas. El código y la documentación deben respetarlas. Para cambiar una decisión, se agrega una entrada nueva que la reemplace; no se borra la anterior.
+
+Los códigos como "I-7" o "C-2" remiten a `docs/auditoria-inicial.md`.
+
+---
+
+## D-1. Los patólogos pueden administrar el catálogo
+
+- **Fecha:** 2026-10-03
+- **Hallazgo relacionado:** I-7
+- **Decisión:** los usuarios con rol **patólogo** pueden crear, editar y borrar **patologías, plantillas, categorías y temas del foro**, igual que el administrador. El auditor sigue teniendo solo lectura. Los permisos del código (`EsPatologoOAdmin`) no cambian. Lo que se corrige es el README, que decía que esa gestión era solo del administrador.
+- **Motivo:** criterio del profesor.
+
+## D-2. Solo el autor o un administrador puede editar, borrar o finalizar un informe
+
+- **Fecha:** 2026-10-03
+- **Hallazgo relacionado:** C-2 (punto 3)
+- **Decisión:** un informe solo lo puede **editar, borrar o finalizar** su **autor** o un **administrador**. Un patólogo **no** puede finalizar, editar ni borrar informes de otro patólogo, aunque sí puede verlos. El auditor sigue teniendo solo lectura.
+- **Motivo:** cada informe tiene un patólogo responsable. Si otro patólogo pudiera modificarlo o cerrarlo, se perdería la trazabilidad de quién hizo qué en un documento clínico.
