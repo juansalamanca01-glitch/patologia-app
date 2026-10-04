@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import client from '../api/client';
+import client, { resultados } from '../api/client';
+import EstadoBadge from '../components/EstadoBadge';
 
 const TAMANO_PAGINA = 20; // Debe coincidir con PAGE_SIZE de backend/config/settings.py
 
@@ -34,7 +35,7 @@ export default function BuscarPage() {
 
     try {
       const { data } = await client.get(`/informes/?${params.toString()}`);
-      const informes = data.results || data;
+      const informes = resultados(data);
       setResults(informes);
       setTotal(data.count ?? informes.length);
       setHayAnterior(Boolean(data.previous));
@@ -67,7 +68,6 @@ export default function BuscarPage() {
     handleSearch();
   }, []);
 
-  const ESTADO_CLASS = { borrador: 'badge-warning', finalizado: 'badge-success' };
 
   return (
     <div className="buscar-page">
@@ -161,9 +161,7 @@ export default function BuscarPage() {
                       <td>{inf.autor_nombre}</td>
                       <td>{inf.fecha}</td>
                       <td>
-                        <span className={`badge ${ESTADO_CLASS[inf.estado] || ''}`}>
-                          {inf.estado === 'borrador' ? 'Borrador' : 'Finalizado'}
-                        </span>
+                        <EstadoBadge estado={inf.estado} />
                       </td>
                       <td>
                         <Link to={`/informes/${inf.id}`} className="btn btn-outline btn-xs">Ver</Link>

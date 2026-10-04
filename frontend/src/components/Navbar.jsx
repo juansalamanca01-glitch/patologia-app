@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { ROL_LABELS } from '../constants';
 
-const ROL_LABELS = { admin: 'Administrador', patologo: 'Patólogo', auditor: 'Auditor' };
 
 export default function Navbar() {
   const { user, logout, canWrite } = useAuth();

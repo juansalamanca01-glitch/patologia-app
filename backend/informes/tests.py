@@ -383,3 +383,39 @@ class CamposObligatoriosTests(APITestCase):
             f'/api/informes/{informe_id}/', {'datos_ingresados': {'num_ganglios': 3}}, format='json',
         )
         self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class NombreVisibleAutorTests(APITestCase):
+    """
+    Auditoría M-3: "nombre_completo o, si está vacío, username" estaba repetido en
+    8 lugares. Ahora lo calcula Usuario.nombre_visible. La API debe responder igual.
+    """
+
+    def setUp(self):
+        self.con_nombre = Usuario.objects.create_user(
+            username='dr_mendez', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            nombre_completo='Dr. Carlos Méndez',
+        )
+        self.sin_nombre = Usuario.objects.create_user(
+            username='patologo_sin_nombre', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+        )
+        patologia = Patologia.objects.create(nombre='Patología nombres')
+        for autor in (self.con_nombre, self.sin_nombre):
+            Informe.objects.create(numero_caso=f'NV-{autor.id}', patologia=patologia, autor=autor)
+        self.client.force_authenticate(self.con_nombre)
+
+    def test_informes_muestran_nombre_completo_o_username(self):
+        nombres = {i['numero_caso']: i['autor_nombre'] for i in self.client.get('/api/informes/').data['results']}
+        self.assertEqual(nombres[f'NV-{self.con_nombre.id}'], 'Dr. Carlos Méndez')
+        self.assertEqual(nombres[f'NV-{self.sin_nombre.id}'], 'patologo_sin_nombre')
+        informe = Informe.objects.get(autor=self.sin_nombre)
+        self.assertEqual(self.client.get(f'/api/informes/{informe.id}/').data['autor_nombre'], 'patologo_sin_nombre')
+
+    def test_foro_muestra_nombre_completo_o_username(self):
+        from foro.models import Comentario, Publicacion
+        publicacion = Publicacion.objects.create(autor=self.sin_nombre, titulo='Caso', contenido='Texto')
+        Comentario.objects.create(publicacion=publicacion, autor=self.con_nombre, contenido='Hola')
+        self.assertEqual(self.client.get('/api/foro/publicaciones/').data['results'][0]['autor_nombre'], 'patologo_sin_nombre')
+        detalle = self.client.get(f'/api/foro/publicaciones/{publicacion.id}/').data
+        self.assertEqual(detalle['autor_nombre'], 'patologo_sin_nombre')
+        self.assertEqual(detalle['comentarios'][0]['autor_nombre'], 'Dr. Carlos Méndez')

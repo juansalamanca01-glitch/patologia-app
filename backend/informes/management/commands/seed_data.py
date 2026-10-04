@@ -1,6 +1,6 @@
 """
-Management command to seed the database with sample pathologies and form templates.
-Usage: python manage.py seed_data
+Comando para cargar datos iniciales: usuarios de prueba y 14 patologías con sus plantillas.
+Uso: python manage.py seed_data (se puede ejecutar varias veces sin duplicar datos).
 """
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
@@ -10,10 +10,10 @@ Usuario = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'Seed the database with sample pathologies, templates, and a superuser.'
+    help = 'Carga usuarios de prueba y 14 patologías con sus plantillas.'
 
     def handle(self, *args, **options):
-        # ── Create superuser ────────────────────────────
+        # ── Superusuario (administrador) ────────────────────────────
         if not Usuario.objects.filter(username='admin').exists():
             Usuario.objects.create_superuser(
                 username='admin',
@@ -24,7 +24,7 @@ class Command(BaseCommand):
             )
             self.stdout.write(self.style.SUCCESS('[OK] Superusuario "admin" creado (pass: admin1234)'))
 
-        # ── Create sample pathologist ────────────────────
+        # ── Patólogo de prueba ────────────────────
         if not Usuario.objects.filter(username='patologo1').exists():
             Usuario.objects.create_user(
                 username='patologo1',
@@ -36,7 +36,7 @@ class Command(BaseCommand):
             )
             self.stdout.write(self.style.SUCCESS('[OK] Patologo "patologo1" creado (pass: patologo1234)'))
 
-        # ── Create auditor ──────────────────────────────
+        # ── Auditor de prueba ──────────────────────────────
         if not Usuario.objects.filter(username='auditor1').exists():
             Usuario.objects.create_user(
                 username='auditor1',
@@ -47,7 +47,7 @@ class Command(BaseCommand):
             )
             self.stdout.write(self.style.SUCCESS('[OK] Auditor "auditor1" creado (pass: auditor1234)'))
 
-        # ── Pathologies and templates ────────────────────
+        # ── Patologías y sus plantillas ────────────────────
         patologias_data = [
             # ─── 1. BIOPSIA DE PIEL ──────────────────────
             {

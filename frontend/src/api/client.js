@@ -12,7 +12,7 @@ const client = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach JWT token to every request
+// Añade el token JWT a cada petición
 client.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
@@ -21,7 +21,7 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
-// Auto-refresh on 401
+// Si la API responde 401 (token vencido), lo renueva y repite la petición
 client.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -45,5 +45,9 @@ client.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Los listados de la API vienen paginados ({count, next, previous, results}).
+// Devuelve la lista de resultados, o los datos tal cual si no vienen paginados.
+export const resultados = (data) => data.results ?? data;
 
 export default client;

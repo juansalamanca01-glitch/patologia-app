@@ -12,13 +12,13 @@ from .throttles import LoginRateThrottle, RegistroRateThrottle
 Usuario = get_user_model()
 
 
-# ── Custom JWT token that includes user role ──────────────────────
+# ── Token JWT que incluye el rol del usuario ──────────────────────
 class CustomTokenSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
         token['rol'] = user.rol
-        token['nombre'] = user.nombre_completo or user.username
+        token['nombre'] = user.nombre_visible
         return token
 
     def validate(self, attrs):
@@ -32,14 +32,14 @@ class CustomTokenView(TokenObtainPairView):
     throttle_classes = [LoginRateThrottle]
 
 
-# ── Registration (admin-only) ────────────────────────────────────
+# ── Registro de usuarios (solo admin) ────────────────────────────────────
 class RegistroView(generics.CreateAPIView):
     serializer_class = RegistroSerializer
     permission_classes = [EsAdmin]
     throttle_classes = [RegistroRateThrottle]
 
 
-# ── Profile ──────────────────────────────────────────────────────
+# ── Perfil ──────────────────────────────────────────────────────
 class PerfilView(generics.RetrieveUpdateAPIView):
     serializer_class = UsuarioSerializer
 
@@ -47,7 +47,7 @@ class PerfilView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
-# ── Change password ──────────────────────────────────────────────
+# ── Cambio de contraseña ──────────────────────────────────────────────
 class CambiarPasswordView(APIView):
     def post(self, request):
         serializer = CambiarPasswordSerializer(data=request.data, context={'request': request})
@@ -56,7 +56,7 @@ class CambiarPasswordView(APIView):
         return Response({'detail': 'Contraseña actualizada correctamente.'})
 
 
-# ── List users (admin-only) ─────────────────────────────────────
+# ── Lista de usuarios (solo admin) ─────────────────────────────────────
 class ListaUsuariosView(generics.ListAPIView):
     serializer_class = UsuarioSerializer
     permission_classes = [EsAdmin]

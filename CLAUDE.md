@@ -83,3 +83,4 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
   - `PublicRoute`: solo para `/login`.
   - `LegalRoute`: páginas legales, visibles con o sin sesión.
 - Los estilos globales están en `src/index.css`; no hay librería de UI.
+- Código compartido: las etiquetas de rol (`ROL_LABELS`) y de estado del informe están en `src/constants.js`; la etiqueta de estado se dibuja con `<EstadoBadge estado={...} />`, y `resultados(data)` de `api/client.js` saca la lista de un listado paginado. En el backend, el nombre para mostrar de un usuario es `Usuario.nombre_visible`. Úsalos en lugar de repetir esa lógica.

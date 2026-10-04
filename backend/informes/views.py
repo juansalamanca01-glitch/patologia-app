@@ -18,7 +18,7 @@ from .utils import generar_descripcion_macroscopica, generar_pdf_informe
 
 
 class CategoriaViewSet(viewsets.ModelViewSet):
-    """CRUD for pathology categories. Only patólogo/admin can create, edit or delete."""
+    """Categorías de patologías. Todos leen; crear, editar o borrar requiere patólogo o admin."""
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
     permission_classes = [EsPatologoOAdmin]
@@ -36,7 +36,7 @@ class CategoriaViewSet(viewsets.ModelViewSet):
 
 
 class PatologiaViewSet(viewsets.ModelViewSet):
-    """CRUD for pathology types. Write access requires admin or patologo role."""
+    """Tipos de patología. Todos leen; crear, editar o borrar requiere patólogo o admin."""
     queryset = Patologia.objects.select_related('categoria').prefetch_related('plantillas').all()
     permission_classes = [EsPatologoOAdmin]
     filter_backends = [filters.SearchFilter]
@@ -69,7 +69,7 @@ class PatologiaViewSet(viewsets.ModelViewSet):
 
 
 class PlantillaViewSet(viewsets.ModelViewSet):
-    """CRUD for dynamic form field templates."""
+    """Campos de los formularios dinámicos (plantillas)."""
     queryset = Plantilla.objects.select_related('patologia').all()
     serializer_class = PlantillaSerializer
     permission_classes = [EsPatologoOAdmin]
@@ -84,10 +84,10 @@ class PlantillaViewSet(viewsets.ModelViewSet):
 
 class InformeViewSet(viewsets.ModelViewSet):
     """
-    CRUD for clinical pathology reports.
-    - Auto-assigns the author on creation
-    - Generates macroscopic description on save
-    - Provides PDF export and search
+    Informes de patología.
+    - Al crear un informe, su autor es el usuario que hace la petición.
+    - Al guardar, se genera la descripción macroscópica.
+    - Permite buscar, ver estadísticas y exportar a PDF.
 
     Reglas (docs/decisiones.md, D-2 y D-3):
     - solo el autor o un admin puede editar, borrar o finalizar un informe;
@@ -122,7 +122,7 @@ class InformeViewSet(viewsets.ModelViewSet):
         qs = super().get_queryset()
         params = self.request.query_params
 
-        # Search filters
+        # Filtros de búsqueda
         q = params.get('q')
         if q:
             qs = qs.filter(
@@ -151,7 +151,7 @@ class InformeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         informe = serializer.save(autor=self.request.user)
-        # Auto-generate macroscopic description
+        # Genera la descripción macroscópica
         texto = generar_descripcion_macroscopica(
             informe.patologia, informe.datos_ingresados
         )
@@ -160,7 +160,7 @@ class InformeViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         informe = serializer.save()
-        # Regenerate description on update
+        # Vuelve a generar la descripción al editar
         texto = generar_descripcion_macroscopica(
             informe.patologia, informe.datos_ingresados
         )
@@ -188,7 +188,7 @@ class InformeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='pdf')
     def exportar_pdf(self, request, pk=None):
-        """Export the report as a PDF file."""
+        """Descarga el informe en PDF."""
         informe = self.get_object()
         buffer = generar_pdf_informe(informe)
         # Solo letras, números y guiones en el nombre: unas comillas o un punto y coma
@@ -200,7 +200,7 @@ class InformeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='finalizar')
     def finalizar(self, request, pk=None):
-        """Mark a report as finalized."""
+        """Marca el informe como finalizado (después ya no se puede editar)."""
         informe = self.get_object()
         if informe.estado == Informe.Estado.FINALIZADO:
             return Response(

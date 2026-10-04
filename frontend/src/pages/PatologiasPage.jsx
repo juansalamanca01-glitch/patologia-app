@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import client from '../api/client';
+import client, { resultados } from '../api/client';
 
 const CATEGORIA_VACIA = { nombre: '', descripcion: '', color: '#2563eb' };
 const PATOLOGIA_VACIA = { nombre: '', categoria: '', descripcion: '', protocolo_medico: '' };
@@ -24,8 +24,8 @@ export default function PatologiasPage() {
         client.get('/categorias/'),
         client.get('/patologias/', { params: filtroCategoria ? { categoria: filtroCategoria } : {} }),
       ]);
-      setCategorias(catRes.data.results || catRes.data);
-      setPatologias(patRes.data.results || patRes.data);
+      setCategorias(resultados(catRes.data));
+      setPatologias(resultados(patRes.data));
     } catch (err) {
       setError('No se pudieron cargar las patologías y categorías.');
     } finally {

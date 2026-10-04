@@ -1,5 +1,5 @@
 """
-Utility functions for macroscopic description generation and PDF export.
+Generación de la descripción macroscópica y exportación del informe a PDF.
 """
 import io
 from datetime import datetime
@@ -25,16 +25,16 @@ def texto_seguro(texto) -> str:
     return escape(str(texto)).replace('\r\n', '\n').replace('\n', '<br/>')
 
 
-# ── Macroscopic description generator ────────────────────────────
+# ── Generador de la descripción macroscópica ────────────────────────────
 def generar_descripcion_macroscopica(patologia, datos: dict) -> str:
     """
-    Build a macroscopic description paragraph from the pathology type
-    and the form data entered by the pathologist.
+    Redacta el párrafo de descripción macroscópica a partir del tipo de
+    patología y de los datos que llenó el patólogo en el formulario.
     """
     nombre_patologia = patologia.nombre
     partes = [f"Se recibe espécimen para estudio de {nombre_patologia}."]
 
-    # Map common field groups to natural-language fragments
+    # Frase en lenguaje natural para los campos más comunes
     mapeo = {
         'tipo_muestra': 'El tipo de muestra corresponde a {v}.',
         'localizacion': 'La localización anatómica es {v}.',
@@ -61,7 +61,7 @@ def generar_descripcion_macroscopica(patologia, datos: dict) -> str:
         if valor and str(valor).strip():
             partes.append(plantilla.format(v=str(valor).strip()))
 
-    # Include any extra fields not in the map
+    # Los campos que no están en el mapa se agregan como "Etiqueta: valor"
     campos_mapeados = set(mapeo.keys())
     for campo, valor in datos.items():
         if campo not in campos_mapeados and valor and str(valor).strip():
@@ -75,9 +75,9 @@ def generar_descripcion_macroscopica(patologia, datos: dict) -> str:
     return ' '.join(partes)
 
 
-# ── PDF export ───────────────────────────────────────────────────
+# ── Exportación a PDF ───────────────────────────────────────────────────
 def generar_pdf_informe(informe) -> io.BytesIO:
-    """Generate a PDF report and return the bytes buffer."""
+    """Genera el PDF del informe y lo devuelve en un buffer de bytes."""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -90,7 +90,7 @@ def generar_pdf_informe(informe) -> io.BytesIO:
 
     styles = getSampleStyleSheet()
 
-    # Custom styles
+    # Estilos propios
     styles.add(ParagraphStyle(
         'TituloInforme',
         parent=styles['Title'],
@@ -123,18 +123,18 @@ def generar_pdf_informe(informe) -> io.BytesIO:
 
     elements = []
 
-    # Header
+    # Encabezado
     elements.append(Paragraph('INFORME DE PATOLOGÍA CLÍNICA', styles['TituloInforme']))
     elements.append(HRFlowable(width='100%', thickness=2, color=HexColor('#2b6cb0')))
     elements.append(Spacer(1, 12))
 
-    # Report metadata table
+    # Tabla con los datos generales del informe
     meta_data = [
         ['Número de Caso:', informe.numero_caso],
         ['Fecha:', informe.fecha.strftime('%d/%m/%Y') if informe.fecha else ''],
         ['Patología:', informe.patologia.nombre],
         ['Tipo de Muestra:', informe.tipo_muestra or 'N/A'],
-        ['Patólogo:', informe.autor.nombre_completo or informe.autor.username],
+        ['Patólogo:', informe.autor.nombre_visible],
         ['Estado:', informe.get_estado_display()],
     ]
 
@@ -150,7 +150,7 @@ def generar_pdf_informe(informe) -> io.BytesIO:
     elements.append(meta_table)
     elements.append(Spacer(1, 16))
 
-    # Form data
+    # Datos clínicos del formulario
     if informe.datos_ingresados:
         elements.append(Paragraph('DATOS CLÍNICOS', styles['Subtitulo']))
         elements.append(HRFlowable(width='100%', thickness=0.5, color=HexColor('#cbd5e0')))
@@ -166,14 +166,14 @@ def generar_pdf_informe(informe) -> io.BytesIO:
 
     elements.append(Spacer(1, 16))
 
-    # Generated description
+    # Descripción generada
     if informe.texto_generado:
         elements.append(Paragraph('DESCRIPCIÓN MACROSCÓPICA', styles['Subtitulo']))
         elements.append(HRFlowable(width='100%', thickness=0.5, color=HexColor('#cbd5e0')))
         elements.append(Spacer(1, 6))
         elements.append(Paragraph(texto_seguro(informe.texto_generado), styles['CuerpoTexto']))
 
-    # Notes
+    # Notas
     if informe.notas:
         elements.append(Spacer(1, 16))
         elements.append(Paragraph('NOTAS ADICIONALES', styles['Subtitulo']))
@@ -181,7 +181,7 @@ def generar_pdf_informe(informe) -> io.BytesIO:
         elements.append(Spacer(1, 6))
         elements.append(Paragraph(texto_seguro(informe.notas), styles['CuerpoTexto']))
 
-    # Footer
+    # Pie de página
     elements.append(Spacer(1, 30))
     elements.append(HRFlowable(width='100%', thickness=1, color=HexColor('#2b6cb0')))
     elements.append(Spacer(1, 6))

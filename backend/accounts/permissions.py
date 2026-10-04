@@ -2,13 +2,13 @@ from rest_framework import permissions
 
 
 class EsAdmin(permissions.BasePermission):
-    """Only admins can access."""
+    """Solo los administradores tienen acceso."""
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.rol == 'admin'
 
 
 class EsPatologoOAdmin(permissions.BasePermission):
-    """Patólogos and admins can write; auditors read-only."""
+    """Todos leen; solo patólogos y administradores escriben (el auditor solo lee)."""
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False

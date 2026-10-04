@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import client from '../api/client';
+import client, { resultados } from '../api/client';
+import EstadoBadge from '../components/EstadoBadge';
+import { ROL_LABELS } from '../constants';
 
 export default function DashboardPage() {
   const { user, canWrite, isAdmin } = useAuth();
@@ -19,7 +21,7 @@ export default function DashboardPage() {
         client.get('/informes/'),
       ]);
       setStats(estadisticas.data);
-      const informes = listado.data.results || listado.data;
+      const informes = resultados(listado.data);
       setRecientes(informes.slice(0, 10));
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
@@ -44,8 +46,6 @@ export default function DashboardPage() {
     }
   };
 
-  const ROL_LABELS = { admin: 'Administrador', patologo: 'Patólogo', auditor: 'Auditor' };
-  const ESTADO_CLASS = { borrador: 'badge-warning', finalizado: 'badge-success' };
 
   return (
     <div className="dashboard">
@@ -64,7 +64,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Stats cards */}
+      {/* Tarjetas con los totales */}
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-icon stat-icon-blue">
@@ -104,7 +104,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent reports */}
+      {/* Informes recientes */}
       <div className="card">
         <div className="card-header">
           <h2>Informes Recientes</h2>
@@ -137,9 +137,7 @@ export default function DashboardPage() {
                       <td>{inf.patologia_nombre}</td>
                       <td>{inf.fecha}</td>
                       <td>
-                        <span className={`badge ${ESTADO_CLASS[inf.estado] || ''}`}>
-                          {inf.estado === 'borrador' ? 'Borrador' : 'Finalizado'}
-                        </span>
+                        <EstadoBadge estado={inf.estado} />
                       </td>
                       <td>
                         <div className="table-actions">

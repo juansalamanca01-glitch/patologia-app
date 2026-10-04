@@ -3,7 +3,7 @@ from django.conf import settings
 
 
 class Categoria(models.Model):
-    """Category used to group pathology types (e.g. Dermatopatología, Hematopatología)."""
+    """Categoría para agrupar tipos de patología (p. ej. Dermatopatología, Hematopatología)."""
 
     nombre = models.CharField(max_length=150, unique=True, verbose_name='Nombre')
     descripcion = models.TextField(blank=True, verbose_name='Descripción')
@@ -24,7 +24,7 @@ class Categoria(models.Model):
 
 
 class Patologia(models.Model):
-    """Pathology type with its required fields and medical protocol."""
+    """Tipo de patología con su protocolo médico. Sus campos de formulario están en Plantilla."""
 
     nombre = models.CharField(max_length=200, unique=True, verbose_name='Nombre')
     categoria = models.ForeignKey(
@@ -54,7 +54,7 @@ class Patologia(models.Model):
 
 
 class Plantilla(models.Model):
-    """Dynamic form field template linked to a pathology type."""
+    """Campo del formulario dinámico de una patología (texto, número, lista, etc.)."""
 
     class TipoCampo(models.TextChoices):
         TEXTO = 'texto', 'Texto'

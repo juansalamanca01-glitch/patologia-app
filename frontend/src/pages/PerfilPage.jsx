@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import client from '../api/client';
+import { ROL_LABELS } from '../constants';
 
-const ROL_LABELS = { admin: 'Administrador', patologo: 'Patólogo', auditor: 'Auditor' };
 
 export default function PerfilPage() {
   const [perfil, setPerfil] = useState(null);

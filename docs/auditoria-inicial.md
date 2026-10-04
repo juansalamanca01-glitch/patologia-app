@@ -257,6 +257,8 @@ Esto ya se explicó en la sección 1, pero se repite aquí porque es un problema
 
 ### M-3. Código duplicado
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`). Ver `CHANGELOG.md`.
+
 - **`ROL_LABELS`** (el texto "Administrador / Patólogo / Auditor") está copiado en **4 archivos**: `Navbar`, `LoginPage`, `DashboardPage` y `PerfilPage`.
 - **El indicador de estado del informe** (`ESTADO_CLASS` y el texto "Borrador / Finalizado") se repite en `DashboardPage`, `BuscarPage` e `InformePage`.
 - **`get_autor_nombre`** (`nombre_completo or username`) está repetido en **5 serializers**. Se podría convertir en una propiedad del modelo `Usuario`, por ejemplo `nombre_visible`, y usar `source='autor.nombre_visible'`.
@@ -309,6 +311,8 @@ Si el backend está apagado, el usuario no ve ningún mensaje.
 En `config/urls.py`, los archivos de `/media/` solo se sirven si `DEBUG=True`. En producción hará falta configurarlos aparte, por ejemplo con Nginx o un almacenamiento externo.
 
 ### M-13. Comentarios en inglés y un comentario equivocado
+
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`): se tradujeron 63 comentarios y docstrings. **Corrección de esta auditoría:** el "comentario equivocado" de `informes/utils.py` no existía. Cada comentario de sección está sobre su función correcta. El error fue del auditor: leyó dos fragmentos separados del archivo como si fueran seguidos.
 
 - La regla del proyecto es escribir los comentarios en español, pero muchos docstrings están en inglés (por ejemplo, `"""Custom user model with role-based access."""`).
 - En `informes/utils.py`, el comentario `# ── Macroscopic description generator ──` está justo antes de la función que **genera el PDF**, así que confunde.

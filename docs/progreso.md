@@ -19,7 +19,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` a `seguridad-critica` después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 57 del backend (`cd backend` y luego `python manage.py test`) y 14 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 59 del backend (`cd backend` y luego `python manage.py test`) y 17 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -44,15 +44,16 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | I-10 | `client.js` usa `VITE_API_URL` (vacía en desarrollo → proxy de Vite) en lugar de `localhost:8000` fijo | `1a1822e` |
 | I-12 | README reescrito (permisos, API completa, pruebas, seguridad) y colección de Postman rehecha y probada | `e3743c2` |
 | I-2 | Los campos obligatorios se validan aunque `datos_ingresados` llegue vacío; `0` y `false` cuentan como respuesta | `0d94a56` |
-| M-1, M-2 | Limpieza: imports, `LoginSerializer`, campo `campos_requeridos` (migración 0003), `isPatologo`/`isAuditor`, `console.log`, imágenes sobrantes y `dist/` | ver `git log` |
+| M-1, M-2 | Limpieza: imports, `LoginSerializer`, campo `campos_requeridos` (migración 0003), `isPatologo`/`isAuditor`, `console.log`, imágenes sobrantes y `dist/` | `f944dd7` |
+| M-3, M-13 | `nombre_visible`, `constants.js`, `EstadoBadge`, `resultados()`; 63 comentarios traducidos | ver `git log` |
 
 ## Siguiente paso
 
 Seguir el orden sugerido en la sección 7 de la auditoría:
 1. **Limpieza** (en 3 grupos, cada uno con su lista exacta y confirmación del usuario):
    - Grupo 1, código y archivos sin usar (M-1, M-2): **hecho**.
-   - Grupo 2, código duplicado y comentarios (M-3, M-13): siguiente.
-   - Grupo 3, comportamiento (M-4 a M-12; M-5 ampliado, ver abajo).
+   - Grupo 2, código duplicado y comentarios (M-3, M-13): **hecho**.
+   - Grupo 3, comportamiento (M-4 a M-12; M-5 ampliado, ver abajo): siguiente. Incluye un fallo nuevo, que no estaba en la auditoría: los menús desplegables (patologías en "Nuevo informe", categorías, temas del foro) solo cargan la primera página de 20 resultados. Con más de 20 patologías, las demás no se podrían elegir.
 2. **Opcional, al final (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal que obliga a revisar la navegación de todas las páginas.
 
 Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejecutar `git switch main`, luego `git merge --ff-only seguridad-critica` y `git push origin main`, y volver con `git switch seguridad-critica`. Siempre preguntar antes al usuario.

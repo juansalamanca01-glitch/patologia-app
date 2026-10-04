@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import client from '../api/client';
+import client, { resultados } from '../api/client';
+import EstadoBadge from '../components/EstadoBadge';
 
 export default function InformePage() {
   const { id } = useParams();
@@ -29,14 +30,14 @@ export default function InformePage() {
     ? canWrite && Boolean(informe) && (isAdmin || informe.autor === user?.id)
     : canWrite;
 
-  // Fetch pathology list
+  // Carga la lista de patologías
   useEffect(() => {
     client.get('/patologias/').then(({ data }) => {
-      setPatologias(data.results || data);
+      setPatologias(resultados(data));
     });
   }, []);
 
-  // Fetch existing report
+  // Carga el informe si se está editando uno existente
   useEffect(() => {
     if (isEditing) {
       setLoading(true);
@@ -51,12 +52,12 @@ export default function InformePage() {
     }
   }, [id]);
 
-  // Fetch templates when pathology changes
+  // Carga los campos de la plantilla al cambiar de patología
   useEffect(() => {
     if (selectedPatologia) {
       client.get(`/patologias/${selectedPatologia}/`).then(({ data }) => {
         setPlantillas(data.plantillas || []);
-        // Set default values
+        // Valores por defecto de los campos
         if (!isEditing) {
           const defaults = {};
           (data.plantillas || []).forEach((p) => {
@@ -253,9 +254,7 @@ export default function InformePage() {
         <div>
           <h1>{isEditing ? `Informe ${numeroCaso}` : 'Nuevo Informe'}</h1>
           {informe && (
-            <span className={`badge ${informe.estado === 'finalizado' ? 'badge-success' : 'badge-warning'}`}>
-              {informe.estado === 'finalizado' ? 'Finalizado' : 'Borrador'}
-            </span>
+            <EstadoBadge estado={informe.estado} />
           )}
         </div>
         <div className="header-actions">
@@ -349,7 +348,7 @@ export default function InformePage() {
           </div>
         </div>
 
-        {/* Dynamic fields */}
+        {/* Campos dinámicos */}
         {plantillas.length > 0 && (
           <div className="card">
             <div className="card-header"><h2>Descripción Macroscópica</h2></div>
@@ -361,7 +360,7 @@ export default function InformePage() {
           </div>
         )}
 
-        {/* Notes */}
+        {/* Notas */}
         <div className="card">
           <div className="card-header"><h2>Notas Adicionales</h2></div>
           <div className="card-body">
@@ -378,7 +377,7 @@ export default function InformePage() {
           </div>
         </div>
 
-        {/* Generated text preview */}
+        {/* Vista previa del texto generado */}
         {informe?.texto_generado && (
           <div className="card">
             <div className="card-header"><h2>Texto Generado</h2></div>

@@ -5,6 +5,24 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Limpieza: código duplicado y comentarios en español (M-3, M-13)
+
+**Qué se cambió**
+- Backend:
+  - Nueva propiedad `Usuario.nombre_visible` (nombre completo o, si está vacío, el nombre de usuario). Reemplaza la expresión `nombre_completo or username`, que estaba repetida en 8 lugares: 5 serializers (que ahora usan `CharField(source='autor.nombre_visible')`), el PDF, el token del login y `Usuario.__str__`. La API responde igual.
+  - Se tradujeron al español 52 docstrings, comentarios y el texto de ayuda de `seed_data`, en 11 archivos. También se corrigió el docstring de `Patologia`, que todavía mencionaba el campo borrado en M-1.
+- Frontend:
+  - `src/constants.js` (nuevo): `ROL_LABELS` (antes copiado en 3 archivos) y `ESTADOS_INFORME`.
+  - `src/components/EstadoBadge.jsx` (nuevo): la etiqueta de estado del informe, que se repetía en el Dashboard, el Buscador y la página del informe. Antes, cualquier estado distinto de "borrador" se mostraba como "Finalizado"; ahora un estado desconocido se muestra tal cual.
+  - `api/client.js`: nueva función `resultados(data)`, que reemplaza `data.results || data` (7 apariciones en 5 páginas).
+  - Se tradujeron 11 comentarios.
+- Pruebas: `NombreVisibleAutorTests` (2, backend) y `EstadoBadge.test.jsx` (3, frontend). Los mocks de `InformePage.test.jsx` y `ForoPage.test.jsx` ahora conservan las funciones reales del módulo `api/client`.
+- Documentación: `CLAUDE.md` (dónde está el código compartido) y una corrección en la auditoría (ver M-13).
+
+**Por qué**
+- Con el código repetido, un cambio (por ejemplo, el nombre de un rol) había que hacerlo en varios sitios, y era fácil olvidar alguno.
+- La regla 4 de `CLAUDE.md` pide comentarios y documentación en español.
+
 ### Limpieza: código y archivos sin usar (M-1, M-2)
 
 **Qué se cambió**

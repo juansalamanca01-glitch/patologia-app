@@ -19,7 +19,7 @@ class ImagenPublicacionSerializer(serializers.ModelSerializer):
 
 
 class ComentarioSerializer(serializers.ModelSerializer):
-    autor_nombre = serializers.SerializerMethodField()
+    autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
 
     class Meta:
         model = Comentario
@@ -34,9 +34,6 @@ class ComentarioSerializer(serializers.ModelSerializer):
             campos['publicacion'].read_only = True
         return campos
 
-    def get_autor_nombre(self, obj):
-        return obj.autor.nombre_completo or obj.autor.username
-
     def validate_contenido(self, value):
         if not value.strip():
             raise serializers.ValidationError('El comentario no puede estar vacío.')
@@ -46,7 +43,7 @@ class ComentarioSerializer(serializers.ModelSerializer):
 
 
 class PublicacionSerializer(serializers.ModelSerializer):
-    autor_nombre = serializers.SerializerMethodField()
+    autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
     tema_nombre = serializers.CharField(source='tema.nombre', read_only=True, default=None)
     imagenes = ImagenPublicacionSerializer(many=True, read_only=True)
     comentarios = ComentarioSerializer(many=True, read_only=True)
@@ -70,9 +67,6 @@ class PublicacionSerializer(serializers.ModelSerializer):
             campos['fijado'].read_only = True
         return campos
 
-    def get_autor_nombre(self, obj):
-        return obj.autor.nombre_completo or obj.autor.username
-
     def validate_titulo(self, value):
         if not value.strip():
             raise serializers.ValidationError('El título no puede estar vacío.')
@@ -85,8 +79,8 @@ class PublicacionSerializer(serializers.ModelSerializer):
 
 
 class PublicacionListSerializer(serializers.ModelSerializer):
-    """Lightweight serializer for the forum feed."""
-    autor_nombre = serializers.SerializerMethodField()
+    """Versión resumida para el listado del foro."""
+    autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
     tema_nombre = serializers.CharField(source='tema.nombre', read_only=True, default=None)
     total_comentarios = serializers.IntegerField(source='comentarios.count', read_only=True)
     total_imagenes = serializers.IntegerField(source='imagenes.count', read_only=True)
@@ -98,9 +92,6 @@ class PublicacionListSerializer(serializers.ModelSerializer):
             'id', 'tema', 'tema_nombre', 'autor_nombre', 'titulo', 'fijado',
             'total_comentarios', 'total_imagenes', 'portada', 'fecha_creacion',
         ]
-
-    def get_autor_nombre(self, obj):
-        return obj.autor.nombre_completo or obj.autor.username
 
     def get_portada(self, obj):
         primera = obj.imagenes.first()

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import client from '../api/client';
+import client, { resultados } from '../api/client';
 
 // Debe coincidir con FORO_MAX_TAMANO_IMAGEN de backend/config/settings.py.
 const MAX_TAMANO_IMAGEN_MB = 10;
@@ -42,8 +42,8 @@ export default function ForoPage() {
         client.get('/foro/publicaciones/', { params: filtroTema ? { tema: filtroTema } : {} }),
         client.get('/foro/temas/'),
       ]);
-      setPublicaciones(pubRes.data.results || pubRes.data);
-      setTemas(temaRes.data.results || temaRes.data);
+      setPublicaciones(resultados(pubRes.data));
+      setTemas(resultados(temaRes.data));
     } catch (err) {
       setError('No se pudo cargar el foro.');
     } finally {

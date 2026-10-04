@@ -3,7 +3,7 @@ from django.db import models
 
 
 class Usuario(AbstractUser):
-    """Custom user model with role-based access."""
+    """Usuario del sistema. Su rol (admin, patólogo o auditor) define qué puede hacer."""
 
     class Rol(models.TextChoices):
         ADMIN = 'admin', 'Administrador'
@@ -28,7 +28,12 @@ class Usuario(AbstractUser):
         ordering = ['-fecha_creacion']
 
     def __str__(self):
-        return f'{self.nombre_completo or self.username} ({self.get_rol_display()})'
+        return f'{self.nombre_visible} ({self.get_rol_display()})'
+
+    @property
+    def nombre_visible(self):
+        """Nombre para mostrar: el nombre completo o, si está vacío, el nombre de usuario."""
+        return self.nombre_completo or self.username
 
     @property
     def es_admin(self):

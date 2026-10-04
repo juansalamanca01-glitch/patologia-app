@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import client from '../api/client';
 import ForoPage from './ForoPage';
 
-vi.mock('../api/client', () => ({
+// Se simula solo el cliente; resultados() y el resto del módulo son los reales.
+vi.mock('../api/client', async (importOriginal) => ({
+  ...(await importOriginal()),
   default: { get: vi.fn(), post: vi.fn() },
 }));
 

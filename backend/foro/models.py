@@ -7,7 +7,7 @@ def ruta_imagen_publicacion(instance, filename):
 
 
 class TemaForo(models.Model):
-    """Topic/category used to organize forum posts (e.g. Casos clínicos, Técnicas de tinción)."""
+    """Tema para organizar las publicaciones del foro (p. ej. Casos clínicos, Técnicas de tinción)."""
 
     nombre = models.CharField(max_length=150, unique=True, verbose_name='Nombre')
     descripcion = models.TextField(blank=True, verbose_name='Descripción')
@@ -24,7 +24,7 @@ class TemaForo(models.Model):
 
 
 class Publicacion(models.Model):
-    """A research note / observation shared by a pathologist in the forum."""
+    """Nota de investigación u observación que un patólogo comparte en el foro."""
 
     tema = models.ForeignKey(
         TemaForo,
@@ -58,7 +58,7 @@ class Publicacion(models.Model):
 
 
 class ImagenPublicacion(models.Model):
-    """Image attached to a forum post."""
+    """Imagen adjunta a una publicación del foro."""
 
     publicacion = models.ForeignKey(
         Publicacion,
@@ -79,7 +79,7 @@ class ImagenPublicacion(models.Model):
 
 
 class Comentario(models.Model):
-    """Comment on a forum post."""
+    """Comentario en una publicación del foro."""
 
     publicacion = models.ForeignKey(
         Publicacion,

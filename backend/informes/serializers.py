@@ -53,7 +53,7 @@ class PatologiaSerializer(serializers.ModelSerializer):
 
 
 class PatologiaListSerializer(serializers.ModelSerializer):
-    """Lightweight serializer for dropdowns."""
+    """Versión resumida para listas y menús desplegables."""
     categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True, default=None)
 
     class Meta:
@@ -63,7 +63,7 @@ class PatologiaListSerializer(serializers.ModelSerializer):
 
 class InformeSerializer(serializers.ModelSerializer):
     patologia_nombre = serializers.CharField(source='patologia.nombre', read_only=True)
-    autor_nombre = serializers.SerializerMethodField()
+    autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
 
     class Meta:
         model = Informe
@@ -74,9 +74,6 @@ class InformeSerializer(serializers.ModelSerializer):
             'fecha_creacion', 'fecha_actualizacion',
         ]
         read_only_fields = ['id', 'autor', 'texto_generado', 'fecha', 'fecha_creacion', 'fecha_actualizacion']
-
-    def get_autor_nombre(self, obj):
-        return obj.autor.nombre_completo or obj.autor.username
 
     def validate(self, data):
         """Comprueba que estén llenos los campos obligatorios de la plantilla de la patología."""
@@ -104,9 +101,9 @@ class InformeSerializer(serializers.ModelSerializer):
 
 
 class InformeListSerializer(serializers.ModelSerializer):
-    """Lightweight serializer for list views."""
+    """Versión resumida para el listado de informes."""
     patologia_nombre = serializers.CharField(source='patologia.nombre', read_only=True)
-    autor_nombre = serializers.SerializerMethodField()
+    autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
 
     class Meta:
         model = Informe
@@ -114,6 +111,3 @@ class InformeListSerializer(serializers.ModelSerializer):
             'id', 'numero_caso', 'patologia_nombre', 'autor', 'autor_nombre',
             'fecha', 'tipo_muestra', 'estado', 'fecha_creacion',
         ]
-
-    def get_autor_nombre(self, obj):
-        return obj.autor.nombre_completo or obj.autor.username

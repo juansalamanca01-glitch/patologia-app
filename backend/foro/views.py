@@ -21,7 +21,7 @@ MAX_IMAGENES_POR_PUBLICACION = 6
 
 
 class TemaForoViewSet(viewsets.ModelViewSet):
-    """CRUD for forum topics. Only patólogo/admin can create, edit or delete."""
+    """Temas del foro. Todos leen; crear, editar o borrar requiere patólogo o admin."""
     queryset = TemaForo.objects.all()
     serializer_class = TemaForoSerializer
     permission_classes = [EsPatologoOAdmin]
@@ -31,8 +31,8 @@ class TemaForoViewSet(viewsets.ModelViewSet):
 
 class PublicacionViewSet(viewsets.ModelViewSet):
     """
-    CRUD for forum posts shared by pathologists (research notes, observations).
-    Supports attaching images and nested comments.
+    Publicaciones del foro (notas de investigación, observaciones, casos).
+    Admite imágenes adjuntas y comentarios.
     """
     queryset = Publicacion.objects.select_related('autor', 'tema').prefetch_related('imagenes', 'comentarios__autor')
     permission_classes = [EsAutorOAdminOSoloLectura]
@@ -63,7 +63,7 @@ class PublicacionViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='imagenes')
     def subir_imagenes(self, request, pk=None):
-        """Attach one or more images to an existing post (author or admin only)."""
+        """Adjunta una o más imágenes a una publicación existente (solo su autor o un admin)."""
         publicacion = self.get_object()
         if request.user.rol != 'admin' and publicacion.autor_id != request.user.id:
             return Response(
@@ -111,7 +111,7 @@ class PublicacionViewSet(viewsets.ModelViewSet):
 
 
 class ImagenPublicacionViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
-    """Allows removing a single image from a post (author or admin only)."""
+    """Permite borrar una imagen de una publicación (solo su autor o un admin)."""
     queryset = ImagenPublicacion.objects.select_related('publicacion')
     serializer_class = ImagenPublicacionSerializer
 
@@ -125,7 +125,7 @@ class ImagenPublicacionViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet
 
 
 class ComentarioViewSet(viewsets.ModelViewSet):
-    """CRUD for comments on forum posts."""
+    """Comentarios en las publicaciones del foro."""
     queryset = Comentario.objects.select_related('autor', 'publicacion')
     serializer_class = ComentarioSerializer
     permission_classes = [EsAutorOAdminOSoloLectura]
