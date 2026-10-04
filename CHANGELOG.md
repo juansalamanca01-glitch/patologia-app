@@ -5,6 +5,16 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Los errores se muestran en pantalla, no solo en la consola (M-9)
+
+**Qué se cambió**
+- `frontend/src/pages/DashboardPage.jsx`: si falla la carga del panel, se muestra *"No se pudo cargar el panel…"*; si falla el borrado de un borrador, se muestra el motivo que devuelve la API.
+- `frontend/src/pages/InformePage.jsx`: avisos si no se pueden cargar las patologías o los campos de la patología elegida. Se quitó el último `console.error`, porque ese error ya se mostraba en pantalla.
+- Pruebas: `DashboardPage.test.jsx` (nuevo, 2) y 2 nuevas en `InformePage.test.jsx`.
+
+**Por qué**
+- Con el backend apagado o ante un error del servidor, el panel se quedaba vacío y el formulario de informe sin opciones, sin ningún aviso. El error solo aparecía en la consola del navegador, que el usuario no ve.
+
 ### Foro: el auditor ya no ve el formulario para comentar (M-7)
 
 **Qué se cambió**

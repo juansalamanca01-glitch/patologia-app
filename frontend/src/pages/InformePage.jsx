@@ -35,9 +35,9 @@ export default function InformePage() {
     // Al crear un informe solo se ofrecen las patologías activas (decisión D-4). Al editar se
     // piden todas, para que se vea la patología de un informe viejo aunque esté desactivada.
     const params = isEditing ? LISTA_COMPLETA : { ...LISTA_COMPLETA, activa: 'true' };
-    client.get('/patologias/', { params }).then(({ data }) => {
-      setPatologias(resultados(data));
-    });
+    client.get('/patologias/', { params })
+      .then(({ data }) => setPatologias(resultados(data)))
+      .catch(() => setErrors((prev) => ({ ...prev, general: 'No se pudieron cargar las patologías. Recarga la página.' })));
   }, []);
 
   // Carga el informe si se está editando uno existente
@@ -68,6 +68,8 @@ export default function InformePage() {
           });
           setFormData((prev) => ({ ...defaults, ...prev }));
         }
+      }).catch(() => {
+        setErrors((prev) => ({ ...prev, general: 'No se pudieron cargar los campos de la patología. Recarga la página.' }));
       });
     } else {
       setPlantillas([]);
@@ -149,7 +151,6 @@ export default function InformePage() {
       setInforme(data);
       setSuccessMsg('Informe finalizado correctamente.');
     } catch (err) {
-      console.error('Error al finalizar:', err.response?.data || err);
       setErrors({ general: err.response?.data?.detail || 'Error al finalizar el informe.' });
     }
   };

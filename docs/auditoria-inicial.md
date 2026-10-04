@@ -301,6 +301,8 @@ En `PerfilPage.jsx`, si `GET /auth/perfil/` falla, `perfil` queda en `null`. Lue
 
 ### M-9. Algunas peticiones no manejan errores
 
+> **Estado: corregido el 2026-10-04** (rama `seguridad-critica`). Ver `CHANGELOG.md`.
+
 - `InformePage.jsx` no tiene `.catch` al cargar las patologías ni las plantillas.
 - `DashboardPage.jsx` solo escribe los errores en la consola.
 

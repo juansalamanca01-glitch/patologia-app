@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [recientes, setRecientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [error, setError] = useState('');
 
   const fetchData = async () => {
     try {
@@ -23,8 +24,8 @@ export default function DashboardPage() {
       setStats(estadisticas.data);
       const informes = resultados(listado.data);
       setRecientes(informes.slice(0, 10));
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
+    } catch {
+      setError('No se pudo cargar el panel. Revisa tu conexión e intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -37,18 +38,22 @@ export default function DashboardPage() {
       setConfirmDeleteId(id);
       return;
     }
+    setError('');
     try {
       await client.delete(`/informes/${id}/`);
       setConfirmDeleteId(null);
       fetchData();
     } catch (err) {
-      console.error('Error eliminando informe:', err);
+      setConfirmDeleteId(null);
+      setError(err.response?.data?.detail || 'No se pudo eliminar el informe.');
     }
   };
 
 
   return (
     <div className="dashboard">
+      {/* Los errores se muestran en pantalla, no solo en la consola (auditoría M-9). */}
+      {error && <div className="alert alert-error">{error}</div>}
       <div className="page-header">
         <div>
           <h1>Bienvenido, {user?.nombre_completo || user?.username}</h1>

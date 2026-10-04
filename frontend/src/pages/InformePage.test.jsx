@@ -107,3 +107,33 @@ describe('InformePage: selector de patologías', () => {
     });
   });
 });
+
+// Hallazgo M-9 de docs/auditoria-inicial.md: si fallaba la carga de las patologías
+// o de los campos de la plantilla, el formulario quedaba vacío sin ningún aviso.
+describe('InformePage: errores visibles', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('avisa si no se pueden cargar las patologías', async () => {
+    client.get.mockRejectedValue(new Error('Network Error'));
+    render(
+      <MemoryRouter initialEntries={['/informes/nuevo']}>
+        <Routes>
+          <Route path="/informes/nuevo" element={<InformePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText(/No se pudieron cargar las patologías/i)).toBeInTheDocument();
+  });
+
+  it('avisa si no se pueden cargar los campos de la patología', async () => {
+    simularApi();
+    const simulacion = client.get.getMockImplementation();
+    client.get.mockImplementation((url, ...resto) => (
+      url === '/patologias/1/' ? Promise.reject(new Error('Network Error')) : simulacion(url, ...resto)
+    ));
+    renderInforme();
+    expect(await screen.findByText(/No se pudieron cargar los campos de la patología/i)).toBeInTheDocument();
+  });
+});
