@@ -150,6 +150,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### I-6. El límite de 10 MB para subir imágenes no existe en realidad
 
+> **Estado: corregido el 2026-10-03** (rama `seguridad-critica`). Al corregirlo se encontró otro problema: tampoco se validaba que el archivo fuera una imagen (se aceptaba un HTML llamado `foto.png`). También quedó corregido. Ver `CHANGELOG.md`, `backend/foro/tests.py` y `ForoPage.test.jsx`.
+
 - **Dónde:** `backend/config/settings.py`, líneas 158–161.
 - **Qué pasa:** el comentario dice "Tamaño máximo de subida (10 MB)", pero esos ajustes no hacen eso:
   - `DATA_UPLOAD_MAX_MEMORY_SIZE` **no cuenta** los archivos subidos.

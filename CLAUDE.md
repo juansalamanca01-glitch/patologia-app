@@ -47,6 +47,7 @@ Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234`, `auditor1/
 - `SECRET_KEY` es obligatoria: si falta, `settings.py` lanza `ImproperlyConfigured` y nada arranca (ni `runserver` ni las pruebas). `DEBUG` vale `False` si no se define. Las dos cosas las verifica `backend/config/tests.py`.
 - Si `DB_NAME` está definido usa PostgreSQL; si no, SQLite (`backend/db.sqlite3`).
 - `DEBUG=True` activa `CORS_ALLOW_ALL_ORIGINS` y sirve `/media/`; con `DEBUG=False` se usan `CORS_ALLOWED_ORIGINS` y los ajustes HTTPS/HSTS.
+- `FORO_MAX_TAMANO_IMAGEN` (10 MB) es el límite por imagen del foro. Lo aplica `foro/views.py` (`subir_imagenes`, que además comprueba con Pillow que el archivo sea una imagen real), y `ForoPage.jsx` repite el valor en `MAX_TAMANO_IMAGEN_MB`: si cambia uno, hay que cambiar el otro.
 - Idioma `es`, zona horaria `America/Bogota`.
 
 ## Arquitectura

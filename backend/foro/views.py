@@ -1,3 +1,7 @@
+from django import forms
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from rest_framework import viewsets, mixins, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -78,10 +82,29 @@ class PublicacionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        creadas = []
+        # Se revisan TODOS los archivos antes de guardar ninguno (auditoría I-6).
+        limite = settings.FORO_MAX_TAMANO_IMAGEN
         for archivo in archivos:
-            imagen = ImagenPublicacion.objects.create(publicacion=publicacion, imagen=archivo)
-            creadas.append(imagen)
+            if archivo.size > limite:
+                return Response(
+                    {'detail': f'«{archivo.name}» supera el tamaño máximo de {limite / (1024 * 1024):g} MB.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            try:
+                # Abre el archivo con Pillow: rechaza lo que no sea una imagen real,
+                # aunque tenga extensión .png (por ejemplo, un HTML disfrazado).
+                forms.ImageField().to_python(archivo)
+            except ValidationError:
+                return Response(
+                    {'detail': f'«{archivo.name}» no es una imagen válida.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        with transaction.atomic():
+            creadas = [
+                ImagenPublicacion.objects.create(publicacion=publicacion, imagen=archivo)
+                for archivo in archivos
+            ]
 
         serializer = ImagenPublicacionSerializer(creadas, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)

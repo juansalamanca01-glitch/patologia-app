@@ -3,6 +3,23 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
 
+// Debe coincidir con FORO_MAX_TAMANO_IMAGEN de backend/config/settings.py.
+const MAX_TAMANO_IMAGEN_MB = 10;
+
+// Revisa las imágenes antes de publicar (auditoría I-6). La validación de verdad
+// la hace el backend; esto evita crear la publicación si una imagen será rechazada.
+function errorEnImagenes(archivos) {
+  for (const archivo of archivos) {
+    if (!archivo.type.startsWith('image/')) {
+      return `«${archivo.name}» no es una imagen.`;
+    }
+    if (archivo.size > MAX_TAMANO_IMAGEN_MB * 1024 * 1024) {
+      return `«${archivo.name}» supera el tamaño máximo de ${MAX_TAMANO_IMAGEN_MB} MB.`;
+    }
+  }
+  return '';
+}
+
 export default function ForoPage() {
   const { canWrite } = useAuth();
   const [publicaciones, setPublicaciones] = useState([]);
@@ -15,6 +32,8 @@ export default function ForoPage() {
   const [nuevo, setNuevo] = useState({ titulo: '', contenido: '', tema: '' });
   const [archivos, setArchivos] = useState([]);
   const [guardando, setGuardando] = useState(false);
+  // Errores del formulario: se muestran dentro del modal, no detrás de él.
+  const [errorFormulario, setErrorFormulario] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -36,14 +55,24 @@ export default function ForoPage() {
 
   const crearPublicacion = async (e) => {
     e.preventDefault();
-    setGuardando(true);
     setError('');
+    setErrorFormulario('');
+
+    const errorImagenes = errorEnImagenes(archivos);
+    if (errorImagenes) {
+      setErrorFormulario(errorImagenes);
+      return;
+    }
+
+    setGuardando(true);
+    let publicacionCreada = false;
     try {
       const { data } = await client.post('/foro/publicaciones/', {
         titulo: nuevo.titulo,
         contenido: nuevo.contenido,
         tema: nuevo.tema || null,
       });
+      publicacionCreada = true;
       if (archivos.length > 0) {
         const form = new FormData();
         archivos.forEach((f) => form.append('imagenes', f));
@@ -51,20 +80,31 @@ export default function ForoPage() {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       }
-      setMostrarForm(false);
-      setNuevo({ titulo: '', contenido: '', tema: '' });
-      setArchivos([]);
+      cerrarFormulario();
       fetchData();
     } catch (err) {
-      setError(
-        err.response?.data?.titulo?.[0] ||
+      const detalle = err.response?.data?.titulo?.[0] ||
         err.response?.data?.contenido?.[0] ||
-        err.response?.data?.detail ||
-        'No se pudo publicar. Intenta de nuevo.'
-      );
+        err.response?.data?.detail;
+      if (publicacionCreada) {
+        // La publicación ya existe: se cierra el formulario para que reintentar
+        // no cree una publicación duplicada.
+        cerrarFormulario();
+        fetchData();
+        setError(`La publicación se creó, pero las imágenes no se pudieron subir. ${detalle || ''}`.trim());
+      } else {
+        setErrorFormulario(detalle || 'No se pudo publicar. Intenta de nuevo.');
+      }
     } finally {
       setGuardando(false);
     }
+  };
+
+  const cerrarFormulario = () => {
+    setMostrarForm(false);
+    setNuevo({ titulo: '', contenido: '', tema: '' });
+    setArchivos([]);
+    setErrorFormulario('');
   };
 
   return (
@@ -75,7 +115,7 @@ export default function ForoPage() {
           <p className="text-muted">Comparte investigaciones, observaciones y casos con tus colegas</p>
         </div>
         {canWrite && (
-          <button className="btn btn-primary" onClick={() => setMostrarForm(true)}>
+          <button className="btn btn-primary" onClick={() => { setErrorFormulario(''); setMostrarForm(true); }}>
             + Nueva publicación
           </button>
         )}
@@ -133,6 +173,7 @@ export default function ForoPage() {
         <div className="modal-overlay" onClick={() => setMostrarForm(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <h2>Nueva publicación</h2>
+            {errorFormulario && <div className="alert alert-error">{errorFormulario}</div>}
             <form onSubmit={crearPublicacion}>
               <div className="form-group">
                 <label>Tema</label>

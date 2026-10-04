@@ -169,9 +169,16 @@ if not DEBUG:
 # ---------- Archivos subidos (imágenes del foro) ----------
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-# Tamaño máximo de subida (10 MB) para evitar abuso/denegación de servicio por archivos gigantes.
+# Tamaño máximo de cada imagen del foro. Lo comprueba foro/views.py (auditoría I-6).
+# El frontend (ForoPage.jsx) usa el mismo valor para avisar antes de publicar.
+FORO_MAX_TAMANO_IMAGEN = 10 * 1024 * 1024
+# DATA_UPLOAD_MAX_MEMORY_SIZE limita el cuerpo de la petición SIN contar los archivos,
+# así que no sirve para limitar imágenes. Para FILE_UPLOAD_MAX_MEMORY_SIZE se deja el
+# valor por defecto de Django (2,5 MB): los archivos más grandes van a disco temporal
+# en vez de ocupar RAM.
+# En producción, el servidor web debe cortar las peticiones enormes antes de que
+# lleguen a Django (por ejemplo, en Nginx: client_max_body_size 60m;).
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 
 # ---------- i18n ----------
 LANGUAGE_CODE = 'es'

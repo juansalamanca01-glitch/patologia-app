@@ -5,6 +5,27 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-03
 
+### Seguridad: límite real de tamaño y validación de las imágenes del foro (I-6)
+
+**Qué se cambió**
+- `backend/config/settings.py`:
+  - Nuevo ajuste `FORO_MAX_TAMANO_IMAGEN = 10 MB`.
+  - Se corrigió el comentario que decía que `DATA_UPLOAD_MAX_MEMORY_SIZE` y `FILE_UPLOAD_MAX_MEMORY_SIZE` limitaban la subida; no lo hacen.
+  - Se quitó `FILE_UPLOAD_MAX_MEMORY_SIZE` para usar el valor por defecto de Django (2,5 MB), así los archivos grandes van a disco y no a RAM.
+  - Se añadió una nota: en producción, el servidor web debe limitar el tamaño de las peticiones (por ejemplo, `client_max_body_size` en Nginx).
+- `backend/foro/views.py` (`subir_imagenes`): antes de guardar nada revisa todos los archivos. Si alguno supera el límite o **no es una imagen real** (se abre con Pillow mediante `forms.ImageField().to_python()`), responde 400. Las imágenes se guardan dentro de `transaction.atomic()`.
+- `frontend/src/pages/ForoPage.jsx`:
+  - Revisa el tipo y el tamaño de las imágenes **antes** de crear la publicación.
+  - Los errores del formulario se muestran dentro del modal; antes quedaban ocultos detrás.
+  - Si la publicación se crea pero el backend rechaza las imágenes, cierra el formulario y lo avisa, para que reintentar no cree una publicación duplicada.
+- Pruebas: `backend/foro/tests.py` (nuevo, 5 pruebas; las imágenes se guardan en una carpeta temporal) y `frontend/src/pages/ForoPage.test.jsx` (nuevo, 4 pruebas).
+- Documentación: `CLAUDE.md` (ajuste `FORO_MAX_TAMANO_IMAGEN`).
+
+**Por qué**
+- El "límite de 10 MB" no existía: los ajustes usados no limitan el tamaño de los archivos subidos, y se podía llenar el disco del servidor.
+- Durante el arreglo se descubrió algo más grave: `ImagenPublicacion.objects.create()` no valida el `ImageField`, así que el foro aceptaba cualquier archivo con extensión de imagen. Por ejemplo, un HTML con `<script>` llamado `foto.png`.
+- En el frontend, una imagen rechazada dejaba una publicación sin imágenes, y al reintentar se creaba otra duplicada.
+
 ### Seguridad: el token de sesión ya no viaja en la URL al descargar el PDF (I-5)
 
 **Qué se cambió**
