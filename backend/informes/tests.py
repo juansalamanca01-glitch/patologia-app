@@ -218,6 +218,16 @@ class PdfConTextoDelUsuarioTests(APITestCase):
         textos = [str(llamada.args[0]) for llamada in espia.call_args_list]
         self.assertIn('Primera línea<br/>Segunda línea<br/>Tercera &lt; línea', textos)
 
+    def test_la_hora_del_pie_usa_la_zona_horaria_de_bogota(self):
+        # Hallazgo M-10: el pie usaba la hora del servidor (datetime.now()), no TIME_ZONE.
+        from datetime import datetime, timezone as tz
+        from reportlab.platypus import Paragraph
+        ahora_utc = datetime(2026, 10, 4, 3, 30, tzinfo=tz.utc)  # en Bogotá: 3 de octubre, 22:30
+        with mock.patch('django.utils.timezone.now', return_value=ahora_utc),                 mock.patch('informes.utils.Paragraph', wraps=Paragraph) as espia:
+            self.descargar_pdf()
+        textos = ' '.join(str(llamada.args[0]) for llamada in espia.call_args_list)
+        self.assertIn('Generado el 03/10/2026 22:30', textos)
+
 
 class EstadisticasYPaginacionTests(APITestCase):
     """

@@ -2,9 +2,9 @@
 Generación de la descripción macroscópica y exportación del informe a PDF.
 """
 import io
-from datetime import datetime
 from xml.sax.saxutils import escape
 
+from django.utils import timezone
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
@@ -186,7 +186,8 @@ def generar_pdf_informe(informe) -> io.BytesIO:
     elements.append(HRFlowable(width='100%', thickness=1, color=HexColor('#2b6cb0')))
     elements.append(Spacer(1, 6))
     elements.append(Paragraph(
-        f'Generado el {datetime.now().strftime("%d/%m/%Y %H:%M")} — '
+        # Hora en la zona de settings.TIME_ZONE (America/Bogota), no la del servidor (auditoría M-10).
+        f'Generado el {timezone.localtime().strftime("%d/%m/%Y %H:%M")} — '
         'Sistema de Patología Clínica',
         styles['PiePagina'],
     ))

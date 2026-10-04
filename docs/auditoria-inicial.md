@@ -310,6 +310,8 @@ Si el backend está apagado, el usuario no ve ningún mensaje.
 
 ### M-10. La hora del PDF no usa la zona horaria configurada
 
+> **Estado: corregido el 2026-10-04** (rama `seguridad-critica`). Ver `CHANGELOG.md`.
+
 `generar_pdf_informe` usa `datetime.now()`, que toma la hora del servidor y no la de Bogotá configurada en `TIME_ZONE`. Se corrige con `django.utils.timezone.localtime()`.
 
 ### M-11. Cerrar sesión no invalida los tokens

@@ -5,6 +5,15 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### La hora del pie del PDF usa la zona horaria configurada (M-10)
+
+**Qué se cambió**
+- `backend/informes/utils.py`: el pie *"Generado el …"* usa `timezone.localtime()` de Django en lugar de `datetime.now()`.
+- `backend/informes/tests.py`: una prueba fija la hora en 03:30 UTC del 4 de octubre y comprueba que el PDF diga "03/10/2026 22:30" (hora de Bogotá).
+
+**Por qué**
+- `datetime.now()` devuelve la hora del sistema operativo, no la de `TIME_ZONE = 'America/Bogota'`. En Linux, Django ajusta la zona horaria de todo el proceso y el resultado coincidía; en Windows no puede hacerlo, y en un servidor con otra zona la hora del PDF salía corrida.
+
 ### Los errores se muestran en pantalla, no solo en la consola (M-9)
 
 **Qué se cambió**
