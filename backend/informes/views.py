@@ -6,8 +6,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 
 from accounts.permissions import EsPatologoOAdmin, EsSoloLectura
-from .models import Patologia, Plantilla, Informe
+from .models import Categoria, Patologia, Plantilla, Informe
 from .serializers import (
+    CategoriaSerializer,
     PatologiaSerializer, PatologiaListSerializer,
     PlantillaSerializer,
     InformeSerializer, InformeListSerializer,
@@ -15,12 +16,37 @@ from .serializers import (
 from .utils import generar_descripcion_macroscopica, generar_pdf_informe
 
 
-class PatologiaViewSet(viewsets.ModelViewSet):
-    """CRUD for pathology types. Write access requires admin or patologo role."""
-    queryset = Patologia.objects.prefetch_related('plantillas').all()
-    permission_classes = [EsSoloLectura]
+class CategoriaViewSet(viewsets.ModelViewSet):
+    """CRUD for pathology categories. Only patólogo/admin can create, edit or delete."""
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
+    permission_classes = [EsPatologoOAdmin]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nombre']
+
+    def destroy(self, request, *args, **kwargs):
+        categoria = self.get_object()
+        if categoria.patologias.exists():
+            return Response(
+                {'detail': 'No se puede eliminar: hay patologías asociadas a esta categoría.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().destroy(request, *args, **kwargs)
+
+
+class PatologiaViewSet(viewsets.ModelViewSet):
+    """CRUD for pathology types. Write access requires admin or patologo role."""
+    queryset = Patologia.objects.select_related('categoria').prefetch_related('plantillas').all()
+    permission_classes = [EsPatologoOAdmin]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nombre']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        categoria_id = self.request.query_params.get('categoria')
+        if categoria_id:
+            qs = qs.filter(categoria_id=categoria_id)
+        return qs
 
     def get_serializer_class(self):
         if self.action == 'list':

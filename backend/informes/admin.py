@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Patologia, Plantilla, Informe
+from .models import Categoria, Patologia, Plantilla, Informe
 
 
 class PlantillaInline(admin.TabularInline):
@@ -7,10 +7,17 @@ class PlantillaInline(admin.TabularInline):
     extra = 1
 
 
-@admin.register(Patologia)
-class PatologiaAdmin(admin.ModelAdmin):
+@admin.register(Categoria)
+class CategoriaAdmin(admin.ModelAdmin):
     list_display = ['nombre', 'activa', 'fecha_creacion']
     list_filter = ['activa']
+    search_fields = ['nombre']
+
+
+@admin.register(Patologia)
+class PatologiaAdmin(admin.ModelAdmin):
+    list_display = ['nombre', 'categoria', 'activa', 'fecha_creacion']
+    list_filter = ['activa', 'categoria']
     search_fields = ['nombre']
     inlines = [PlantillaInline]
 

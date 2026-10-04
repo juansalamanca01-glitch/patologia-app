@@ -1,5 +1,17 @@
 from rest_framework import serializers
-from .models import Patologia, Plantilla, Informe
+from .models import Categoria, Patologia, Plantilla, Informe
+
+
+class CategoriaSerializer(serializers.ModelSerializer):
+    total_patologias = serializers.IntegerField(source='patologias.count', read_only=True)
+
+    class Meta:
+        model = Categoria
+        fields = [
+            'id', 'nombre', 'descripcion', 'color', 'activa',
+            'total_patologias', 'fecha_creacion',
+        ]
+        read_only_fields = ['id', 'fecha_creacion']
 
 
 class PlantillaSerializer(serializers.ModelSerializer):
@@ -14,12 +26,13 @@ class PlantillaSerializer(serializers.ModelSerializer):
 
 class PatologiaSerializer(serializers.ModelSerializer):
     plantillas = PlantillaSerializer(many=True, read_only=True)
+    categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True, default=None)
 
     class Meta:
         model = Patologia
         fields = [
-            'id', 'nombre', 'descripcion', 'campos_requeridos',
-            'protocolo_medico', 'activa', 'plantillas',
+            'id', 'nombre', 'categoria', 'categoria_nombre', 'descripcion',
+            'campos_requeridos', 'protocolo_medico', 'activa', 'plantillas',
             'fecha_creacion', 'fecha_actualizacion',
         ]
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
@@ -27,9 +40,11 @@ class PatologiaSerializer(serializers.ModelSerializer):
 
 class PatologiaListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for dropdowns."""
+    categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True, default=None)
+
     class Meta:
         model = Patologia
-        fields = ['id', 'nombre', 'activa']
+        fields = ['id', 'nombre', 'categoria', 'categoria_nombre', 'activa']
 
 
 class InformeSerializer(serializers.ModelSerializer):

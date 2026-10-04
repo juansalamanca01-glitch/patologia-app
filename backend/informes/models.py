@@ -2,10 +2,38 @@ from django.db import models
 from django.conf import settings
 
 
+class Categoria(models.Model):
+    """Category used to group pathology types (e.g. Dermatopatología, Hematopatología)."""
+
+    nombre = models.CharField(max_length=150, unique=True, verbose_name='Nombre')
+    descripcion = models.TextField(blank=True, verbose_name='Descripción')
+    color = models.CharField(
+        max_length=7, blank=True, default='#2563eb',
+        verbose_name='Color', help_text='Color hexadecimal para distinguirla en la interfaz.',
+    )
+    activa = models.BooleanField(default=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Categoría'
+        verbose_name_plural = 'Categorías'
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
 class Patologia(models.Model):
     """Pathology type with its required fields and medical protocol."""
 
     nombre = models.CharField(max_length=200, unique=True, verbose_name='Nombre')
+    categoria = models.ForeignKey(
+        Categoria,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='patologias',
+        verbose_name='Categoría',
+    )
     descripcion = models.TextField(blank=True, verbose_name='Descripción')
     campos_requeridos = models.JSONField(
         default=list,

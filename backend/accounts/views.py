@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 
 from .serializers import RegistroSerializer, UsuarioSerializer, CambiarPasswordSerializer
 from .permissions import EsAdmin
+from .throttles import LoginRateThrottle, RegistroRateThrottle
 
 Usuario = get_user_model()
 
@@ -28,12 +29,14 @@ class CustomTokenSerializer(TokenObtainPairSerializer):
 
 class CustomTokenView(TokenObtainPairView):
     serializer_class = CustomTokenSerializer
+    throttle_classes = [LoginRateThrottle]
 
 
 # ── Registration (admin-only) ────────────────────────────────────
 class RegistroView(generics.CreateAPIView):
     serializer_class = RegistroSerializer
     permission_classes = [EsAdmin]
+    throttle_classes = [RegistroRateThrottle]
 
 
 # ── Profile ──────────────────────────────────────────────────────
