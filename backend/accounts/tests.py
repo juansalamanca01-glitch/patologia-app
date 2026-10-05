@@ -173,3 +173,65 @@ class CierreDeSesionTests(APITestCase):
         self.assertEqual(self.renovar(sesion_2['refresh']).status_code, status.HTTP_401_UNAUTHORIZED)
         # La sesión desde la que se cambió la contraseña sigue abierta con tokens nuevos.
         self.assertEqual(self.renovar(respuesta.data['refresh']).status_code, status.HTTP_200_OK)
+
+
+class RegistroMedicoTests(APITestCase):
+    """
+    Informe v2, etapa 6 (decisión D-8): el registro médico firma los informes, así
+    que solo lo asigna un administrador. En el perfil es de solo lectura, como el rol (C-1).
+    """
+
+    CLAVE = 'Histologia-Segura-2026'
+
+    def setUp(self):
+        self.patologo = Usuario.objects.create_user(
+            username='patologo_registro', password=self.CLAVE, rol=Usuario.Rol.PATOLOGO,
+            registro_medico='RM-PRUEBA-0001',
+        )
+        self.admin = Usuario.objects.create_user(
+            username='admin_registro', password=self.CLAVE, rol=Usuario.Rol.ADMIN,
+        )
+
+    def test_el_perfil_muestra_el_registro_medico(self):
+        self.client.force_authenticate(self.patologo)
+        respuesta = self.client.get('/api/auth/perfil/')
+        self.assertEqual(respuesta.data['registro_medico'], 'RM-PRUEBA-0001')
+
+    def test_no_puede_cambiar_su_registro_medico_desde_el_perfil(self):
+        self.client.force_authenticate(self.patologo)
+        self.client.patch('/api/auth/perfil/', {'registro_medico': 'RM-FALSO'}, format='json')
+        self.patologo.refresh_from_db()
+        self.assertEqual(self.patologo.registro_medico, 'RM-PRUEBA-0001')
+
+    def test_el_login_devuelve_el_registro_medico(self):
+        respuesta = self.client.post(
+            '/api/auth/login/', {'username': 'patologo_registro', 'password': self.CLAVE}, format='json',
+        )
+        self.assertEqual(respuesta.data['user']['registro_medico'], 'RM-PRUEBA-0001')
+
+    def test_el_admin_asigna_el_registro_medico_al_crear_el_usuario(self):
+        self.client.force_authenticate(self.admin)
+        respuesta = self.client.post('/api/auth/registro/', {
+            'username': 'patologo_nuevo', 'email': 'nuevo@patologia.local',
+            'password': self.CLAVE, 'password_confirm': self.CLAVE,
+            'rol': 'patologo', 'registro_medico': 'RM-PRUEBA-0002',
+        }, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        self.assertEqual(Usuario.objects.get(username='patologo_nuevo').registro_medico, 'RM-PRUEBA-0002')
+
+    def test_seed_data_da_registro_medico_a_patologo1(self):
+        # También si patologo1 ya existía sin registro (bases creadas antes de la etapa 6).
+        from io import StringIO
+        from django.core.management import call_command
+        Usuario.objects.create_user(username='patologo1', password=self.CLAVE, rol=Usuario.Rol.PATOLOGO)
+        call_command('seed_data', stdout=StringIO())
+        self.assertEqual(Usuario.objects.get(username='patologo1').registro_medico, 'RM-PRUEBA-0001')
+
+    def test_seed_data_no_cambia_un_registro_medico_ya_asignado(self):
+        from io import StringIO
+        from django.core.management import call_command
+        Usuario.objects.create_user(
+            username='patologo1', password=self.CLAVE, rol=Usuario.Rol.PATOLOGO, registro_medico='RM-PRUEBA-0777',
+        )
+        call_command('seed_data', stdout=StringIO())
+        self.assertEqual(Usuario.objects.get(username='patologo1').registro_medico, 'RM-PRUEBA-0777')

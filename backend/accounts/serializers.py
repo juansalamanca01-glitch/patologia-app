@@ -25,11 +25,12 @@ class UsuarioSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             'id', 'username', 'email', 'nombre_completo',
-            'rol', 'telefono', 'especialidad', 'activo', 'fecha_creacion',
+            'rol', 'telefono', 'especialidad', 'registro_medico', 'activo', 'fecha_creacion',
         ]
         # username, rol y activo son de solo lectura para que nadie pueda
-        # cambiárselos a sí mismo desde /api/auth/perfil/ (auditoría C-1).
-        read_only_fields = ['id', 'username', 'rol', 'activo', 'fecha_creacion']
+        # cambiárselos a sí mismo desde /api/auth/perfil/ (auditoría C-1). El registro
+        # médico tampoco: con uno falso se firmarían informes (decisión D-8).
+        read_only_fields = ['id', 'username', 'rol', 'registro_medico', 'activo', 'fecha_creacion']
 
 
 class RegistroSerializer(serializers.ModelSerializer):
@@ -42,7 +43,7 @@ class RegistroSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             'username', 'email', 'password', 'password_confirm',
-            'nombre_completo', 'rol', 'telefono', 'especialidad',
+            'nombre_completo', 'rol', 'telefono', 'especialidad', 'registro_medico',
         ]
 
     def validate(self, data):

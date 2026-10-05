@@ -1,7 +1,7 @@
 # Propuesta: informe de anatomía patológica v2
 
 **Fecha:** 2026-10-04
-**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); las etapas 1 (número de petición), 2 (catálogos y opciones), 3 (pacientes), 4 (datos de la solicitud) y 5 (contenido del informe) se terminaron el 2026-10-04.
+**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); las etapas 1 (número de petición), 2 (catálogos y opciones), 3 (pacientes), 4 (datos de la solicitud), 5 (contenido del informe) y 6 (firma y finalización) se terminaron el 2026-10-04.
 
 **Objetivo:** que el informe tenga los datos y el orden de un informe real de laboratorio:
 
@@ -267,6 +267,8 @@ Para finalizar, además de lo que se exige hoy (autor o admin, y que no esté ya
 
 Al finalizar se fija `fecha_informe`, se guarda `datos_finalizacion` y se cambia el estado, todo en una sola transacción.
 
+**Hecho en la etapa 6:** si faltan requisitos, `finalizar` responde 400 con todos a la vez: `{"detail": "No se puede finalizar el informe. …", "requisitos": [...]}`, y el formulario los muestra en una lista. La edad no se congela: se calcula con la fecha de nacimiento congelada y la fecha de ingreso, que tampoco cambia. Decisiones del usuario del 2026-10-04: `seed_data` da a `patologo1` el registro ficticio `RM-PRUEBA-0001` (también si ya existía sin registro), y el PDF actual ya usa la firma congelada y muestra el registro médico y la fecha de informe, sin esperar a la etapa 7.
+
 Para **guardar un borrador** solo se exigen la patología, el paciente (en informes nuevos) y los campos obligatorios de la plantilla (I-2), como hoy. Así el patólogo puede guardar el trabajo a medias.
 
 ---
@@ -453,7 +455,7 @@ Se actualiza en cada etapa, según las reglas 2, 3 y 6 de `CLAUDE.md`:
 | **3. Pacientes** (hecha, 2026-10-04) | Modelo `Paciente` en la app `pacientes`, CRUD, búsqueda, edad calculada, permisos, `useOpciones`, `PacientesPage` y enlace en el Navbar. Borrar una EPS que usa un paciente responde 400 ("desactívela"). | backend, frontend |
 | **4. Datos de la solicitud** (hecha, 2026-10-04) | Paciente y campos de 3.4 en el informe, historial `GET /api/pacientes/{id}/informes/` (y en `PacientesPage`), 400 al borrar un paciente con informes (se pasaron de la etapa 3 porque necesitan `Informe.paciente`), `SelectorPaciente`, tarjeta "Datos de la solicitud", búsqueda ampliada, columnas de los listados y pantalla para administrar EPS y servicios (6.3). Borrar un servicio o una EPS que usa un informe responde 400. | backend, frontend |
 | **5. Contenido del informe** (hecha, 2026-10-04) | Descripción microscópica, `notas` → `comentarios` y diagnósticos con CIE-10 (`ListaDiagnosticos`, que se reordena con botones de subir y bajar). El PDF actual ya imprime las tres secciones (decisión del usuario en la etapa 5); su estructura completa sigue en la etapa 7. | backend, frontend, PDF (secciones nuevas) |
-| **6. Firma y finalización** | `registro_medico`, reglas para finalizar, `fecha_informe`, `datos_finalizacion`, perfil y `SeccionFirma`. | backend, frontend |
+| **6. Firma y finalización** (hecha, 2026-10-04) | `registro_medico`, reglas para finalizar, `fecha_informe`, `datos_finalizacion`, perfil y `SeccionFirma`. El PDF actual ya usa la firma congelada y muestra el registro médico y la fecha de informe (decisión del usuario en la etapa 6). | backend, frontend, PDF (firma y fecha de informe) |
 | **7. PDF nuevo** | Estructura de la sección 5, encabezado configurable, numeración de páginas y borrador. | PDF |
 | **8. Adendas** | Modelo, endpoints, sección en el frontend y en el PDF. | backend, frontend, PDF |
 | **9. Cierre** | Política de privacidad, revisión completa del README y de Postman, comprobar que el código cumple D-7 a D-11 y prueba manual de todo el flujo en el navegador. | documentación |

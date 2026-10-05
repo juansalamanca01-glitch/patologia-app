@@ -45,6 +45,8 @@ const INFORME = {
   comentarios: 'Se sugiere correlación clínica.',
   datos_ingresados: {},
   texto_generado: '',
+  fecha_informe: null,
+  firma: { nombre: 'Dra. Ficticia Firma', especialidad: 'Patología Quirúrgica', registro_medico: 'RM-PRUEBA-0001' },
 };
 
 const OPCIONES = {
@@ -395,5 +397,54 @@ describe('InformePage: contenido del informe', () => {
     await screen.findByLabelText('Diagnóstico 2');
     fireEvent.click(screen.getByRole('button', { name: /Actualizar Informe/i }));
     expect(await screen.findByText('Código CIE-10 no válido.')).toBeInTheDocument();
+  });
+});
+
+describe('InformePage: firma y finalización (etapa 6)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    reiniciarOpciones();
+    simularApi();
+  });
+
+  it('un informe guardado termina con la tarjeta Firma', async () => {
+    renderInforme();
+    await screen.findByText('Dra. Ficticia Firma');
+    const titulos = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+    expect(titulos.at(-1)).toBe('Firma');
+  });
+
+  it('si no se puede finalizar, muestra todos los requisitos que faltan', async () => {
+    client.post.mockRejectedValue({
+      response: {
+        status: 400,
+        data: {
+          detail: 'No se puede finalizar el informe. El informe debe tener al menos un diagnóstico. ...',
+          requisitos: [
+            'El informe debe tener al menos un diagnóstico.',
+            'El patólogo autor no tiene registro médico; un administrador debe registrarlo.',
+          ],
+        },
+      },
+    });
+    renderInforme();
+    fireEvent.click(await screen.findByRole('button', { name: /Finalizar Informe/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Confirmar/i }));
+    expect(await screen.findByText('No se puede finalizar el informe:')).toBeInTheDocument();
+    const lista = screen.getAllByRole('listitem').map((li) => li.textContent);
+    expect(lista).toContain('El informe debe tener al menos un diagnóstico.');
+    expect(lista).toContain('El patólogo autor no tiene registro médico; un administrador debe registrarlo.');
+  });
+
+  it('al finalizar muestra la firma y la fecha de informe', async () => {
+    client.post.mockResolvedValue({
+      data: { ...INFORME, estado: 'finalizado', fecha_informe: '2026-10-04T20:30:00Z' },
+    });
+    renderInforme();
+    fireEvent.click(await screen.findByRole('button', { name: /Finalizar Informe/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Confirmar/i }));
+    expect(await screen.findByText('Informe finalizado correctamente.')).toBeInTheDocument();
+    expect(screen.getByText(/Fecha de informe/)).toBeInTheDocument();
+    expect(screen.queryByText(/Al finalizar, el informe llevará/)).not.toBeInTheDocument();
   });
 });

@@ -5,7 +5,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http import HttpResponse
+from django.db import transaction
 from django.db.models import Count, Q, ProtectedError
+from django.utils import timezone
 
 from accounts.permissions import EsPatologoOAdmin, EsAutorOAdminOSoloLectura
 from config.catalogos import filtrar_por_activo
@@ -270,14 +272,30 @@ class InformeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='finalizar')
     def finalizar(self, request, pk=None):
-        """Marca el informe como finalizado (después ya no se puede editar)."""
-        informe = self.get_object()
-        if informe.estado == Informe.Estado.FINALIZADO:
-            return Response(
-                {'detail': 'El informe ya está finalizado.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        informe.estado = Informe.Estado.FINALIZADO
-        informe.save(update_fields=['estado'])
+        """
+        Finaliza el informe (después ya no se puede editar, D-3). Exige los requisitos
+        de D-8 y, en la misma transacción, fija la fecha de informe y congela los
+        datos que imprime (D-10).
+        """
+        # get_object() comprueba el permiso (autor o admin, D-2) antes de bloquear nada.
+        self.get_object()
+        with transaction.atomic():
+            # Se bloquea el informe: dos peticiones a la vez no lo finalizan dos veces.
+            informe = self.get_queryset().select_for_update(of=('self',)).get(pk=pk)
+            if informe.esta_finalizado:
+                return Response(
+                    {'detail': 'El informe ya está finalizado.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            faltantes = informe.requisitos_faltantes()
+            if faltantes:
+                return Response(
+                    {'detail': 'No se puede finalizar el informe. ' + ' '.join(faltantes), 'requisitos': faltantes},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            informe.estado = Informe.Estado.FINALIZADO
+            informe.fecha_informe = timezone.now()
+            informe.datos_finalizacion = informe.datos_para_congelar()
+            informe.save(update_fields=['estado', 'fecha_informe', 'datos_finalizacion'])
         return Response(InformeSerializer(informe).data)
 

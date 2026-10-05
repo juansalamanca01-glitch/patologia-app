@@ -15,6 +15,7 @@ const PERFIL = {
   email: 'patologo@patologia.local',
   telefono: '',
   especialidad: 'Patología Quirúrgica',
+  registro_medico: 'RM-PRUEBA-0001',
 };
 
 // Hallazgo M-8 de docs/auditoria-inicial.md: si la carga del perfil fallaba,
@@ -69,5 +70,37 @@ describe('PerfilPage: cambiar contraseña', () => {
     expect(await screen.findByText('Contraseña actualizada correctamente.')).toBeInTheDocument();
     expect(localStorage.getItem('access_token')).toBe('access-nuevo');
     expect(localStorage.getItem('refresh_token')).toBe('refresh-nuevo');
+  });
+});
+
+// Informe v2, etapa 6 (decisión D-8): el registro médico lo asigna un administrador.
+describe('PerfilPage: registro médico', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('muestra el registro médico sin dejar editarlo y no lo envía al guardar', async () => {
+    client.get.mockResolvedValue({ data: PERFIL });
+    client.patch.mockResolvedValue({ data: PERFIL });
+    render(<PerfilPage />);
+    const campo = await screen.findByLabelText('Registro médico');
+    expect(campo).toHaveValue('RM-PRUEBA-0001');
+    expect(campo).toHaveAttribute('readonly');
+    fireEvent.click(screen.getByRole('button', { name: /Guardar cambios/i }));
+    await vi.waitFor(() => expect(client.patch).toHaveBeenCalled());
+    expect(client.patch.mock.calls[0][1]).not.toHaveProperty('registro_medico');
+  });
+
+  it('avisa a un patólogo sin registro médico que no podrá finalizar informes', async () => {
+    client.get.mockResolvedValue({ data: { ...PERFIL, registro_medico: '' } });
+    render(<PerfilPage />);
+    expect(await screen.findByText(/no podrás finalizar informes/i)).toBeInTheDocument();
+  });
+
+  it('no muestra el aviso a un auditor', async () => {
+    client.get.mockResolvedValue({ data: { ...PERFIL, rol: 'auditor', registro_medico: '' } });
+    render(<PerfilPage />);
+    await screen.findByLabelText('Registro médico');
+    expect(screen.queryByText(/no podrás finalizar informes/i)).not.toBeInTheDocument();
   });
 });

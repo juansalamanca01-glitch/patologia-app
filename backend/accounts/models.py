@@ -19,6 +19,8 @@ class Usuario(AbstractUser):
     nombre_completo = models.CharField(max_length=255, blank=True, verbose_name='Nombre completo')
     telefono = models.CharField(max_length=20, blank=True, verbose_name='Teléfono')
     especialidad = models.CharField(max_length=100, blank=True, verbose_name='Especialidad')
+    # Firma los informes: solo lo asigna un administrador (decisión D-8).
+    registro_medico = models.CharField(max_length=30, blank=True, verbose_name='Registro médico')
     activo = models.BooleanField(default=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 

@@ -38,8 +38,13 @@ class Command(BaseCommand):
                 nombre_completo='Dr. Carlos Méndez',
                 rol='patologo',
                 especialidad='Patología Quirúrgica',
+                registro_medico='RM-PRUEBA-0001',
             )
             self.stdout.write(self.style.SUCCESS('[OK] Patologo "patologo1" creado (pass: patologo1234)'))
+        # Registro médico ficticio para poder finalizar informes (D-8). También se asigna si
+        # patologo1 ya existía sin registro (bases creadas antes de la etapa 6); no se cambia uno ya asignado.
+        elif Usuario.objects.filter(username='patologo1', registro_medico='').update(registro_medico='RM-PRUEBA-0001'):
+            self.stdout.write(self.style.SUCCESS('[OK] Registro medico RM-PRUEBA-0001 asignado a "patologo1"'))
 
         # ── Auditor de prueba ──────────────────────────────
         if not Usuario.objects.filter(username='auditor1').exists():

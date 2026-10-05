@@ -11,7 +11,7 @@ from rest_framework.test import APIClient, APITestCase
 
 from accounts.models import Usuario
 from pacientes.models import EPS, Paciente
-from .models import Categoria, Informe, Patologia, Plantilla, Servicio
+from .models import Categoria, Diagnostico, Informe, Patologia, Plantilla, Servicio
 
 
 def paciente_ficticio(numero='PRUEBA0001', **extra):
@@ -45,15 +45,24 @@ class PermisosInformeTests(APITestCase):
         self.auditor = Usuario.objects.create_user(
             username='auditor_prueba', password='ClaveSegura-2026', rol=Usuario.Rol.AUDITOR,
         )
+        # Lo que exige finalizar (D-8): el autor tiene registro médico y el informe,
+        # paciente, diagnóstico y descripción microscópica.
+        self.autor.registro_medico = 'RM-PRUEBA-0001'
+        self.autor.save()
         self.patologia = Patologia.objects.create(nombre='Patología de prueba')
+        self.paciente = paciente_ficticio()
 
     def crear_informe(self, estado=Informe.Estado.BORRADOR):
-        return Informe.objects.create(
+        informe = Informe.objects.create(
             patologia=self.patologia,
             autor=self.autor,
+            paciente=self.paciente,
+            descripcion_microscopica='Hallazgos de prueba.',
             comentarios='original',
             estado=estado,
         )
+        Diagnostico.objects.create(informe=informe, orden=1, descripcion='Diagnóstico de prueba')
+        return informe
 
     def url(self, informe, accion=''):
         return f'/api/informes/{informe.id}/{accion}'
@@ -749,7 +758,9 @@ class MigracionNumeroPeticionTests(TransactionTestCase):
     listo para que el siguiente informe continúe la numeración.
     """
 
-    ANTES = [('informes', '0003_quitar_campos_requeridos')]
+    # accounts también vuelve atrás: con la columna registro_medico (accounts 0002, NOT NULL)
+    # el modelo histórico de Usuario, que no la conoce, no podría crear usuarios.
+    ANTES = [('informes', '0003_quitar_campos_requeridos'), ('accounts', '0001_initial')]
 
     def test_numera_los_informes_existentes(self):
         executor = MigrationExecutor(connection)
@@ -1333,7 +1344,7 @@ class ContenidoInformeTests(APITestCase):
 class MigracionContenidoTests(TransactionTestCase):
     """La migración de la etapa 5 conserva las notas de los informes como comentarios (P-5)."""
 
-    ANTES = [('informes', '0008_datos_solicitud')]
+    ANTES = [('informes', '0008_datos_solicitud'), ('accounts', '0001_initial')]
 
     def test_las_notas_pasan_a_comentarios(self):
         executor = MigrationExecutor(connection)
@@ -1350,3 +1361,270 @@ class MigracionContenidoTests(TransactionTestCase):
         executor.migrate(executor.loader.graph.leaf_nodes())
 
         self.assertEqual(Informe.objects.get(id=informe.id).comentarios, 'Nota que debe conservarse')
+
+
+class FinalizacionTests(APITestCase):
+    """
+    Informe v2, etapa 6 (docs/propuesta-informe-v2.md, 3.7 y 3.9; decisiones D-8 y D-10):
+    - para finalizar, el informe tiene paciente y al menos un diagnóstico, el autor
+      tiene registro médico y, en histología, hay descripción microscópica;
+    - al finalizar se fija la fecha de informe y se congelan los datos que imprime;
+    - la firma es siempre la del autor, aunque finalice un admin.
+    Solo datos ficticios.
+    """
+
+    URL = '/api/informes/'
+    SIN_PACIENTE = 'El informe no tiene paciente.'
+    SIN_DIAGNOSTICO = 'El informe debe tener al menos un diagnóstico.'
+    SIN_MICROSCOPICA = 'En un estudio de histología, la descripción microscópica es obligatoria.'
+    SIN_REGISTRO = 'El patólogo autor no tiene registro médico; un administrador debe registrarlo.'
+
+    def setUp(self):
+        self.autor = Usuario.objects.create_user(
+            username='patologo_firma', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            nombre_completo='Dra. Ficticia Firma', especialidad='Patología Quirúrgica',
+            registro_medico='RM-PRUEBA-0001',
+        )
+        self.admin = Usuario.objects.create_user(
+            username='admin_firma', password='ClaveSegura-2026', rol=Usuario.Rol.ADMIN,
+            nombre_completo='Admin Ficticio', registro_medico='RM-PRUEBA-9999',
+        )
+        self.client.force_authenticate(self.autor)
+        self.patologia = Patologia.objects.create(nombre='Patología firma')
+        self.eps = EPS.objects.create(nombre='EPS Ficticia')
+        self.servicio = Servicio.objects.create(nombre='Dermatología')
+        self.paciente = paciente_ficticio(eps=self.eps)
+
+    def crear(self, **extra):
+        cuerpo = {
+            'patologia': self.patologia.id, 'paciente': self.paciente.id, 'datos_ingresados': {},
+            'fecha_ingreso': '2026-10-01', 'servicio': self.servicio.id,
+            'descripcion_microscopica': 'Proliferación de células basaloides.',
+            'diagnosticos': [{'descripcion': 'Carcinoma basocelular nodular', 'codigo_cie10': 'C44.3'}],
+            **extra,
+        }
+        respuesta = self.client.post(self.URL, cuerpo, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        return respuesta.data['id']
+
+    def finalizar(self, informe_id):
+        return self.client.post(f'{self.URL}{informe_id}/finalizar/')
+
+    def detalle(self, informe_id):
+        return self.client.get(f'{self.URL}{informe_id}/').data
+
+    def assertNoFinaliza(self, informe_id, requisito):
+        respuesta = self.finalizar(informe_id)
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(requisito, respuesta.data['requisitos'])
+        self.assertIn(requisito, respuesta.data['detail'])
+        informe = Informe.objects.get(id=informe_id)
+        self.assertEqual(informe.estado, Informe.Estado.BORRADOR)
+        self.assertIsNone(informe.fecha_informe)
+        self.assertIsNone(informe.datos_finalizacion)
+
+    # --- Requisitos para finalizar (D-8) ---
+
+    def test_finaliza_un_informe_completo(self):
+        informe_id = self.crear()
+        respuesta = self.finalizar(informe_id)
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
+        self.assertEqual(respuesta.data['estado'], Informe.Estado.FINALIZADO)
+
+    def test_no_finaliza_sin_diagnosticos(self):
+        self.assertNoFinaliza(self.crear(diagnosticos=[]), self.SIN_DIAGNOSTICO)
+
+    def test_no_finaliza_si_el_autor_no_tiene_registro_medico(self):
+        self.autor.registro_medico = ''
+        self.autor.save()
+        self.assertNoFinaliza(self.crear(), self.SIN_REGISTRO)
+
+    def test_no_finaliza_un_informe_antiguo_sin_paciente(self):
+        antiguo = Informe.objects.create(
+            patologia=self.patologia, autor=self.autor, descripcion_microscopica='Hallazgos.',
+        )
+        Diagnostico.objects.create(informe=antiguo, orden=1, descripcion='Diagnóstico')
+        self.assertNoFinaliza(antiguo.id, self.SIN_PACIENTE)
+
+    def test_histologia_exige_descripcion_microscopica(self):
+        for vacia in ['', '   ']:
+            with self.subTest(microscopica=vacia):
+                self.assertNoFinaliza(self.crear(descripcion_microscopica=vacia), self.SIN_MICROSCOPICA)
+
+    def test_otros_tipos_de_estudio_no_exigen_descripcion_microscopica(self):
+        informe_id = self.crear(tipo_estudio='citologia_no_ginecologica', descripcion_microscopica='')
+        self.assertEqual(self.finalizar(informe_id).status_code, status.HTTP_200_OK)
+
+    def test_informa_todos_los_requisitos_que_faltan_a_la_vez(self):
+        self.autor.registro_medico = ''
+        self.autor.save()
+        informe_id = self.crear(diagnosticos=[], descripcion_microscopica='')
+        respuesta = self.finalizar(informe_id)
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(respuesta.data['requisitos'], [self.SIN_DIAGNOSTICO, self.SIN_MICROSCOPICA, self.SIN_REGISTRO])
+
+    def test_el_registro_que_cuenta_es_el_del_autor_aunque_finalice_un_admin(self):
+        self.autor.registro_medico = ''
+        self.autor.save()
+        informe_id = self.crear()
+        self.client.force_authenticate(self.admin)  # el admin sí tiene registro médico
+        self.assertNoFinaliza(informe_id, self.SIN_REGISTRO)
+
+    def test_un_borrador_incompleto_se_puede_guardar(self):
+        # D-8: los requisitos son para finalizar, no para guardar el borrador.
+        informe_id = self.crear(diagnosticos=[], descripcion_microscopica='')
+        respuesta = self.client.patch(f'{self.URL}{informe_id}/', {'comentarios': 'A medias'}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
+
+    # --- Fecha de informe ---
+
+    def test_al_finalizar_se_fija_la_fecha_de_informe(self):
+        informe_id = self.crear()
+        self.assertIsNone(self.detalle(informe_id)['fecha_informe'])
+        momento = timezone.make_aware(datetime(2026, 10, 4, 15, 30))
+        with mock.patch('django.utils.timezone.now', return_value=momento):
+            respuesta = self.finalizar(informe_id)
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
+        self.assertEqual(Informe.objects.get(id=informe_id).fecha_informe, momento)
+        self.assertIsNotNone(self.detalle(informe_id)['fecha_informe'])
+
+    def test_la_fecha_de_informe_y_los_datos_congelados_no_se_escriben_por_la_api(self):
+        informe_id = self.crear(fecha_informe='2020-01-01T00:00:00Z', datos_finalizacion={'falso': True})
+        informe = Informe.objects.get(id=informe_id)
+        self.assertIsNone(informe.fecha_informe)
+        self.assertIsNone(informe.datos_finalizacion)
+        self.client.patch(f'{self.URL}{informe_id}/', {'fecha_informe': '2020-01-01T00:00:00Z'}, format='json')
+        self.assertIsNone(Informe.objects.get(id=informe_id).fecha_informe)
+
+    # --- Firma ---
+
+    def test_el_borrador_muestra_la_firma_actual_del_autor(self):
+        informe_id = self.crear()
+        self.assertEqual(self.detalle(informe_id)['firma'], {
+            'nombre': 'Dra. Ficticia Firma',
+            'especialidad': 'Patología Quirúrgica',
+            'registro_medico': 'RM-PRUEBA-0001',
+        })
+
+    def test_la_firma_es_la_del_autor_aunque_finalice_un_admin(self):
+        informe_id = self.crear()
+        self.client.force_authenticate(self.admin)
+        respuesta = self.finalizar(informe_id)
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
+        self.assertEqual(respuesta.data['firma']['registro_medico'], 'RM-PRUEBA-0001')
+        self.assertEqual(respuesta.data['firma']['nombre'], 'Dra. Ficticia Firma')
+
+    # --- Datos congelados (D-10) ---
+
+    def test_corregir_paciente_eps_servicio_o_autor_no_cambia_un_informe_finalizado(self):
+        informe_id = self.crear()
+        self.assertEqual(self.finalizar(informe_id).status_code, status.HTTP_200_OK)
+        antes = self.detalle(informe_id)
+
+        Paciente.objects.filter(id=self.paciente.id).update(
+            nombres='Otro Nombre', apellidos='Corregido', numero_documento='PRUEBA0099',
+            tipo_documento='TI', sexo='masculino', fecha_nacimiento=date(1990, 1, 1),
+        )
+        EPS.objects.filter(id=self.eps.id).update(nombre='EPS Renombrada')
+        Servicio.objects.filter(id=self.servicio.id).update(nombre='Servicio Renombrado')
+        Usuario.objects.filter(id=self.autor.id).update(
+            nombre_completo='Nombre Cambiado', especialidad='Otra', registro_medico='RM-PRUEBA-0002',
+        )
+
+        despues = self.detalle(informe_id)
+        for campo in ['paciente_datos', 'eps_nombre', 'servicio_nombre', 'firma']:
+            with self.subTest(campo=campo):
+                self.assertEqual(despues[campo], antes[campo])
+        self.assertEqual(despues['paciente_datos']['nombre_completo'], 'Paciente Ficticio Uno')
+        self.assertEqual(despues['paciente_datos']['edad'], '45 años')  # nació el 5/10/1980, ingresó el 1/10/2026
+        self.assertEqual(despues['eps_nombre'], 'EPS Ficticia')
+        self.assertEqual(despues['firma']['registro_medico'], 'RM-PRUEBA-0001')
+
+    def test_en_un_borrador_los_datos_siguen_siendo_los_actuales(self):
+        informe_id = self.crear()
+        EPS.objects.filter(id=self.eps.id).update(nombre='EPS Renombrada')
+        Usuario.objects.filter(id=self.autor.id).update(registro_medico='RM-PRUEBA-0002')
+        detalle = self.detalle(informe_id)
+        self.assertEqual(detalle['eps_nombre'], 'EPS Renombrada')
+        self.assertEqual(detalle['firma']['registro_medico'], 'RM-PRUEBA-0002')
+
+    def test_el_pdf_de_un_informe_finalizado_usa_la_firma_congelada(self):
+        from reportlab.platypus import Table
+        informe_id = self.crear()
+        momento = timezone.make_aware(datetime(2026, 10, 4, 15, 30))
+        with mock.patch('django.utils.timezone.now', return_value=momento):
+            self.assertEqual(self.finalizar(informe_id).status_code, status.HTTP_200_OK)
+        Usuario.objects.filter(id=self.autor.id).update(nombre_completo='Nombre Cambiado', registro_medico='RM-OTRO')
+        with mock.patch('informes.utils.Table', wraps=Table) as espia:
+            respuesta = self.client.get(f'{self.URL}{informe_id}/pdf/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        filas = dict((fila[0], fila[1]) for fila in espia.call_args.args[0])
+        self.assertEqual(filas['Patólogo:'], 'Dra. Ficticia Firma')
+        self.assertEqual(filas['Registro médico:'], 'RM-PRUEBA-0001')
+        self.assertEqual(filas['Fecha de informe:'], '04/10/2026 15:30')
+
+    def test_el_pdf_de_un_borrador_no_tiene_fecha_de_informe(self):
+        from reportlab.platypus import Table
+        informe_id = self.crear()
+        with mock.patch('informes.utils.Table', wraps=Table) as espia:
+            self.client.get(f'{self.URL}{informe_id}/pdf/')
+        filas = dict((fila[0], fila[1]) for fila in espia.call_args.args[0])
+        self.assertEqual(filas['Patólogo:'], 'Dra. Ficticia Firma')
+        self.assertNotIn('Fecha de informe:', filas)
+
+    def test_no_se_puede_finalizar_dos_veces(self):
+        informe_id = self.crear()
+        self.assertEqual(self.finalizar(informe_id).status_code, status.HTTP_200_OK)
+        fecha = Informe.objects.get(id=informe_id).fecha_informe
+        self.assertEqual(self.finalizar(informe_id).status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Informe.objects.get(id=informe_id).fecha_informe, fecha)
+
+
+class MigracionFinalizacionTests(TransactionTestCase):
+    """
+    La migración de la etapa 6 completa los informes que ya estaban finalizados:
+    fecha_informe toma la fecha de la última modificación (la mejor aproximación
+    disponible) y datos_finalizacion se llena con los datos actuales.
+    """
+
+    ANTES = [('informes', '0009_contenido'), ('accounts', '0001_initial')]
+
+    def test_completa_los_informes_ya_finalizados(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(self.ANTES)
+        modelos = executor.loader.project_state(self.ANTES).apps
+        autor = modelos.get_model('accounts', 'Usuario').objects.create(
+            username='autor_migracion_firma', nombre_completo='Dr. Ficticio Migración',
+        )
+        patologia = modelos.get_model('informes', 'Patologia').objects.create(nombre='Patología migración firma')
+        eps = modelos.get_model('pacientes', 'EPS').objects.create(nombre='EPS Migración')
+        paciente = modelos.get_model('pacientes', 'Paciente').objects.create(
+            tipo_documento='CC', numero_documento='PRUEBA0500', nombres='Paciente Ficticio', apellidos='Migración',
+            fecha_nacimiento=date(1970, 1, 1), sexo='femenino',
+        )
+        InformeAntes = modelos.get_model('informes', 'Informe')
+        finalizado = InformeAntes.objects.create(
+            numero_peticion='P-2026-09990', patologia=patologia, autor=autor, paciente=paciente, eps=eps,
+            fecha_ingreso=date(2026, 9, 1), estado='finalizado',
+        )
+        borrador = InformeAntes.objects.create(
+            numero_peticion='P-2026-09991', patologia=patologia, autor=autor, paciente=paciente,
+        )
+        sin_paciente = InformeAntes.objects.create(
+            numero_peticion='P-2026-09992', patologia=patologia, autor=autor, estado='finalizado',
+        )
+        actualizado = InformeAntes.objects.get(id=finalizado.id).fecha_actualizacion
+
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        executor.migrate(executor.loader.graph.leaf_nodes())
+
+        finalizado = Informe.objects.get(id=finalizado.id)
+        self.assertEqual(finalizado.fecha_informe, actualizado)
+        self.assertEqual(finalizado.datos_finalizacion['paciente']['nombre_completo'], 'Paciente Ficticio Migración')
+        self.assertEqual(finalizado.datos_finalizacion['eps_nombre'], 'EPS Migración')
+        self.assertEqual(finalizado.datos_finalizacion['firma']['nombre'], 'Dr. Ficticio Migración')
+        borrador = Informe.objects.get(id=borrador.id)
+        self.assertIsNone(borrador.fecha_informe)
+        self.assertIsNone(borrador.datos_finalizacion)
+        self.assertIsNone(Informe.objects.get(id=sin_paciente.id).datos_finalizacion['paciente'])

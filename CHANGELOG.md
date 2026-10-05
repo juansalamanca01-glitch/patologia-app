@@ -5,6 +5,39 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Informe v2, etapa 6: firma y finalización
+
+**Qué se cambió**
+- **Usuario** (`backend/accounts/models.py`, migración `accounts/0002_registro_medico`): campo nuevo `registro_medico` (texto, opcional).
+  - `UsuarioSerializer` lo devuelve (perfil, login y lista de usuarios), pero es de **solo lectura**, como el rol (C-1). Con un registro falso se podrían firmar informes (decisión D-8).
+  - `RegistroSerializer` lo acepta: solo un admin crea usuarios. También se edita en `/admin/`, donde además aparece en la lista y en la búsqueda.
+- **Informe** (`backend/informes/models.py`, migración `informes/0010_finalizacion`): campos nuevos `fecha_informe` y `datos_finalizacion` (JSON). Los dos son `editable=False`: no se escriben por la API ni en `/admin/`, donde se ven en solo lectura.
+  - `requisitos_faltantes()`: lo que falta para finalizar (D-8): paciente, al menos un diagnóstico, descripción microscópica si el estudio es de histología y registro médico **del autor**.
+  - `datos_para_congelar()`: paciente (nombre, documento, fecha de nacimiento y sexo), nombres de la EPS y del servicio, y firma del autor (nombre, especialidad y registro médico).
+  - `datos_impresos()`: los datos congelados si el informe está finalizado y los actuales si es borrador.
+  - **Migración de datos:** en los informes que ya estaban finalizados, `fecha_informe` toma el valor de `fecha_actualizacion` (la mejor aproximación disponible) y `datos_finalizacion` se llena con los datos actuales. Usa `update()` para no cambiar `fecha_actualizacion` y tiene función de reversa.
+- **`pacientes/models.py`:** el cálculo de la edad pasa a la función `edad_en_texto(nacimiento, fecha)`, que usan `Paciente.edad_en()` y los datos congelados. El resultado no cambia.
+- **`POST /api/informes/{id}/finalizar/`** (`backend/informes/views.py`):
+  - Bloquea el informe con `select_for_update` dentro de una transacción, para que dos peticiones a la vez no lo finalicen dos veces.
+  - Si faltan requisitos, responde 400 con todos a la vez: `{"detail": "No se puede finalizar el informe. …", "requisitos": [...]}`. Antes finalizaba cualquier borrador.
+  - Si todo está bien, en la misma transacción cambia el estado, fija `fecha_informe` y guarda `datos_finalizacion`.
+- **`InformeSerializer`:** campos nuevos `fecha_informe` (solo lectura) y `firma` (`{nombre, especialidad, registro_medico}` del autor). En un informe finalizado, `paciente_datos`, `eps_nombre`, `servicio_nombre` y `firma` salen de los datos congelados; corregir después el paciente, la EPS, el servicio o el usuario ya no cambia el informe (D-10). La edad se sigue calculando a la fecha de ingreso.
+- **PDF** (`backend/informes/utils.py`): la fila "Patólogo" usa la firma de `datos_impresos()` (la congelada si está finalizado), y se agregan las filas "Registro médico" y, si está finalizado, "Fecha de informe" (hora de Bogotá). La estructura completa sigue en la etapa 7.
+- **`seed_data`:** `patologo1` recibe el registro médico ficticio `RM-PRUEBA-0001`. Si `patologo1` ya existía sin registro, se le asigna; un registro ya asignado no se cambia.
+- **Frontend:**
+  - `components/informe/SeccionFirma.jsx` (nuevo): tarjeta "Firma" al final de un informe guardado, de solo lectura. En un informe finalizado muestra la firma y la fecha de informe; en un borrador, quién firmará o, si el autor no tiene registro médico, un aviso.
+  - `InformePage.jsx`: si no se puede finalizar, muestra la lista de requisitos que faltan.
+  - `PerfilPage.jsx`: muestra el registro médico en solo lectura (no se envía al guardar) y avisa a un patólogo sin registro que no podrá finalizar informes.
+  - `index.css`: estilos `.alert-warning`, `.alert-lista` y `.firma-informe`.
+- **Pruebas:**
+  - 25 nuevas en el backend (de 179 a 204): `RegistroMedicoTests` (6), `FinalizacionTests` (18) y `MigracionFinalizacionTests` (1).
+  - El ayudante de `PermisosInformeTests` crea informes completos (paciente, diagnóstico, microscópica y autor con registro médico), para que sus pruebas de finalizar sigan siendo válidas.
+  - `MigracionNumeroPeticionTests` y `MigracionContenidoTests` vuelven también `accounts` a `0001_initial`: con la columna `registro_medico` el modelo histórico de `Usuario` no podía crear usuarios.
+  - 10 nuevas en el frontend (de 79 a 89): `SeccionFirma.test.jsx` (4), 3 en `InformePage.test.jsx` y 3 en `PerfilPage.test.jsx`.
+- **Documentación:** `README.md`, `CLAUDE.md`, `docs/propuesta-informe-v2.md`, `docs/progreso.md` y la colección de Postman ("Ver mi perfil" y "Finalizar informe").
+
+**Por qué:** es la etapa 6 de `docs/propuesta-informe-v2.md` y cumple las decisiones D-8 (registro médico, firma del autor y requisitos para finalizar) y D-10 (datos congelados al finalizar). El usuario aprobó el 2026-10-04 dar el registro ficticio a `patologo1` en `seed_data` (si no, en una base existente no se podría finalizar ningún informe) y usar ya en el PDF actual la firma congelada, para que un PDF finalizado no cambie si después se corrige el nombre del autor.
+
 ### Informe v2, etapa 5: contenido del informe
 
 **Qué se cambió**

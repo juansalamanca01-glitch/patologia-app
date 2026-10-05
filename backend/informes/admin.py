@@ -45,8 +45,12 @@ class InformeAdmin(admin.ModelAdmin):
     list_select_related = ['paciente', 'patologia', 'autor']
     # Listas con búsqueda en lugar de un menú con todos los pacientes.
     autocomplete_fields = ['paciente']
-    # numero_peticion no es editable (D-7): se muestra pero no se puede cambiar.
-    readonly_fields = ['numero_peticion', 'texto_generado', 'fecha_creacion', 'fecha_actualizacion']
+    # numero_peticion (D-7), fecha_informe y datos_finalizacion (D-10) no son editables:
+    # se muestran pero no se pueden cambiar.
+    readonly_fields = [
+        'numero_peticion', 'texto_generado', 'fecha_informe', 'datos_finalizacion',
+        'fecha_creacion', 'fecha_actualizacion',
+    ]
     inlines = [DiagnosticoInline]
 
 

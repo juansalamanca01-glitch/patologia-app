@@ -6,6 +6,7 @@ import EstadoBadge from '../components/EstadoBadge';
 import SelectorPaciente from '../components/informe/SelectorPaciente';
 import DatosSolicitud from '../components/informe/DatosSolicitud';
 import ListaDiagnosticos, { conClaves, sinClaves } from '../components/informe/ListaDiagnosticos';
+import SeccionFirma from '../components/informe/SeccionFirma';
 import useOpciones from '../hooks/useOpciones';
 import { conOpcionActual, hoyISO } from '../utils/formularios';
 
@@ -232,7 +233,13 @@ export default function InformePage() {
       setInforme(data);
       setSuccessMsg('Informe finalizado correctamente.');
     } catch (err) {
-      setErrors({ general: err.response?.data?.detail || 'Error al finalizar el informe.' });
+      // Si faltan requisitos (decisión D-8), el backend los devuelve todos en `requisitos`.
+      const requisitos = err.response?.data?.requisitos;
+      if (requisitos?.length) {
+        setErrors({ requisitos });
+      } else {
+        setErrors({ general: err.response?.data?.detail || 'Error al finalizar el informe.' });
+      }
     }
   };
 
@@ -376,6 +383,14 @@ export default function InformePage() {
 
       {successMsg && <div className="alert alert-success">{successMsg}</div>}
       {(errors.general || errors.detail) && <div className="alert alert-error">{errors.general || errors.detail}</div>}
+      {errors.requisitos && (
+        <div className="alert alert-error alert-lista">
+          <p>No se puede finalizar el informe:</p>
+          <ul>
+            {errors.requisitos.map((requisito) => <li key={requisito}>{requisito}</li>)}
+          </ul>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         {/* Orden del informe real (informe v2, etapa 4): Paciente, Datos de la solicitud y Estudio */}
@@ -518,6 +533,8 @@ export default function InformePage() {
             </div>
           </div>
         </div>
+
+        <SeccionFirma firma={informe?.firma} estado={informe?.estado} fechaInforme={informe?.fecha_informe} />
 
         {puedeEditar && informe?.estado !== 'finalizado' && (
           <div className="form-actions">

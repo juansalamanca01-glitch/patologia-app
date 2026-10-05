@@ -110,7 +110,7 @@
 								""
 							]
 						},
-						"description": "Datos del usuario autenticado, incluido su rol."
+						"description": "Datos del usuario autenticado, incluidos su rol y su registro médico (de solo lectura: lo asigna un administrador)."
 					},
 					"response": []
 				}
@@ -583,7 +583,7 @@
 								""
 							]
 						},
-						"description": "Marca el informe como finalizado. Después ya no se puede editar ni borrar (400). Solo el autor o un admin."
+						"description": "Finaliza el informe: fija fecha_informe y congela los datos del paciente, la EPS, el servicio y la firma del autor. Después ya no se puede editar ni borrar (400). Solo el autor o un admin. Requisitos: paciente, al menos un diagnóstico, registro médico del autor (patologo1 tiene RM-PRUEBA-0001 con seed_data) y, en histología, descripción microscópica. Si falta alguno responde 400 con detail y la lista requisitos."
 					},
 					"response": []
 				},

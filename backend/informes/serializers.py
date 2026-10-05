@@ -1,10 +1,12 @@
 import re
+from datetime import date
 
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
 from config.catalogos import NombreCatalogoMixin
+from pacientes.models import edad_en_texto
 from .models import Categoria, Diagnostico, Patologia, Plantilla, Informe, Servicio
 
 MAX_DIAGNOSTICOS = 20
@@ -124,9 +126,11 @@ class InformeSerializer(serializers.ModelSerializer):
     patologia_nombre = serializers.CharField(source='patologia.nombre', read_only=True)
     autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
     # `paciente` es el id (para escribirlo); `paciente_datos`, lo que muestra el informe.
+    # En un informe finalizado, estos cuatro salen de los datos congelados (decisión D-10).
     paciente_datos = serializers.SerializerMethodField()
-    eps_nombre = serializers.CharField(source='eps.nombre', read_only=True, default=None)
-    servicio_nombre = serializers.CharField(source='servicio.nombre', read_only=True, default=None)
+    eps_nombre = serializers.SerializerMethodField()
+    servicio_nombre = serializers.SerializerMethodField()
+    firma = serializers.SerializerMethodField()
     # Si se envía, reemplaza la lista anterior; si no se envía (p. ej. un PATCH), no cambia.
     diagnosticos = DiagnosticoSerializer(many=True, required=False)
 
@@ -139,7 +143,7 @@ class InformeSerializer(serializers.ModelSerializer):
             'patologia', 'patologia_nombre',
             'autor', 'autor_nombre', 'fecha', 'tipo_muestra',
             'datos_ingresados', 'texto_generado', 'descripcion_microscopica', 'diagnosticos', 'comentarios',
-            'estado', 'fecha_creacion', 'fecha_actualizacion',
+            'estado', 'fecha_informe', 'firma', 'fecha_creacion', 'fecha_actualizacion',
         ]
         # numero_peticion lo asigna el sistema y no se puede cambiar (decisión D-7).
         read_only_fields = [
@@ -148,20 +152,22 @@ class InformeSerializer(serializers.ModelSerializer):
         ]
 
     def get_paciente_datos(self, informe):
-        paciente = informe.paciente
+        paciente = informe.datos_impresos()['paciente']
         if paciente is None:  # informe de antes de la etapa 4
             return None
         # La edad es la de la fecha de ingreso, no la de hoy: no cambia al reimprimir el informe.
         fecha = informe.fecha_ingreso or timezone.localdate(informe.fecha_creacion)
-        return {
-            'id': paciente.id,
-            'nombre_completo': paciente.nombre_completo,
-            'tipo_documento': paciente.tipo_documento,
-            'numero_documento': paciente.numero_documento,
-            'fecha_nacimiento': paciente.fecha_nacimiento.isoformat(),
-            'sexo': paciente.sexo,
-            'edad': paciente.edad_en(fecha),
-        }
+        nacimiento = date.fromisoformat(paciente['fecha_nacimiento'])
+        return {**paciente, 'edad': edad_en_texto(nacimiento, fecha)}
+
+    def get_eps_nombre(self, informe):
+        return informe.datos_impresos()['eps_nombre']
+
+    def get_servicio_nombre(self, informe):
+        return informe.datos_impresos()['servicio_nombre']
+
+    def get_firma(self, informe):
+        return informe.datos_impresos()['firma']
 
     def validate_fecha_ingreso(self, valor):
         if valor is not None and valor > timezone.localdate():

@@ -41,6 +41,25 @@ def _plural(cantidad, singular, plural):
     return f'{cantidad} {singular if cantidad == 1 else plural}'
 
 
+def edad_en_texto(nacimiento, fecha):
+    """
+    Edad a la fecha dada, como texto: en años cumplidos; si es menor de 1 año,
+    en meses; si es menor de 1 mes, en días. Devuelve None si la fecha es
+    anterior al nacimiento. Está fuera de Paciente para calcularla también con
+    los datos congelados de un informe finalizado (decisión D-10).
+    """
+    if fecha < nacimiento:
+        return None
+    # Quien nació un 29 de febrero cumple años el 1 de marzo en los años no bisiestos.
+    anios = fecha.year - nacimiento.year - ((fecha.month, fecha.day) < (nacimiento.month, nacimiento.day))
+    if anios >= 1:
+        return _plural(anios, 'año', 'años')
+    meses = (fecha.year - nacimiento.year) * 12 + fecha.month - nacimiento.month - (fecha.day < nacimiento.day)
+    if meses >= 1:
+        return _plural(meses, 'mes', 'meses')
+    return _plural((fecha - nacimiento).days, 'día', 'días')
+
+
 class Paciente(models.Model):
     """
     Paciente del informe (docs/propuesta-informe-v2.md, 3.1). Solo guarda lo que
@@ -83,22 +102,8 @@ class Paciente(models.Model):
         return f'{self.tipo_documento} {self.numero_documento}'
 
     def edad_en(self, fecha):
-        """
-        Edad a la fecha dada, como texto: en años cumplidos; si es menor de 1 año,
-        en meses; si es menor de 1 mes, en días. Devuelve None si la fecha es
-        anterior al nacimiento.
-        """
-        nacimiento = self.fecha_nacimiento
-        if fecha < nacimiento:
-            return None
-        # Quien nació un 29 de febrero cumple años el 1 de marzo en los años no bisiestos.
-        anios = fecha.year - nacimiento.year - ((fecha.month, fecha.day) < (nacimiento.month, nacimiento.day))
-        if anios >= 1:
-            return _plural(anios, 'año', 'años')
-        meses = (fecha.year - nacimiento.year) * 12 + fecha.month - nacimiento.month - (fecha.day < nacimiento.day)
-        if meses >= 1:
-            return _plural(meses, 'mes', 'meses')
-        return _plural((fecha - nacimiento).days, 'día', 'días')
+        """Edad a la fecha dada, como texto (ver edad_en_texto)."""
+        return edad_en_texto(self.fecha_nacimiento, fecha)
 
     @property
     def edad(self):

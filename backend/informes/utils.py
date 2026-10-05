@@ -128,15 +128,21 @@ def generar_pdf_informe(informe) -> io.BytesIO:
     elements.append(HRFlowable(width='100%', thickness=2, color=HexColor('#2b6cb0')))
     elements.append(Spacer(1, 12))
 
-    # Tabla con los datos generales del informe
+    # Tabla con los datos generales del informe. La firma de un informe finalizado
+    # sale de los datos congelados (D-10); la estructura completa llega en la etapa 7.
+    firma = informe.datos_impresos()['firma']
     meta_data = [
         ['N.º de petición:', informe.numero_peticion],
         ['Fecha:', informe.fecha.strftime('%d/%m/%Y') if informe.fecha else ''],
         ['Patología:', informe.patologia.nombre],
         ['Tipo de Muestra:', informe.tipo_muestra or 'N/A'],
-        ['Patólogo:', informe.autor.nombre_visible],
+        ['Patólogo:', firma['nombre']],
         ['Estado:', informe.get_estado_display()],
     ]
+    if firma['registro_medico']:
+        meta_data.insert(5, ['Registro médico:', firma['registro_medico']])
+    if informe.fecha_informe:
+        meta_data.append(['Fecha de informe:', timezone.localtime(informe.fecha_informe).strftime('%d/%m/%Y %H:%M')])
     if informe.numero_orden_externa:
         meta_data.insert(1, ['Orden externa:', informe.numero_orden_externa])
 

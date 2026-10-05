@@ -238,6 +238,12 @@ class Informe(models.Model):
     descripcion_microscopica = models.TextField(blank=True, verbose_name='Descripción microscópica')
     # Antes se llamaba `notas` (P-5); la migración 0009 conserva lo que ya estaba escrito.
     comentarios = models.TextField(blank=True, verbose_name='Comentarios')
+    # Los dos los llena solo `finalizar` (informe v2, etapa 6); no se escriben por la API ni en /admin/.
+    fecha_informe = models.DateTimeField(null=True, blank=True, editable=False, verbose_name='Fecha de informe')
+    # Paciente, EPS, servicio y firma tal como estaban al finalizar (decisión D-10).
+    datos_finalizacion = models.JSONField(
+        null=True, blank=True, editable=False, verbose_name='Datos congelados al finalizar',
+    )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 
@@ -258,6 +264,59 @@ class Informe(models.Model):
                 super().save(*args, **kwargs)
         else:
             super().save(*args, **kwargs)
+
+    @property
+    def esta_finalizado(self):
+        return self.estado == self.Estado.FINALIZADO
+
+    def requisitos_faltantes(self):
+        """Lo que le falta al informe para poder finalizarse (decisión D-8). Vacío si nada."""
+        faltantes = []
+        if self.paciente_id is None:
+            faltantes.append('El informe no tiene paciente.')
+        if not self.diagnosticos.exists():
+            faltantes.append('El informe debe tener al menos un diagnóstico.')
+        if self.tipo_estudio == self.TipoEstudio.HISTOLOGIA and not self.descripcion_microscopica.strip():
+            faltantes.append('En un estudio de histología, la descripción microscópica es obligatoria.')
+        # La firma es siempre la del autor, aunque finalice un admin (D-8).
+        if not self.autor.registro_medico.strip():
+            faltantes.append('El patólogo autor no tiene registro médico; un administrador debe registrarlo.')
+        return faltantes
+
+    def firma_actual(self):
+        """Firma con los datos de hoy del autor; al finalizar se congela (D-10)."""
+        return {
+            'nombre': self.autor.nombre_visible,
+            'especialidad': self.autor.especialidad,
+            'registro_medico': self.autor.registro_medico,
+        }
+
+    def datos_para_congelar(self):
+        """
+        Lo que se guarda en datos_finalizacion al finalizar (decisión D-10). La edad
+        no se guarda: se calcula con la fecha de nacimiento congelada y la fecha de
+        ingreso, que tampoco cambia en un informe finalizado.
+        """
+        paciente = self.paciente
+        return {
+            'paciente': None if paciente is None else {
+                'id': paciente.id,
+                'nombre_completo': paciente.nombre_completo,
+                'tipo_documento': paciente.tipo_documento,
+                'numero_documento': paciente.numero_documento,
+                'fecha_nacimiento': paciente.fecha_nacimiento.isoformat(),
+                'sexo': paciente.sexo,
+            },
+            'eps_nombre': self.eps.nombre if self.eps else None,
+            'servicio_nombre': self.servicio.nombre if self.servicio else None,
+            'firma': self.firma_actual(),
+        }
+
+    def datos_impresos(self):
+        """Los datos que muestran la API y el PDF: congelados si está finalizado (D-10), actuales si no."""
+        if self.esta_finalizado and self.datos_finalizacion:
+            return self.datos_finalizacion
+        return self.datos_para_congelar()
 
 
 class Diagnostico(models.Model):

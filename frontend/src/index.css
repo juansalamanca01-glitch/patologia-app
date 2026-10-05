@@ -642,6 +642,26 @@ textarea { resize: vertical; min-height: 80px; }
   color: var(--primary-800);
   border: 1px solid var(--info);
 }
+.alert-warning {
+  background: var(--warning-light);
+  color: #92400e;
+  border: 1px solid var(--warning);
+}
+/* Alerta con una lista (requisitos que faltan para finalizar un informe) */
+.alert-lista { display: block; }
+.alert-lista p { margin: 0 0 0.25rem; }
+.alert-lista ul { margin: 0; padding-left: 1.25rem; }
+
+/* ── Firma del informe (informe v2, etapa 6) ── */
+.firma-informe {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0.5rem 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gray-300);
+  max-width: 22rem;
+}
 
 /* ── Modales (categorías, patologías, confirmaciones) ── */
 .modal-overlay {

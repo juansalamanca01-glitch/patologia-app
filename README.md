@@ -36,8 +36,9 @@
 - **Formularios dinámicos**: los campos (texto, número, lista desplegable, área de texto, sí/no) se generan según la patología elegida. Los campos obligatorios se validan en el frontend y en el backend (0 y "No" cuentan como respuestas válidas).
 - **Descripción macroscópica automática**: al guardar un informe, el backend convierte los datos del formulario en un párrafo redactado en lenguaje natural.
 - **Número de petición automático**: al crear un informe, el sistema le asigna un número `P-AÑO-NNNNN` (por ejemplo `P-2026-00045`). El consecutivo vuelve a 1 cada año, no se repite aunque varios usuarios guarden a la vez y no se reutiliza si se borra un borrador. Se puede anotar, de forma opcional, el número de orden de la institución remitente.
-- **Exportación a PDF**: genera con **ReportLab** un informe con título, número de petición (y orden externa, si existe), metadatos (fecha, patología, tipo de muestra, patólogo y estado), datos clínicos, descripción macroscópica, descripción microscópica, diagnósticos numerados con su código CIE-10 y comentarios.
+- **Exportación a PDF**: genera con **ReportLab** un informe con título, número de petición (y orden externa, si existe), metadatos (fecha, patología, tipo de muestra, patólogo con su registro médico, estado y, si está finalizado, fecha de informe), datos clínicos, descripción macroscópica, descripción microscópica, diagnósticos numerados con su código CIE-10 y comentarios.
 - **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
+- **Firma y finalización**: el informe lo firma siempre su autor, con su nombre, especialidad y registro médico. El registro médico solo lo asigna un administrador. Para finalizar, el informe debe tener paciente y al menos un diagnóstico, el autor debe tener registro médico y, en histología, debe haber descripción microscópica; si falta algo, la aplicación dice qué. Al finalizar se fija la fecha de informe y se congelan los datos del paciente, la EPS, el servicio y la firma: corregirlos después no cambia un informe ya entregado.
 - **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables. Una patología se puede desactivar: deja de ofrecerse en los informes nuevos sin perder el historial.
 - **Pacientes**: registro de los pacientes con su documento, nombres, fecha de nacimiento, sexo y EPS. La edad se calcula a partir de la fecha de nacimiento: en años, o en meses o días si el paciente es menor de 1 año. Se buscan por documento, nombres o apellidos, y cada paciente muestra su historial de informes. Solo se guardan los datos que aparecen en el informe.
 - **Datos de la solicitud**: cada informe tiene su paciente (se busca o se crea desde el mismo formulario), médico tratante, fecha de ingreso, EPS, servicio, estudios solicitados y tipo de estudio (histología, citología, inmunohistoquímica, etc.). La EPS se guarda en el informe, porque el paciente puede cambiar de EPS. La edad del paciente se calcula a la fecha de ingreso, así que no cambia si el informe se reimprime años después.
@@ -46,7 +47,7 @@
 - **Búsqueda y filtros**: por número de petición, nombre o documento del paciente, número de orden externa, patología o tipo de muestra, rango de fechas y estado. Resultados paginados de 20 en 20.
 - **Panel de inicio**: totales de informes (todos, borradores y finalizados) y los 10 más recientes.
 - **Foro de patólogos**: publicaciones por temas (los patólogos y administradores pueden crear temas nuevos), con hasta 6 imágenes (máximo 10 MB cada una) y comentarios. Un administrador puede fijar publicaciones importantes.
-- **Perfil de usuario**: edición de datos personales y cambio de contraseña.
+- **Perfil de usuario**: edición de datos personales y cambio de contraseña. El registro médico se ve en solo lectura, y un patólogo sin registro ve un aviso de que no podrá finalizar informes.
 
 ---
 
@@ -324,7 +325,7 @@ También se pueden arrancar por separado, en dos terminales: `python manage.py r
 | Usuario | Contraseña | Rol |
 |---|---|---|
 | `admin` | `admin1234` | **Administrador** (también tiene acceso a `/admin/`) |
-| `patologo1` | `patologo1234` | **Patólogo** |
+| `patologo1` | `patologo1234` | **Patólogo** (registro médico ficticio `RM-PRUEBA-0001`, para poder finalizar informes) |
 | `auditor1` | `auditor1234` | **Auditor** |
 
 Los permisos de cada rol están en [Roles y Permisos](#roles-y-permisos).
@@ -350,8 +351,8 @@ npm run test:watch                        # se repiten al guardar cambios
 npm test
 ```
 
-- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones, búsqueda e historial), los datos de la solicitud del informe (paciente obligatorio, fecha de ingreso, EPS del momento del estudio, búsqueda por paciente), el contenido del informe (microscópica, comentarios, diagnósticos y validación del CIE-10), los catálogos de EPS y servicios (y su borrado cuando están en uso), las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
-- **Frontend:** cubre el formulario del informe (paciente, datos de la solicitud, diagnósticos y orden de las tarjetas), la página de pacientes y su historial, la pantalla de catálogos, los listados, la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
+- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones, búsqueda e historial), los datos de la solicitud del informe (paciente obligatorio, fecha de ingreso, EPS del momento del estudio, búsqueda por paciente), el contenido del informe (microscópica, comentarios, diagnósticos y validación del CIE-10), la finalización (requisitos, fecha de informe, firma del autor y datos congelados), el registro médico, los catálogos de EPS y servicios (y su borrado cuando están en uso), las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
+- **Frontend:** cubre el formulario del informe (paciente, datos de la solicitud, diagnósticos, firma, requisitos para finalizar y orden de las tarjetas), la página de pacientes y su historial, la pantalla de catálogos, los listados, la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
 
 ---
 
@@ -387,9 +388,9 @@ Todas las rutas exigen la cabecera `Authorization: Bearer <token>`, excepto el l
 | POST | `/api/auth/login/` | Iniciar sesión. Devuelve `access`, `refresh` y los datos del usuario | Público (máx. 10 intentos/min) |
 | POST | `/api/auth/refresh/` | Renovar el token de acceso. Devuelve también un `refresh` nuevo; el anterior queda invalidado | Público |
 | POST | `/api/auth/logout/` | Cerrar sesión: invalida el `refresh` enviado (`{"refresh": "..."}`) | Público (con el token de renovación) |
-| GET / PATCH | `/api/auth/perfil/` | Ver o editar el perfil propio (nombre, email, teléfono, especialidad). El rol y el usuario no se pueden cambiar | Autenticado |
+| GET / PATCH | `/api/auth/perfil/` | Ver o editar el perfil propio (nombre, email, teléfono, especialidad). El rol, el usuario y el registro médico no se pueden cambiar | Autenticado |
 | POST | `/api/auth/cambiar-password/` | Cambiar la contraseña (`old_password`, `new_password`). Cierra las demás sesiones y devuelve tokens nuevos | Autenticado |
-| POST | `/api/auth/registro/` | Crear un usuario con su rol | Admin |
+| POST | `/api/auth/registro/` | Crear un usuario con su rol y, si es patólogo, su `registro_medico` | Admin |
 | GET | `/api/auth/usuarios/` | Listar usuarios | Admin |
 
 ### Catálogo (`/api/`)
@@ -435,7 +436,7 @@ Las EPS y los servicios se desactivan en lugar de borrarse (decisión D-4), para
 | GET | `/api/informes/{id}/` | Ver un informe completo | Todos |
 | PUT / PATCH | `/api/informes/{id}/` | Editar un borrador (si está finalizado → 400) | Autor / Admin |
 | DELETE | `/api/informes/{id}/` | Borrar un borrador (si está finalizado → 400) | Autor / Admin |
-| POST | `/api/informes/{id}/finalizar/` | Finalizar el informe (después ya no se puede editar) | Autor / Admin |
+| POST | `/api/informes/{id}/finalizar/` | Finalizar el informe (después ya no se puede editar). Si faltan requisitos → 400 con `detail` y la lista `requisitos` | Autor / Admin |
 | GET | `/api/informes/{id}/pdf/` | Descargar el informe en PDF | Todos |
 
 Datos de la solicitud del informe (etapa 4 del informe v2):
@@ -451,6 +452,12 @@ Contenido del informe (etapa 5 del informe v2):
 - `diagnosticos`: lista de `{"descripcion": "...", "codigo_cie10": "C44.3"}` en el orden del informe (al leerla, cada uno trae también su `orden`). Si se envía, **reemplaza** a la lista anterior; si no se envía (por ejemplo, en un PATCH), no cambia. Máximo 20; la descripción no puede estar vacía.
 - `codigo_cie10` es opcional. Se pasa a mayúsculas, se quitan los espacios y se agrega el punto si falta (`c443` → `C44.3`). Debe ser una letra, dos cifras y, si aplica, un punto con uno o dos caracteres (`C44`, `C44.3`, `M80.90`); si no → 400.
 - Un borrador se puede guardar sin diagnósticos.
+
+Firma y finalización (etapa 6 del informe v2):
+- Para finalizar: el informe tiene paciente y al menos un diagnóstico, el autor tiene `registro_medico` (aunque finalice un admin, cuenta el del autor) y, si `tipo_estudio` es `histologia`, `descripcion_microscopica` no está vacía. Un borrador se puede guardar sin cumplirlos.
+- `fecha_informe`: la fija `finalizar`; es `null` en un borrador. No se puede escribir por la API.
+- `firma`: `{nombre, especialidad, registro_medico}` del autor.
+- En un informe **finalizado**, `paciente_datos`, `eps_nombre`, `servicio_nombre` y `firma` salen de los datos congelados al finalizar, y no de los actuales. En un borrador son los actuales.
 
 ### Foro (`/api/foro/`)
 
@@ -485,7 +492,7 @@ graph TD
     H --> I[El backend genera la descripción macroscópica]
     I --> J{¿Revisión satisfactoria?}
     J -->|No| G
-    J -->|Sí| K[Finalizar informe: queda bloqueado]
+    J -->|Sí| K[Finalizar informe: se firma, se fija la fecha de informe y queda bloqueado]
     K --> L[Descargar PDF]
     D --> L
 ```
@@ -538,7 +545,7 @@ Para publicar la app en un servidor:
 - [ ] **Plantillas microscópicas e IHQ**: textos predefinidos para la descripción microscópica y la inmunohistoquímica (la descripción microscópica libre ya existe).
 - [ ] **Catálogo CIE-10 y CIE-O**: autocompletado de los códigos de diagnóstico y de morfología tumoral.
 - [ ] **Imágenes en los informes**: adjuntar microfotografías al informe y al PDF (hoy solo el foro admite imágenes).
-- [ ] **Firma digital**: firma electrónica del patólogo con certificado o trazo digital.
+- [ ] **Firma digital**: firma electrónica del patólogo con certificado o trazo digital. Hoy el informe lleva el nombre, la especialidad y el registro médico del autor, pero no es una firma criptográfica.
 - [ ] **Integración HL7 / FHIR**: interoperabilidad con sistemas de información hospitalaria (HIS/LIS).
 - [ ] **Contenedores Docker**: `Dockerfile` y `docker-compose.yml` para desplegar en un solo paso.
 

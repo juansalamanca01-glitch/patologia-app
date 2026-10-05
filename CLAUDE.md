@@ -49,7 +49,7 @@ npx vitest run src/pages/PerfilPage.test.jsx  # un solo archivo de pruebas
 
 Las pruebas del backend están en `backend/*/tests.py`: `APITestCase` de DRF para la API y `SimpleTestCase` en `config/tests.py` para la configuración. Las del frontend usan Vitest + React Testing Library + jsdom (configuración en `vite.config.js` y `src/test/setup.js`), en archivos `*.test.jsx` junto al componente, y simulan la API con `vi.mock('../api/client')`. No hay linter configurado. Los hallazgos pendientes de corregir están en `docs/auditoria-inicial.md`. `PathoLab_API.postman_collection.json` contiene la colección de la API.
 
-Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234`, `auditor1/auditor1234`. `seed_data` los crea directamente, sin validadores. La API (registro y cambio de contraseña) sí aplica `AUTH_PASSWORD_VALIDATORS` mediante `validar_contrasena()` de `accounts/serializers.py`, así que esas contraseñas no se aceptarían como contraseña nueva.
+Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234` (registro médico `RM-PRUEBA-0001`, que se le asigna también si ya existía sin registro), `auditor1/auditor1234`. `seed_data` los crea directamente, sin validadores. La API (registro y cambio de contraseña) sí aplica `AUTH_PASSWORD_VALIDATORS` mediante `validar_contrasena()` de `accounts/serializers.py`, así que esas contraseñas no se aceptarían como contraseña nueva.
 
 ## Configuración
 
@@ -84,7 +84,7 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
 - En cada create/update, `InformeViewSet` regenera `texto_generado` con `informes/utils.generar_descripcion_macroscopica`. Esa función usa un diccionario `mapeo` de `campo_nombre` → frase: los campos cuyo nombre coincide con una clave (`localizacion`, `dimensiones`, `peso`, `margenes`…) producen una frase redactada; los demás se agregan como `Etiqueta: valor`. Por eso, al añadir plantillas o patologías conviene reutilizar esos nombres de campo.
 - `generar_pdf_informe` (ReportLab) arma el PDF.
 - El PDF se descarga solo por `GET /api/informes/{id}/pdf/` (acción `exportar_pdf`), con el token en la cabecera `Authorization`. `InformePage.jsx` lo pide con `client.get(..., { responseType: 'blob' })` y lo guarda con un enlace temporal `blob:`. Nunca se debe pasar el token por la URL: la antigua ruta `/api/descargar-pdf/...?token=` se eliminó (auditoría I-5).
-- `POST /api/informes/{id}/finalizar/` cambia el estado `borrador` → `finalizado`.
+- `POST /api/informes/{id}/finalizar/` cambia el estado `borrador` → `finalizado` (ver "Firma y finalización").
 - `GET /api/informes/estadisticas/` devuelve los totales por estado calculados en el backend. El listado está paginado de 20 en 20 (`PAGE_SIZE`): el frontend usa `count`, `next` y `previous` y nunca debe contar los resultados de una sola página. Los menús desplegables y las listas que deben mostrarlo todo piden `params: LISTA_COMPLETA` (`?page_size=1000`, que permite `config/paginacion.py`). `BuscarPage.jsx` tiene `TAMANO_PAGINA = 20`, que debe coincidir con `PAGE_SIZE`.
 
 **Listas de opciones (informe v2).**
@@ -109,8 +109,16 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
 - `Diagnostico` (`informe`, `orden`, `descripcion`, `codigo_cie10`; único por `informe` + `orden`) va anidado en `InformeSerializer` como `diagnosticos`. Si la petición lo trae, `_guardar_diagnosticos` **reemplaza** toda la lista en la misma transacción que el informe; si no lo trae, no cambia. El orden es el de la lista enviada. Máximo `MAX_DIAGNOSTICOS` (20).
 - `DiagnosticoSerializer.validate_codigo_cie10` normaliza el código (mayúsculas, sin espacios, agrega el punto: `c443` → `C44.3`) y lo valida con `PATRON_CIE10`. No hay catálogo oficial de CIE-10.
 - `InformeViewSet.get_queryset` hace `prefetch_related('diagnosticos')` solo en las rutas de detalle (`self.detail`): el listado no los muestra. Lo vigila `test_el_detalle_no_hace_una_consulta_por_diagnostico`.
-- El PDF ya imprime microscópica, diagnósticos (`1. … (CIE-10: C44.3)`) y comentarios con `texto_seguro()`; su estructura completa llega en la etapa 7.
+- El PDF ya imprime microscópica, diagnósticos (`1. … (CIE-10: C44.3)`) y comentarios con `texto_seguro()`, y la firma y la fecha de informe de la etapa 6; su estructura completa llega en la etapa 7.
 - En el frontend, `components/informe/ListaDiagnosticos.jsx` es controlado: `conClaves()` da a cada fila una `clave` para React y `sinClaves()` la quita antes de enviar. Recibe en `error` un texto o el arreglo de errores por fila que devuelve DRF; `InformePage` conserva ese arreglo sin aplanarlo.
+
+**Firma y finalización (informe v2, etapa 6; decisiones D-8 y D-10).**
+- `Usuario.registro_medico` solo lo asigna un admin (`RegistroSerializer` o `/admin/`); en `UsuarioSerializer` es de solo lectura, como `rol`.
+- `finalizar` bloquea el informe (`select_for_update(of=('self',))`: en PostgreSQL no se puede bloquear el lado nulo de un `LEFT JOIN`), revisa `Informe.requisitos_faltantes()` (paciente, al menos un diagnóstico, microscópica en histología y registro médico **del autor**, aunque finalice un admin) y, si falta algo, responde 400 con `detail` y `requisitos`. Si todo está bien, en la misma transacción fija `fecha_informe` y guarda `datos_finalizacion = datos_para_congelar()`.
+- `fecha_informe` y `datos_finalizacion` son `editable=False`: no se escriben por la API ni en `/admin/`.
+- `Informe.datos_impresos()` devuelve los datos congelados si el informe está finalizado y los actuales si es borrador. La usan `InformeSerializer` (`paciente_datos`, `eps_nombre`, `servicio_nombre`, `firma`) y el PDF: cualquier dato nuevo del paciente, la EPS, el servicio o la firma que se muestre debe salir de ahí y agregarse a `datos_para_congelar()`. La edad no se congela: se calcula con `pacientes.models.edad_en_texto()` a partir de la fecha de nacimiento congelada y la fecha de ingreso.
+- La migración `informes/0010` completa los informes ya finalizados (`fecha_informe` = `fecha_actualizacion`) con una copia propia de la lógica de `datos_para_congelar()`. Las pruebas de migraciones antiguas vuelven también `accounts` a `0001_initial`: con la columna `registro_medico` el modelo histórico no podría crear usuarios.
+- En el frontend, `components/informe/SeccionFirma.jsx` es la tarjeta "Firma" (solo lectura, solo en informes guardados) e `InformePage` muestra la lista `requisitos` si no se puede finalizar. `PerfilPage` muestra el registro médico en solo lectura.
 
 **Rate limiting.** En `settings.REST_FRAMEWORK` están los throttles globales (`anon`, `user`) y otros por scope (`login`, `registro`, `foro_publicacion`, `foro_comentario`). Los de scope se asignan en `accounts/throttles.py` y en `get_throttles()` de las vistas del foro. Si un endpoint nuevo usa un scope nuevo, hay que agregarlo a `DEFAULT_THROTTLE_RATES`.
 

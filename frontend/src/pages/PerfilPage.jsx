@@ -108,6 +108,11 @@ export default function PerfilPage() {
         <div className="card-body">
           {mensaje && <div className="alert alert-success">{mensaje}</div>}
           {error && <div className="alert alert-error">{error}</div>}
+          {perfil.rol === 'patologo' && !perfil.registro_medico && (
+            <div className="alert alert-warning">
+              No tienes registro médico: no podrás finalizar informes hasta que un administrador lo registre.
+            </div>
+          )}
           <form onSubmit={guardarPerfil}>
             <div className="form-row">
               <div className="form-group">
@@ -140,6 +145,14 @@ export default function PerfilPage() {
                   value={perfil.especialidad || ''}
                   onChange={(e) => setPerfil({ ...perfil, especialidad: e.target.value })}
                 />
+              </div>
+            </div>
+            <div className="form-row">
+              {/* Solo lectura: firma los informes y solo lo asigna un administrador (decisión D-8). */}
+              <div className="form-group">
+                <label htmlFor="registroMedico">Registro médico</label>
+                <input id="registroMedico" value={perfil.registro_medico || ''} readOnly />
+                <span className="text-muted">Lo asigna un administrador.</span>
               </div>
             </div>
             <div className="form-actions">
