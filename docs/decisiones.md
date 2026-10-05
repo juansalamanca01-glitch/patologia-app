@@ -108,3 +108,14 @@ Los códigos como "I-7" o "C-2" remiten a `docs/auditoria-inicial.md`.
   - **Informes finalizados:** su PDF lo siguen descargando todos los roles, sin marca de agua ni sufijo.
 - **Motivo:** el usuario notó en la prueba manual que cualquiera podía descargar un borrador, y un PDF suelto puede imprimirse y circular aunque diga "sin validez" en letra pequeña. La vista previa se conserva porque al patólogo le sirve revisar el PDF antes de finalizar: después solo podría corregirlo con una adenda (D-9).
 
+## D-13. Aviso al salir con cambios sin guardar y autoguardado de los borradores existentes
+
+- **Fecha:** 2026-10-05
+- **Relacionado con:** D-2, D-7; `docs/progreso.md` ("Pendientes", punto 3)
+- **Decisión:**
+  - **Aviso al salir:** en un informe que se puede editar (nuevo, o borrador del que se es autor o admin), si hay cambios sin guardar, salir de la pantalla pide confirmar. Esto vale para el menú, "Cancelar" o cualquier enlace interno. Las opciones son **Seguir editando**, **Salir sin guardar** y **Guardar y salir**. Si "Guardar y salir" falla por validación (por ejemplo, falta el paciente o un campo obligatorio), no se sale: la página se queda mostrando qué falta. Al cerrar la pestaña o recargar, el navegador muestra su propio aviso.
+  - **Autoguardado:** solo en un **borrador que ya existe** y que el usuario puede editar. Se guarda en el servidor 5 segundos después del último cambio, y solo si pasa la validación del formulario. Un indicador muestra el estado: guardado y su hora, guardando, o cambios sin guardar y por qué.
+  - **Informes nuevos:** no se autoguardan, porque cada informe creado gasta un número de petición (D-7). Solo llevan el aviso al salir.
+  - **Navegador:** no se guarda ninguna copia en el navegador (`localStorage`, `sessionStorage` ni similares), porque serían datos de pacientes en el computador.
+- **Motivo:** en la prueba manual del 2026-10-05 el usuario notó que al salir del formulario sin guardar se perdía todo lo escrito. Avisar cubre los informes nuevos sin gastar números de petición, y el autoguardado protege el trabajo largo sobre un borrador sin dejar datos sensibles en el equipo.
+

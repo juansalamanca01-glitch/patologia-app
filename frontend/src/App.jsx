@@ -1,4 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { useState } from 'react';
+import {
+  createBrowserRouter, createRoutesFromElements, RouterProvider, Route, Navigate, Link,
+} from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -60,33 +63,33 @@ function LegalRoute({ children }) {
   );
 }
 
-function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-      <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/informes/nuevo" element={<ProtectedRoute><InformePage /></ProtectedRoute>} />
-      <Route path="/informes/:id" element={<ProtectedRoute><InformePage /></ProtectedRoute>} />
-      <Route path="/buscar" element={<ProtectedRoute><BuscarPage /></ProtectedRoute>} />
-      <Route path="/patologias" element={<ProtectedRoute><PatologiasPage /></ProtectedRoute>} />
-      <Route path="/pacientes" element={<ProtectedRoute><PacientesPage /></ProtectedRoute>} />
-      <Route path="/catalogos" element={<ProtectedRoute><CatalogosPage /></ProtectedRoute>} />
-      <Route path="/foro" element={<ProtectedRoute><ForoPage /></ProtectedRoute>} />
-      <Route path="/foro/:id" element={<ProtectedRoute><PublicacionDetallePage /></ProtectedRoute>} />
-      <Route path="/perfil" element={<ProtectedRoute><PerfilPage /></ProtectedRoute>} />
-      <Route path="/politica-privacidad" element={<LegalRoute><PoliticaPrivacidadPage /></LegalRoute>} />
-      <Route path="/terminos-condiciones" element={<LegalRoute><TerminosCondicionesPage /></LegalRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
-}
+// Router de datos (createBrowserRouter): lo necesita useBlocker, con el que el informe
+// avisa antes de salir si hay cambios sin guardar (decisión D-13).
+const rutas = createRoutesFromElements(
+  <>
+    <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+    <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+    <Route path="/informes/nuevo" element={<ProtectedRoute><InformePage /></ProtectedRoute>} />
+    <Route path="/informes/:id" element={<ProtectedRoute><InformePage /></ProtectedRoute>} />
+    <Route path="/buscar" element={<ProtectedRoute><BuscarPage /></ProtectedRoute>} />
+    <Route path="/patologias" element={<ProtectedRoute><PatologiasPage /></ProtectedRoute>} />
+    <Route path="/pacientes" element={<ProtectedRoute><PacientesPage /></ProtectedRoute>} />
+    <Route path="/catalogos" element={<ProtectedRoute><CatalogosPage /></ProtectedRoute>} />
+    <Route path="/foro" element={<ProtectedRoute><ForoPage /></ProtectedRoute>} />
+    <Route path="/foro/:id" element={<ProtectedRoute><PublicacionDetallePage /></ProtectedRoute>} />
+    <Route path="/perfil" element={<ProtectedRoute><PerfilPage /></ProtectedRoute>} />
+    <Route path="/politica-privacidad" element={<LegalRoute><PoliticaPrivacidadPage /></LegalRoute>} />
+    <Route path="/terminos-condiciones" element={<LegalRoute><TerminosCondicionesPage /></LegalRoute>} />
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </>,
+);
 
 export default function App() {
+  // Se crea al montar la app (y no al importar el módulo), para que lea la dirección actual.
+  const [router] = useState(() => createBrowserRouter(rutas));
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   );
 }

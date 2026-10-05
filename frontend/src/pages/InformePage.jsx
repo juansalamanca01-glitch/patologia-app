@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate, useBlocker } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import client, { LISTA_COMPLETA, resultados } from '../api/client';
 import EstadoBadge from '../components/EstadoBadge';
@@ -20,6 +20,25 @@ const solicitudVacia = () => ({
   numero_orden_externa: '',
   estudios_solicitados: '',
 });
+
+// D-13: un borrador existente se autoguarda este tiempo después del último cambio.
+export const ESPERA_AUTOGUARDADO_MS = 5000;
+
+const formatoHora = new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' });
+
+// Convierte la respuesta de error de la API en los errores del formulario.
+function erroresDeRespuesta(err) {
+  const detail = err.response?.data;
+  if (!detail || typeof detail !== 'object') return { general: 'Ocurrió un error al guardar el informe.' };
+  const errores = {};
+  Object.entries(detail).forEach(([key, val]) => {
+    // Los errores de los diagnósticos vienen por fila ([{}, {codigo_cie10: [...]}]):
+    // se conservan así para mostrarlos junto a cada fila.
+    const porFila = Array.isArray(val) && val.some((v) => typeof v === 'object');
+    errores[key] = Array.isArray(val) && !porFila ? val.join(' ') : val;
+  });
+  return errores;
+}
 
 export default function InformePage() {
   const { id } = useParams();
@@ -48,6 +67,14 @@ export default function InformePage() {
   const [errors, setErrors] = useState({});
   const [successMsg, setSuccessMsg] = useState('');
   const [confirmFinalizar, setConfirmFinalizar] = useState(false);
+  // Cambios sin guardar (D-13): `version` cuenta los cambios del usuario y
+  // `versionGuardada` es la que tenía el formulario en el último guardado.
+  const [version, setVersion] = useState(0);
+  const [versionGuardada, setVersionGuardada] = useState(0);
+  const [autoguardado, setAutoguardado] = useState(null); // { tipo: 'guardando' | 'guardado' | 'invalido' | 'error', hora }
+  const versionRef = useRef(0);
+  versionRef.current = version;
+  const guardandoRef = useRef(false);
 
   // Un informe nuevo lo puede crear cualquier patólogo o admin; uno existente solo
   // lo puede editar o finalizar su autor o un admin (decisión D-2).
@@ -55,6 +82,36 @@ export default function InformePage() {
     ? canWrite && Boolean(informe) && (isAdmin || informe.autor === user?.id)
     : canWrite;
   const soloLectura = informe?.estado === 'finalizado' || !puedeEditar;
+  const hayCambiosSinGuardar = !soloLectura && version !== versionGuardada;
+  // Solo un borrador que ya existe se autoguarda: uno nuevo gastaría un número de petición (D-7).
+  const autoguardable = isEditing && informe?.estado === 'borrador' && puedeEditar;
+  // El bloqueo de la navegación lee este ref, para poder desactivarlo justo antes de navegar.
+  const sucioRef = useRef(false);
+  sucioRef.current = hayCambiosSinGuardar;
+
+  const marcarCambio = () => {
+    setVersion((v) => v + 1);
+    setAutoguardado(null);
+  };
+
+  // Salir de la pantalla con cambios sin guardar pide confirmar (D-13). No se frena la
+  // salida hacia /login (cerrar sesión), porque para entonces la sesión ya se cerró.
+  const blocker = useBlocker(useCallback(({ currentLocation, nextLocation }) => (
+    sucioRef.current
+      && currentLocation.pathname !== nextLocation.pathname
+      && nextLocation.pathname !== '/login'
+  ), []));
+
+  // Cerrar la pestaña o recargar con cambios sin guardar: aviso del navegador.
+  useEffect(() => {
+    if (!hayCambiosSinGuardar) return undefined;
+    const avisar = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', avisar);
+    return () => window.removeEventListener('beforeunload', avisar);
+  }, [hayCambiosSinGuardar]);
   // El PDF de un borrador es una vista previa solo para su autor o un admin (decisión D-12).
   const borrador = informe?.estado !== 'finalizado';
   const puedeVerPdf = Boolean(informe) && (!borrador || puedeEditar);
@@ -129,11 +186,13 @@ export default function InformePage() {
   }, [selectedPatologia]);
 
   const handleFieldChange = (fieldName, value) => {
+    marcarCambio();
     setFormData((prev) => ({ ...prev, [fieldName]: value }));
     setErrors((prev) => ({ ...prev, [fieldName]: null }));
   };
 
   const cambiarSolicitud = (campo, valor) => {
+    marcarCambio();
     setSolicitud((prev) => ({ ...prev, [campo]: valor }));
     setErrors((prev) => ({ ...prev, [campo]: null }));
   };
@@ -141,6 +200,7 @@ export default function InformePage() {
   // Al elegir el paciente se precarga su EPS actual, si sigue activa. La del
   // informe se puede cambiar: es la del momento del estudio.
   const seleccionarPaciente = (nuevo) => {
+    marcarCambio();
     setPaciente(nuevo);
     setSolicitud((prev) => ({
       ...prev,
@@ -149,7 +209,8 @@ export default function InformePage() {
     setErrors((prev) => ({ ...prev, paciente: null, eps: null }));
   };
 
-  const validate = () => {
+  // Errores del formulario sin mostrarlos: los usan validate() y el autoguardado.
+  const calcularErrores = () => {
     const newErrors = {};
     if (!paciente) newErrors.paciente = 'Seleccione un paciente.';
     if (!selectedPatologia) newErrors.patologia = 'Seleccione una patología.';
@@ -166,9 +227,96 @@ export default function InformePage() {
       d.descripcion.trim() ? {} : { descripcion: 'Escriba la descripción del diagnóstico.' }
     ));
     if (erroresDiagnosticos.some((e) => e.descripcion)) newErrors.diagnosticos = erroresDiagnosticos;
+    return newErrors;
+  };
 
+  const validate = () => {
+    const newErrors = calcularErrores();
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // El número de petición no se envía: lo asigna el backend al crear el informe (decisión D-7).
+  const armarPayload = () => ({
+    paciente: paciente.id,
+    ...solicitud,
+    eps: solicitud.eps ? Number(solicitud.eps) : null,
+    servicio: solicitud.servicio ? Number(solicitud.servicio) : null,
+    tipo_estudio: tipoEstudio,
+    patologia: selectedPatologia,
+    tipo_muestra: tipoMuestra,
+    datos_ingresados: formData,
+    descripcion_microscopica: microscopica,
+    diagnosticos: sinClaves(diagnosticos),
+    comentarios,
+  });
+
+  // Guarda el informe (PUT si existe, POST si es nuevo) y devuelve la respuesta.
+  const guardarEnServidor = async () => {
+    const payload = armarPayload();
+    const { data } = isEditing
+      ? await client.put(`/informes/${id}/`, payload)
+      : await client.post('/informes/', payload);
+    return data;
+  };
+
+  // Después de guardar un informe existente. El backend normaliza los códigos CIE-10
+  // ("c443" → "C44.3"); se aplican solo si no hubo cambios mientras se guardaba.
+  const alGuardarExistente = (data, versionInicio) => {
+    setInforme(data);
+    if (versionRef.current === versionInicio) setDiagnosticos(conClaves(data.diagnosticos));
+    setVersionGuardada(versionInicio);
+  };
+
+  // Autoguardado de un borrador existente (D-13): 5 s después del último cambio y solo
+  // si el formulario es válido. Nunca se guarda una copia en el navegador.
+  const autoguardar = async () => {
+    if (guardandoRef.current) return;
+    if (Object.keys(calcularErrores()).length > 0) {
+      setAutoguardado({ tipo: 'invalido' });
+      return;
+    }
+    const versionInicio = versionRef.current;
+    guardandoRef.current = true;
+    setAutoguardado({ tipo: 'guardando' });
+    try {
+      alGuardarExistente(await guardarEnServidor(), versionInicio);
+      setAutoguardado({ tipo: 'guardado', hora: new Date() });
+    } catch {
+      setAutoguardado({ tipo: 'error' });
+    } finally {
+      guardandoRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    if (!autoguardable || version === versionGuardada) return undefined;
+    const temporizador = setTimeout(autoguardar, ESPERA_AUTOGUARDADO_MS);
+    return () => clearTimeout(temporizador);
+  }, [autoguardable, version, versionGuardada]);
+
+  // "Guardar y salir" del aviso: si falla la validación o el servidor rechaza los datos,
+  // no se sale y se muestra qué falta (D-13).
+  const guardarYSalir = async () => {
+    if (!validate()) {
+      blocker.reset();
+      return;
+    }
+    const versionInicio = versionRef.current;
+    guardandoRef.current = true;
+    setSaving(true);
+    try {
+      await guardarEnServidor();
+      sucioRef.current = false;
+      setVersionGuardada(versionInicio);
+      blocker.proceed();
+    } catch (err) {
+      setErrors(erroresDeRespuesta(err));
+      blocker.reset();
+    } finally {
+      guardandoRef.current = false;
+      setSaving(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -177,49 +325,25 @@ export default function InformePage() {
 
     setSaving(true);
     setSuccessMsg('');
-
-    // El número de petición no se envía: lo asigna el backend al crear el informe (decisión D-7).
-    const payload = {
-      paciente: paciente.id,
-      ...solicitud,
-      eps: solicitud.eps ? Number(solicitud.eps) : null,
-      servicio: solicitud.servicio ? Number(solicitud.servicio) : null,
-      tipo_estudio: tipoEstudio,
-      patologia: selectedPatologia,
-      tipo_muestra: tipoMuestra,
-      datos_ingresados: formData,
-      descripcion_microscopica: microscopica,
-      diagnosticos: sinClaves(diagnosticos),
-      comentarios,
-    };
+    const versionInicio = versionRef.current;
+    guardandoRef.current = true;
 
     try {
+      const data = await guardarEnServidor();
       if (isEditing) {
-        const { data } = await client.put(`/informes/${id}/`, payload);
-        setInforme(data);
-        // El backend normaliza los códigos CIE-10 ("c443" → "C44.3").
-        setDiagnosticos(conClaves(data.diagnosticos));
+        alGuardarExistente(data, versionInicio);
         setSuccessMsg('Informe actualizado correctamente.');
       } else {
-        const { data } = await client.post('/informes/', payload);
         setSuccessMsg('Informe creado correctamente.');
+        // Ya está guardado: pasar a su página no debe pedir confirmación (D-13).
+        sucioRef.current = false;
+        setVersionGuardada(versionInicio);
         navigate(`/informes/${data.id}`);
       }
     } catch (err) {
-      const detail = err.response?.data;
-      if (typeof detail === 'object') {
-        const flatErrors = {};
-        Object.entries(detail).forEach(([key, val]) => {
-          // Los errores de los diagnósticos vienen por fila ([{}, {codigo_cie10: [...]}]):
-          // se conservan así para mostrarlos junto a cada fila.
-          const porFila = Array.isArray(val) && val.some((v) => typeof v === 'object');
-          flatErrors[key] = Array.isArray(val) && !porFila ? val.join(' ') : val;
-        });
-        setErrors(flatErrors);
-      } else {
-        setErrors({ general: 'Ocurrió un error al guardar el informe.' });
-      }
+      setErrors(erroresDeRespuesta(err));
     } finally {
+      guardandoRef.current = false;
       setSaving(false);
     }
   };
@@ -353,6 +477,7 @@ export default function InformePage() {
           {informe && (
             <EstadoBadge estado={informe.estado} />
           )}
+          <IndicadorGuardado sinGuardar={hayCambiosSinGuardar} autoguardado={autoguardado} />
         </div>
         <div className="header-actions">
           {isEditing && (
@@ -390,6 +515,8 @@ export default function InformePage() {
 
       {successMsg && <div className="alert alert-success">{successMsg}</div>}
       {(errors.general || errors.detail) && <div className="alert alert-error">{errors.general || errors.detail}</div>}
+      {/* Campos obligatorios de la plantilla que rechazó el backend: antes no se mostraban. */}
+      {typeof errors.datos_ingresados === 'string' && <div className="alert alert-error">{errors.datos_ingresados}</div>}
       {errors.requisitos && (
         <div className="alert alert-error alert-lista">
           <p>No se puede finalizar el informe:</p>
@@ -426,7 +553,7 @@ export default function InformePage() {
                 <select
                   id="tipoEstudio"
                   value={tipoEstudio}
-                  onChange={(e) => setTipoEstudio(e.target.value)}
+                  onChange={(e) => { marcarCambio(); setTipoEstudio(e.target.value); }}
                   disabled={soloLectura}
                 >
                   {opciones.tipos_estudio.map((o) => (
@@ -443,6 +570,7 @@ export default function InformePage() {
                   value={selectedPatologia || ''}
                   onChange={(e) => {
                     const val = e.target.value ? parseInt(e.target.value) : null;
+                    marcarCambio();
                     setSelectedPatologia(val);
                     if (!isEditing) setFormData({});
                     setErrors(p => ({...p, patologia: null}));
@@ -463,7 +591,7 @@ export default function InformePage() {
                   id="tipoMuestra"
                   type="text"
                   value={tipoMuestra}
-                  onChange={(e) => setTipoMuestra(e.target.value)}
+                  onChange={(e) => { marcarCambio(); setTipoMuestra(e.target.value); }}
                   placeholder="Ej: Biopsia escisional"
                   disabled={soloLectura}
                 />
@@ -503,7 +631,7 @@ export default function InformePage() {
                 id="descripcionMicroscopica"
                 aria-label="Descripción microscópica"
                 value={microscopica}
-                onChange={(e) => setMicroscopica(e.target.value)}
+                onChange={(e) => { marcarCambio(); setMicroscopica(e.target.value); }}
                 rows={5}
                 placeholder="Hallazgos al microscopio..."
                 disabled={soloLectura}
@@ -516,6 +644,7 @@ export default function InformePage() {
         <ListaDiagnosticos
           diagnosticos={diagnosticos}
           onCambiar={(lista) => {
+            marcarCambio();
             setDiagnosticos(lista);
             setErrors((prev) => ({ ...prev, diagnosticos: null }));
           }}
@@ -531,7 +660,7 @@ export default function InformePage() {
                 id="comentarios"
                 aria-label="Comentarios"
                 value={comentarios}
-                onChange={(e) => setComentarios(e.target.value)}
+                onChange={(e) => { marcarCambio(); setComentarios(e.target.value); }}
                 rows={3}
                 placeholder="Comentarios para el médico tratante..."
                 disabled={soloLectura}
@@ -555,6 +684,26 @@ export default function InformePage() {
         )}
       </form>
 
+      {blocker.state === 'blocked' && (
+        <div className="modal-overlay">
+          <div className="modal-card modal-card-sm" role="dialog" aria-modal="true" aria-labelledby="aviso-salir-titulo">
+            <h2 id="aviso-salir-titulo">Tienes cambios sin guardar</h2>
+            <p>Si sales ahora, se perderá lo que no se ha guardado.</p>
+            <div className="form-actions">
+              <button type="button" className="btn btn-outline" onClick={() => blocker.reset()} disabled={saving}>
+                Seguir editando
+              </button>
+              <button type="button" className="btn btn-danger-outline" onClick={() => blocker.proceed()} disabled={saving}>
+                Salir sin guardar
+              </button>
+              <button type="button" className="btn btn-primary" onClick={guardarYSalir} disabled={saving}>
+                {saving ? <span className="spinner"></span> : 'Guardar y salir'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Fuera del <form>: una adenda se guarda con su propia petición (decisión D-9). */}
       {informe && (
         <SeccionAdendas
@@ -566,5 +715,20 @@ export default function InformePage() {
         />
       )}
     </div>
+  );
+}
+
+// Estado del guardado junto al título (D-13). aria-live: los lectores de pantalla lo anuncian.
+function IndicadorGuardado({ sinGuardar, autoguardado }) {
+  let texto = null;
+  if (autoguardado?.tipo === 'guardando') texto = 'Guardando…';
+  else if (sinGuardar && autoguardado?.tipo === 'invalido') texto = 'Cambios sin guardar: hay datos obligatorios o incompletos';
+  else if (sinGuardar && autoguardado?.tipo === 'error') texto = 'Cambios sin guardar: no se pudo guardar automáticamente';
+  else if (sinGuardar) texto = 'Cambios sin guardar';
+  else if (autoguardado?.tipo === 'guardado') texto = `Guardado automáticamente a las ${formatoHora.format(autoguardado.hora)}`;
+  return (
+    <span className={`indicador-guardado ${sinGuardar ? 'sin-guardar' : ''}`} role="status" aria-live="polite">
+      {texto}
+    </span>
   );
 }

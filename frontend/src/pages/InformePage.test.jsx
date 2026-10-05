@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { RouterProvider, createMemoryRouter } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import client from '../api/client';
 import { reiniciarOpciones } from '../hooks/useOpciones';
 import InformePage from './InformePage';
@@ -80,13 +80,19 @@ function simularApi() {
   });
 }
 
+// InformePage usa useBlocker (D-13), que necesita un router de datos. "/" hace de
+// pantalla de inicio, para comprobar a dónde lleva salir del informe.
+function crearRouter(ruta) {
+  return createMemoryRouter([
+    { path: '/', element: <h1>Pantalla de inicio</h1> },
+    { path: '/informes/nuevo', element: <InformePage /> },
+    { path: '/informes/:id', element: <InformePage /> },
+  ], { initialEntries: [ruta] });
+}
+
 function renderInforme() {
   return render(
-    <MemoryRouter initialEntries={['/informes/5']}>
-      <Routes>
-        <Route path="/informes/:id" element={<InformePage />} />
-      </Routes>
-    </MemoryRouter>,
+    <RouterProvider router={crearRouter('/informes/5')} />,
   );
 }
 
@@ -159,11 +165,7 @@ describe('InformePage: selector de patologías', () => {
 
   it('al crear un informe pide todas las patologías activas', async () => {
     render(
-      <MemoryRouter initialEntries={['/informes/nuevo']}>
-        <Routes>
-          <Route path="/informes/nuevo" element={<InformePage />} />
-        </Routes>
-      </MemoryRouter>,
+      <RouterProvider router={crearRouter('/informes/nuevo')} />,
     );
     await vi.waitFor(() => {
       expect(client.get).toHaveBeenCalledWith('/patologias/', { params: { page_size: 1000, activa: 'true' } });
@@ -188,11 +190,7 @@ describe('InformePage: errores visibles', () => {
   it('avisa si no se pueden cargar las patologías', async () => {
     client.get.mockRejectedValue(new Error('Network Error'));
     render(
-      <MemoryRouter initialEntries={['/informes/nuevo']}>
-        <Routes>
-          <Route path="/informes/nuevo" element={<InformePage />} />
-        </Routes>
-      </MemoryRouter>,
+      <RouterProvider router={crearRouter('/informes/nuevo')} />,
     );
     expect(await screen.findByText(/No se pudieron cargar las patologías/i)).toBeInTheDocument();
   });
@@ -226,11 +224,7 @@ describe('InformePage: número de petición', () => {
 
   function renderNuevo() {
     return render(
-      <MemoryRouter initialEntries={['/informes/nuevo']}>
-        <Routes>
-          <Route path="/informes/nuevo" element={<InformePage />} />
-        </Routes>
-      </MemoryRouter>,
+      <RouterProvider router={crearRouter('/informes/nuevo')} />,
     );
   }
 
@@ -274,11 +268,7 @@ describe('InformePage: paciente y datos de la solicitud', () => {
 
   function renderNuevo() {
     return render(
-      <MemoryRouter initialEntries={['/informes/nuevo']}>
-        <Routes>
-          <Route path="/informes/nuevo" element={<InformePage />} />
-        </Routes>
-      </MemoryRouter>,
+      <RouterProvider router={crearRouter('/informes/nuevo')} />,
     );
   }
 
@@ -353,11 +343,7 @@ describe('InformePage: contenido del informe', () => {
 
   function renderNuevo() {
     return render(
-      <MemoryRouter initialEntries={['/informes/nuevo']}>
-        <Routes>
-          <Route path="/informes/nuevo" element={<InformePage />} />
-        </Routes>
-      </MemoryRouter>,
+      <RouterProvider router={crearRouter('/informes/nuevo')} />,
     );
   }
 
@@ -527,5 +513,174 @@ describe('InformePage: adendas (etapa 8)', () => {
     renderInforme();
     await screen.findByText('Dra. Ficticia Firma');
     expect(screen.queryByRole('heading', { name: 'Adendas' })).not.toBeInTheDocument();
+  });
+});
+
+// Decisión D-13 (Pendientes, punto 3): al salir con cambios sin guardar se pide
+// confirmar, y un borrador que ya existe se autoguarda 5 segundos después del último
+// cambio. Un informe nuevo no se autoguarda (gastaría un número de petición, D-7) y
+// nada se guarda en el navegador.
+describe('InformePage: no perder lo escrito (D-13)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    reiniciarOpciones();
+    simularApi();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    client.put.mockImplementation((url, datos) => Promise.resolve({ data: { ...INFORME, ...datos } }));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function escribirComentario(texto) {
+    const campo = await screen.findByDisplayValue('Se sugiere correlación clínica.');
+    fireEvent.change(campo, { target: { value: texto } });
+  }
+
+  async function abrirNuevo() {
+    render(<RouterProvider router={crearRouter('/informes/nuevo')} />);
+    await screen.findByRole('option', { name: 'Piel' });
+  }
+
+  const aviso = () => screen.queryByRole('dialog', { name: /cambios sin guardar/i });
+
+  // --- Autoguardado ---
+
+  it('autoguarda un borrador existente 5 segundos después del último cambio', async () => {
+    renderInforme();
+    await escribirComentario('Primer cambio');
+    await vi.advanceTimersByTimeAsync(3000);
+    fireEvent.change(screen.getByLabelText('Comentarios'), { target: { value: 'Segundo cambio' } });
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(client.put).not.toHaveBeenCalled();  // el segundo cambio reinició la espera
+
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(client.put).toHaveBeenCalledTimes(1);
+    const [url, datos] = client.put.mock.calls[0];
+    expect(url).toBe('/informes/5/');
+    expect(datos.comentarios).toBe('Segundo cambio');
+    expect(await screen.findByText(/Guardado automáticamente a las/)).toBeInTheDocument();
+  });
+
+  it('no autoguarda si el formulario no pasa la validación', async () => {
+    renderInforme();
+    const diagnostico = await screen.findByLabelText('Diagnóstico 1');
+    fireEvent.change(diagnostico, { target: { value: '' } });
+    await vi.advanceTimersByTimeAsync(6000);
+    expect(client.put).not.toHaveBeenCalled();
+    expect(screen.getByText(/Cambios sin guardar: hay datos obligatorios o incompletos/)).toBeInTheDocument();
+  });
+
+  it('un informe nuevo no se autoguarda', async () => {
+    await abrirNuevo();
+    await seleccionarPaciente();
+    fireEvent.change(screen.getByLabelText(/Tipo de Patología/i), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText('Comentarios'), { target: { value: 'Algo' } });
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(client.post).not.toHaveBeenCalled();
+    expect(client.put).not.toHaveBeenCalled();
+    expect(screen.getByText('Cambios sin guardar')).toBeInTheDocument();
+  });
+
+  it('nunca guarda una copia en el navegador', async () => {
+    const guardar = vi.spyOn(Storage.prototype, 'setItem');
+    renderInforme();
+    await escribirComentario('Dato del paciente');
+    await vi.advanceTimersByTimeAsync(6000);
+    expect(guardar).not.toHaveBeenCalled();
+    guardar.mockRestore();
+  });
+
+  // --- Aviso al salir ---
+
+  it('sin cambios, salir no pide confirmación', async () => {
+    renderInforme();
+    await screen.findByDisplayValue('Se sugiere correlación clínica.');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(await screen.findByRole('heading', { name: 'Pantalla de inicio' })).toBeInTheDocument();
+  });
+
+  it('con cambios, "Seguir editando" se queda en el informe con lo escrito', async () => {
+    renderInforme();
+    await escribirComentario('Sin guardar');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(await screen.findByRole('dialog', { name: /cambios sin guardar/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Seguir editando' }));
+    expect(aviso()).toBeNull();
+    expect(screen.getByLabelText('Comentarios')).toHaveValue('Sin guardar');
+    expect(screen.queryByRole('heading', { name: 'Pantalla de inicio' })).toBeNull();
+  });
+
+  it('"Salir sin guardar" sale sin guardar', async () => {
+    renderInforme();
+    await escribirComentario('Sin guardar');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Salir sin guardar' }));
+    expect(await screen.findByRole('heading', { name: 'Pantalla de inicio' })).toBeInTheDocument();
+    expect(client.put).not.toHaveBeenCalled();
+  });
+
+  it('"Guardar y salir" guarda y sale', async () => {
+    renderInforme();
+    await escribirComentario('Guardado al salir');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Guardar y salir' }));
+    expect(await screen.findByRole('heading', { name: 'Pantalla de inicio' })).toBeInTheDocument();
+    expect(client.put).toHaveBeenCalledWith('/informes/5/', expect.objectContaining({ comentarios: 'Guardado al salir' }));
+  });
+
+  it('"Guardar y salir" no sale si falla la validación y muestra qué falta', async () => {
+    await abrirNuevo();
+    fireEvent.change(screen.getByLabelText('Comentarios'), { target: { value: 'Sin paciente' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Guardar y salir' }));
+    expect(await screen.findByText('Seleccione un paciente.')).toBeInTheDocument();
+    expect(aviso()).toBeNull();
+    expect(client.post).not.toHaveBeenCalled();
+    expect(screen.queryByRole('heading', { name: 'Pantalla de inicio' })).toBeNull();
+  });
+
+  it('"Guardar y salir" no sale si el servidor rechaza los datos', async () => {
+    client.put.mockRejectedValue({ response: { status: 400, data: { datos_ingresados: ['Faltan campos obligatorios: Localización'] } } });
+    renderInforme();
+    await escribirComentario('Cambio');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Guardar y salir' }));
+    expect(await screen.findByText(/Faltan campos obligatorios: Localización/)).toBeInTheDocument();
+    expect(aviso()).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Pantalla de inicio' })).toBeNull();
+  });
+
+  it('después del autoguardado, salir ya no pide confirmación', async () => {
+    renderInforme();
+    await escribirComentario('Autoguardado');
+    await vi.advanceTimersByTimeAsync(5000);
+    await screen.findByText(/Guardado automáticamente a las/);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(await screen.findByRole('heading', { name: 'Pantalla de inicio' })).toBeInTheDocument();
+  });
+
+  it('al crear un informe nuevo pasa a su página sin pedir confirmación', async () => {
+    client.post.mockResolvedValue({ data: { id: 5, numero_peticion: 'P-2026-00001' } });
+    await abrirNuevo();
+    await seleccionarPaciente();
+    fireEvent.change(screen.getByLabelText(/Tipo de Patología/i), { target: { value: '1' } });
+    fireEvent.click(screen.getByRole('button', { name: /Guardar Informe/i }));
+    expect(await screen.findByRole('heading', { name: /Informe P-2026-00001/ })).toBeInTheDocument();
+    expect(aviso()).toBeNull();
+  });
+
+  it('al cerrar o recargar la pestaña con cambios, el navegador avisa', async () => {
+    renderInforme();
+    await screen.findByDisplayValue('Se sugiere correlación clínica.');
+    const cerrar = () => {
+      const evento = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(evento);
+      return evento.defaultPrevented;
+    };
+    expect(cerrar()).toBe(false);
+    fireEvent.change(screen.getByLabelText('Comentarios'), { target: { value: 'Cambio' } });
+    expect(cerrar()).toBe(true);
   });
 });

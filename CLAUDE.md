@@ -134,11 +134,16 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
 - `AdendaSerializer` solo escribe `motivo` y `texto`. `InformeSerializer` trae `adendas` (solo lectura); se cargan con `prefetch_related('adendas')` solo en las rutas de detalle, como los diagnósticos, y el listado no las muestra. En `/admin/`, `AdendaInline` es de solo lectura.
 - En el frontend, `components/informe/SeccionAdendas.jsx` es la tarjeta "Adendas", solo en informes finalizados. `InformePage` la dibuja **fuera** de su `<form>`, porque tiene su propio formulario y su propia petición. Pide confirmación antes de guardar y, al guardar, `onAgregada` agrega la adenda a `informe.adendas` sin recargar. Reutiliza `LineasFirma` y `formatoFechaHora` de `SeccionFirma.jsx`.
 
+**Cambios sin guardar en el informe (decisión D-13).**
+- `InformePage` cuenta los cambios del usuario (`version`; cada `onChange` llama a `marcarCambio()`) y compara con `versionGuardada`. Si se agrega un campo editable al informe, su `onChange` debe llamar a `marcarCambio()`.
+- Con cambios sin guardar, `useBlocker` muestra el aviso (Seguir editando, Salir sin guardar, Guardar y salir) y `beforeunload` cubre cerrar o recargar. "Guardar y salir" no sale si falla la validación. No se frena la salida a `/login`.
+- Un borrador existente se autoguarda `ESPERA_AUTOGUARDADO_MS` (5 s) después del último cambio, solo si `calcularErrores()` está vacío. Un informe nuevo nunca se autoguarda (gastaría un número de petición, D-7), y nunca se guarda nada en el navegador.
+
 **Rate limiting.** En `settings.REST_FRAMEWORK` están los throttles globales (`anon`, `user`) y otros por scope (`login`, `registro`, `foro_publicacion`, `foro_comentario`). Los de scope se asignan en `accounts/throttles.py` y en `get_throttles()` de las vistas del foro. Si un endpoint nuevo usa un scope nuevo, hay que agregarlo a `DEFAULT_THROTTLE_RATES`.
 
 **Frontend.**
 - `src/api/client.js` es la instancia Axios. Su `baseURL` es `VITE_API_URL + "/api"` (`frontend/.env`). En desarrollo `VITE_API_URL` va vacía: las peticiones a `/api/...` las reenvía el proxy de `vite.config.js` a `localhost:8000`. No escribas direcciones fijas del backend en el código (auditoría I-10). Agrega el `Bearer` desde `localStorage` (`access_token`) y, ante un 401, intenta refrescar con `refresh_token`; si falla, redirige a `/login`. **Los tokens de renovación rotan y están en lista negra** (`token_blacklist`, `BLACKLIST_AFTER_ROTATION`, decisión D-6): cada renovación devuelve un `refresh` nuevo que hay que guardar, porque el anterior deja de servir. `AuthContext.logout()` llama a `POST /api/auth/logout/`, y cambiar la contraseña invalida todos los `refresh` del usuario y devuelve un par nuevo.
-- Las rutas están en `App.jsx` con tres wrappers:
+- Las rutas están en `App.jsx`, en un router de datos (`createBrowserRouter` + `RouterProvider`, creado al montar `App`), que es lo que exige `useBlocker` (D-13). Las pruebas de una pantalla que use `useBlocker` deben renderizarla con `createMemoryRouter`, no con `<MemoryRouter>`. Hay tres wrappers:
   - `ProtectedRoute`: requiere sesión y añade Navbar y Footer.
   - `PublicRoute`: solo para `/login`.
   - `LegalRoute`: páginas legales, visibles con o sin sesión. Sin sesión muestran el `Footer` y el enlace "← Volver al inicio de sesión". `LoginPage` también dibuja el `Footer`, para que la política de privacidad se pueda leer antes de entrar.

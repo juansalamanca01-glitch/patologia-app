@@ -47,6 +47,7 @@
 
   Un informe finalizado imprime los datos congelados al finalizar. El PDF de un borrador es solo una **vista previa** para su autor o un administrador: no lleva firma, tiene una marca de agua "BORRADOR" en cada página, dice "BORRADOR — SIN VALIDEZ" en la fecha de informe y en el pie, y el archivo termina en `_borrador.pdf`.
 - **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
+- **No perder lo escrito**: si hay cambios sin guardar, salir del informe pide confirmar (seguir editando, salir sin guardar o guardar y salir). Un borrador que ya existe se guarda solo, 5 segundos después del último cambio, y un indicador muestra si está guardado. Un informe nuevo no se guarda solo, para no gastar números de petición. Nada se guarda en el navegador.
 - **Adendas**: un informe finalizado se corrige con adendas, sin modificar lo que ya se entregó. Cada adenda lleva motivo, texto, número (1, 2, 3... dentro del informe), fecha y la firma de quien la crea, que debe tener registro médico. Las agrega el autor del informe o un administrador, y no se editan ni se borran.
 - **Firma y finalización**: el informe lo firma siempre su autor, con su nombre, especialidad y registro médico. El registro médico solo lo asigna un administrador. Para finalizar, el informe debe tener paciente y al menos un diagnóstico, el autor debe tener registro médico y, en histología, debe haber descripción microscópica; si falta algo, la aplicación dice qué. Al finalizar se fija la fecha de informe y se congelan los datos del paciente, la EPS, el servicio y la firma: corregirlos después no cambia un informe ya entregado.
 - **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables. Una patología se puede desactivar: deja de ofrecerse en los informes nuevos sin perder el historial.
@@ -89,6 +90,7 @@ Estas reglas responden a decisiones del proyecto registradas en [`docs/decisione
 - **D-9:** un informe finalizado se corrige con adendas, que no se editan ni se borran.
 - **D-11:** patólogos y administradores crean y editan pacientes y administran EPS y servicios; solo un administrador borra pacientes.
 - **D-12:** el PDF de un borrador es una vista previa solo para su autor o un administrador.
+- **D-13:** aviso al salir con cambios sin guardar y autoguardado de los borradores existentes (nunca de los informes nuevos ni en el navegador).
 
 La forma normal de corregir un informe finalizado es agregarle una adenda. Para una corrección excepcional, el administrador puede usar el panel de Django (`/admin/`), donde las adendas y los datos congelados son de solo lectura.
 
@@ -133,7 +135,7 @@ La forma normal de corregir un informe finalizado es agregarle una adenda. Para 
   - ReportLab (PDF) y Pillow (validación de imágenes)
   - SQLite en desarrollo; PostgreSQL si se define `DB_NAME` en el `.env`
 - **Frontend**:
-  - React 18 y React Router 6
+  - React 18 y React Router 6 (router de datos: `createBrowserRouter`)
   - Vite 6.4
   - Axios (añade el token JWT a cada petición y lo renueva automáticamente si vence)
   - Estilos propios en `src/index.css`, sin librería de componentes

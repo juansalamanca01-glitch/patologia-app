@@ -5,6 +5,31 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-05
 
+### Aviso al salir con cambios sin guardar y autoguardado de borradores (decisión D-13, Pendientes, punto 3)
+
+**Qué se cambió**
+- **Aviso al salir** (`frontend/src/pages/InformePage.jsx`):
+  - En un informe que se puede editar, si hay cambios sin guardar, salir por el menú, "Cancelar" o un enlace muestra el aviso "Tienes cambios sin guardar" con tres botones: **Seguir editando**, **Salir sin guardar** y **Guardar y salir**.
+  - "Guardar y salir" valida primero. Si falta algo (por ejemplo, el paciente) o el servidor rechaza los datos, no se sale y la página muestra qué falta.
+  - Al cerrar la pestaña o recargar, el navegador muestra su propio aviso (`beforeunload`).
+  - No se frena la salida hacia `/login` (cerrar sesión), porque para entonces la sesión ya se cerró.
+- **Autoguardado:** solo en un borrador que ya existe y que el usuario puede editar. Se guarda en el servidor 5 segundos después del último cambio (`ESPERA_AUTOGUARDADO_MS`), y solo si el formulario pasa la validación. Un informe nuevo no se autoguarda, para no gastar números de petición (D-7). Nada se guarda en el navegador.
+- **Indicador** junto al título: "Cambios sin guardar", "Cambios sin guardar: hay datos obligatorios o incompletos", "Guardando…" o "Guardado automáticamente a las hh:mm". Lo anuncian los lectores de pantalla (`role="status"`).
+- **Organización de `InformePage`:**
+  - `calcularErrores()` separa la validación de mostrar los errores (la usa el autoguardado);
+  - `armarPayload()` y `guardarEnServidor()` son comunes al botón, al autoguardado y a "Guardar y salir";
+  - `erroresDeRespuesta()` convierte los errores de la API.
+  - Los códigos CIE-10 normalizados por el backend solo se copian al formulario si no hubo cambios mientras se guardaba.
+- **Error que ya existía:** el error del backend sobre `datos_ingresados` ("Faltan campos obligatorios: …") no se mostraba en ninguna parte. Ahora aparece en la alerta de errores.
+- **Router** (`frontend/src/App.jsx`): pasa de `<BrowserRouter>` a `createBrowserRouter` y `RouterProvider` (router de datos), que es lo que exige `useBlocker`. Las rutas y las pantallas no cambian, y React Router sigue en la versión 6.
+- **Pruebas:**
+  - `InformePage.test.jsx` usa `createMemoryRouter`.
+  - 13 pruebas nuevas: autoguardado a los 5 s y la espera que se reinicia, sin autoguardar si no es válido, informe nuevo sin autoguardado, nada en el navegador, salir sin cambios, los tres botones, "Guardar y salir" con validación fallida y con rechazo del servidor, salir después del autoguardado, crear un informe sin aviso y `beforeunload`.
+  - El frontend pasa de 110 a 123 pruebas.
+- **Documentación:** `docs/decisiones.md` (D-13), `CLAUDE.md`, `README.md` y `docs/progreso.md`, con dos casos anotados: finalizar con cambios sin guardar (falta la confirmación del usuario) y cerrar sesión con cambios sin guardar (limitación conocida). También el conflicto entre dos pestañas, para más adelante.
+
+**Por qué:** en la prueba manual del 2026-10-05 el usuario notó que al salir del formulario sin guardar se perdía todo lo escrito. El usuario eligió la opción B el 2026-10-05 (decisión D-13).
+
 ### Visor de imágenes del foro (Pendientes, punto 2)
 
 **Qué se cambió**

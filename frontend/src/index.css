@@ -652,6 +652,10 @@ textarea { resize: vertical; min-height: 80px; }
 .alert-lista p { margin: 0 0 0.25rem; }
 .alert-lista ul { margin: 0; padding-left: 1.25rem; }
 
+/* ── Estado del guardado junto al título del informe (D-13) ── */
+.indicador-guardado { margin-left: 0.75rem; font-size: 0.85rem; color: var(--gray-500); }
+.indicador-guardado.sin-guardar { color: #92400e; }
+
 /* ── Datos del paciente seleccionado en el informe ── */
 .datos-paciente {
   display: grid;
