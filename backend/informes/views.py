@@ -176,6 +176,10 @@ class InformeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         params = self.request.query_params
+        # El detalle, el PDF y finalizar devuelven los diagnósticos: se cargan en una
+        # sola consulta (M-4). El listado no los muestra y no los pide.
+        if self.detail:
+            qs = qs.prefetch_related('diagnosticos')
 
         # Filtros de búsqueda
         # Cada palabra de ?q= debe aparecer en alguno de los campos: así "ficticio uno"

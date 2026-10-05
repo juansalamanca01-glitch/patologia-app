@@ -235,7 +235,9 @@ class Informe(models.Model):
         default=Estado.BORRADOR,
         verbose_name='Estado',
     )
-    notas = models.TextField(blank=True, verbose_name='Notas adicionales')
+    descripcion_microscopica = models.TextField(blank=True, verbose_name='Descripción microscópica')
+    # Antes se llamaba `notas` (P-5); la migración 0009 conserva lo que ya estaba escrito.
+    comentarios = models.TextField(blank=True, verbose_name='Comentarios')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 
@@ -256,3 +258,32 @@ class Informe(models.Model):
                 super().save(*args, **kwargs)
         else:
             super().save(*args, **kwargs)
+
+
+class Diagnostico(models.Model):
+    """
+    Diagnóstico del informe (informe v2, etapa 5). Un informe tiene varios, en el
+    orden en que se imprimen; el código CIE-10 es opcional.
+    """
+
+    informe = models.ForeignKey(
+        Informe,
+        on_delete=models.CASCADE,
+        related_name='diagnosticos',
+        verbose_name='Informe',
+    )
+    orden = models.PositiveSmallIntegerField(verbose_name='Orden')
+    descripcion = models.TextField(verbose_name='Descripción')
+    codigo_cie10 = models.CharField(max_length=7, blank=True, verbose_name='Código CIE-10')
+
+    class Meta:
+        verbose_name = 'Diagnóstico'
+        verbose_name_plural = 'Diagnósticos'
+        ordering = ['informe', 'orden']
+        constraints = [
+            models.UniqueConstraint(fields=['informe', 'orden'], name='diagnostico_orden_unico'),
+        ]
+
+    def __str__(self):
+        codigo = f' ({self.codigo_cie10})' if self.codigo_cie10 else ''
+        return f'{self.orden}. {self.descripcion}{codigo}'

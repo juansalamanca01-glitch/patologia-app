@@ -1,7 +1,7 @@
 # Propuesta: informe de anatomía patológica v2
 
 **Fecha:** 2026-10-04
-**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); las etapas 1 (número de petición), 2 (catálogos y opciones), 3 (pacientes) y 4 (datos de la solicitud) se terminaron el 2026-10-04.
+**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); las etapas 1 (número de petición), 2 (catálogos y opciones), 3 (pacientes), 4 (datos de la solicitud) y 5 (contenido del informe) se terminaron el 2026-10-04.
 
 **Objetivo:** que el informe tenga los datos y el orden de un informe real de laboratorio:
 
@@ -214,6 +214,7 @@ class Diagnostico(models.Model):
 - **En la API:** `diagnosticos` es una lista anidada dentro del informe: `[{"descripcion": "...", "codigo_cie10": "C44.3"}]`. El orden de la lista es el orden del informe. En un PUT, o en un PATCH que incluya `diagnosticos`, la lista enviada **reemplaza** a la anterior, dentro de la misma transacción.
 - **CIE-10:** es opcional. Se pasa a mayúsculas, se valida con `^[A-Z][0-9]{2}(\.[0-9A-Z]{1,2})?$` y `C443` se normaliza a `C44.3`. No se carga el catálogo oficial de CIE-10, que tiene más de 12 000 códigos. Queda como mejora futura con autocompletado, junto con la CIE-O para morfología tumoral.
 - **Límite:** 20 diagnósticos por informe y descripción no vacía.
+- **Confirmado en la etapa 5:** si un PUT o un PATCH no trae `diagnosticos`, la lista guardada no cambia; una lista vacía los quita todos. Un borrador se puede guardar sin diagnósticos (la regla de "al menos uno" es para finalizar, etapa 6). La búsqueda `?q=` no incluye los diagnósticos por ahora.
 
 ### 3.7 Firma del patólogo
 
@@ -451,7 +452,7 @@ Se actualiza en cada etapa, según las reglas 2, 3 y 6 de `CLAUDE.md`:
 | **2. Catálogos y opciones** (hecha, 2026-10-04) | `EPS`, `Servicio`, `TipoEstudio`, `GET /api/opciones/` y `seed_data`. Solo backend, con sus pruebas. La app `pacientes` se crea aquí con solo la EPS. | backend |
 | **3. Pacientes** (hecha, 2026-10-04) | Modelo `Paciente` en la app `pacientes`, CRUD, búsqueda, edad calculada, permisos, `useOpciones`, `PacientesPage` y enlace en el Navbar. Borrar una EPS que usa un paciente responde 400 ("desactívela"). | backend, frontend |
 | **4. Datos de la solicitud** (hecha, 2026-10-04) | Paciente y campos de 3.4 en el informe, historial `GET /api/pacientes/{id}/informes/` (y en `PacientesPage`), 400 al borrar un paciente con informes (se pasaron de la etapa 3 porque necesitan `Informe.paciente`), `SelectorPaciente`, tarjeta "Datos de la solicitud", búsqueda ampliada, columnas de los listados y pantalla para administrar EPS y servicios (6.3). Borrar un servicio o una EPS que usa un informe responde 400. | backend, frontend |
-| **5. Contenido del informe** | Descripción microscópica, `notas` → `comentarios` y diagnósticos con CIE-10 (`ListaDiagnosticos`). | backend, frontend |
+| **5. Contenido del informe** (hecha, 2026-10-04) | Descripción microscópica, `notas` → `comentarios` y diagnósticos con CIE-10 (`ListaDiagnosticos`, que se reordena con botones de subir y bajar). El PDF actual ya imprime las tres secciones (decisión del usuario en la etapa 5); su estructura completa sigue en la etapa 7. | backend, frontend, PDF (secciones nuevas) |
 | **6. Firma y finalización** | `registro_medico`, reglas para finalizar, `fecha_informe`, `datos_finalizacion`, perfil y `SeccionFirma`. | backend, frontend |
 | **7. PDF nuevo** | Estructura de la sección 5, encabezado configurable, numeración de páginas y borrador. | PDF |
 | **8. Adendas** | Modelo, endpoints, sección en el frontend y en el PDF. | backend, frontend, PDF |

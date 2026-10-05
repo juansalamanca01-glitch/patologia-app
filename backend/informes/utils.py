@@ -166,22 +166,33 @@ def generar_pdf_informe(informe) -> io.BytesIO:
                     styles['CuerpoTexto'],
                 ))
 
-    elements.append(Spacer(1, 16))
-
-    # Descripción generada
-    if informe.texto_generado:
-        elements.append(Paragraph('DESCRIPCIÓN MACROSCÓPICA', styles['Subtitulo']))
-        elements.append(HRFlowable(width='100%', thickness=0.5, color=HexColor('#cbd5e0')))
-        elements.append(Spacer(1, 6))
-        elements.append(Paragraph(texto_seguro(informe.texto_generado), styles['CuerpoTexto']))
-
-    # Notas
-    if informe.notas:
+    def seccion(titulo, parrafos):
+        """Título con su línea y los párrafos, ya escapados con texto_seguro (I-3)."""
         elements.append(Spacer(1, 16))
-        elements.append(Paragraph('NOTAS ADICIONALES', styles['Subtitulo']))
+        elements.append(Paragraph(titulo, styles['Subtitulo']))
         elements.append(HRFlowable(width='100%', thickness=0.5, color=HexColor('#cbd5e0')))
         elements.append(Spacer(1, 6))
-        elements.append(Paragraph(texto_seguro(informe.notas), styles['CuerpoTexto']))
+        for parrafo in parrafos:
+            elements.append(Paragraph(parrafo, styles['CuerpoTexto']))
+
+    # Contenido en el orden del informe real (informe v2, etapa 5). La estructura
+    # completa del PDF (encabezado, firma, numeración de páginas) llega en la etapa 7.
+    if informe.texto_generado:
+        seccion('DESCRIPCIÓN MACROSCÓPICA', [texto_seguro(informe.texto_generado)])
+
+    if informe.descripcion_microscopica:
+        seccion('DESCRIPCIÓN MICROSCÓPICA', [texto_seguro(informe.descripcion_microscopica)])
+
+    diagnosticos = list(informe.diagnosticos.all())
+    if diagnosticos:
+        seccion('DIAGNÓSTICOS', [
+            f'{d.orden}. {texto_seguro(d.descripcion)}'
+            + (f' (CIE-10: {texto_seguro(d.codigo_cie10)})' if d.codigo_cie10 else '')
+            for d in diagnosticos
+        ])
+
+    if informe.comentarios:
+        seccion('COMENTARIOS', [texto_seguro(informe.comentarios)])
 
     # Pie de página
     elements.append(Spacer(1, 30))

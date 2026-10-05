@@ -1,8 +1,15 @@
+import re
+
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
 from config.catalogos import NombreCatalogoMixin
-from .models import Categoria, Patologia, Plantilla, Informe, Servicio
+from .models import Categoria, Diagnostico, Patologia, Plantilla, Informe, Servicio
+
+MAX_DIAGNOSTICOS = 20
+# Letra, dos cifras y, opcionalmente, un punto con uno o dos caracteres: C44, C44.3, M80.90.
+PATRON_CIE10 = re.compile(r'^[A-Z][0-9]{2}(\.[0-9A-Z]{1,2})?$')
 
 
 def esta_vacio(valor):
@@ -88,6 +95,31 @@ def _rechazar_si_desactivado(valor, actual_id, mensaje):
     return valor
 
 
+class DiagnosticoSerializer(serializers.ModelSerializer):
+    """Un diagnóstico dentro del informe. El orden es el de la lista que se envía."""
+
+    class Meta:
+        model = Diagnostico
+        fields = ['orden', 'descripcion', 'codigo_cie10']
+        read_only_fields = ['orden']
+        extra_kwargs = {
+            'descripcion': {'error_messages': {'blank': 'Escriba la descripción del diagnóstico.'}},
+        }
+
+    def validate_codigo_cie10(self, valor):
+        """Mayúsculas, sin espacios y con el punto que falte: "c443" se guarda como "C44.3"."""
+        codigo = re.sub(r'\s', '', valor or '').upper()
+        if not codigo:
+            return ''
+        if '.' not in codigo and len(codigo) > 3:
+            codigo = f'{codigo[:3]}.{codigo[3:]}'
+        if not PATRON_CIE10.match(codigo):
+            raise serializers.ValidationError(
+                'Código CIE-10 no válido. Use una letra, dos cifras y, si aplica, la subcategoría (ej.: C44.3).'
+            )
+        return codigo
+
+
 class InformeSerializer(serializers.ModelSerializer):
     patologia_nombre = serializers.CharField(source='patologia.nombre', read_only=True)
     autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
@@ -95,6 +127,8 @@ class InformeSerializer(serializers.ModelSerializer):
     paciente_datos = serializers.SerializerMethodField()
     eps_nombre = serializers.CharField(source='eps.nombre', read_only=True, default=None)
     servicio_nombre = serializers.CharField(source='servicio.nombre', read_only=True, default=None)
+    # Si se envía, reemplaza la lista anterior; si no se envía (p. ej. un PATCH), no cambia.
+    diagnosticos = DiagnosticoSerializer(many=True, required=False)
 
     class Meta:
         model = Informe
@@ -104,8 +138,8 @@ class InformeSerializer(serializers.ModelSerializer):
             'eps', 'eps_nombre', 'servicio', 'servicio_nombre', 'estudios_solicitados', 'tipo_estudio',
             'patologia', 'patologia_nombre',
             'autor', 'autor_nombre', 'fecha', 'tipo_muestra',
-            'datos_ingresados', 'texto_generado', 'estado', 'notas',
-            'fecha_creacion', 'fecha_actualizacion',
+            'datos_ingresados', 'texto_generado', 'descripcion_microscopica', 'diagnosticos', 'comentarios',
+            'estado', 'fecha_creacion', 'fecha_actualizacion',
         ]
         # numero_peticion lo asigna el sistema y no se puede cambiar (decisión D-7).
         read_only_fields = [
@@ -142,10 +176,39 @@ class InformeSerializer(serializers.ModelSerializer):
             valor, getattr(self.instance, 'servicio_id', None), 'Este servicio está desactivado.',
         )
 
+    def validate_diagnosticos(self, valor):
+        if len(valor) > MAX_DIAGNOSTICOS:
+            raise serializers.ValidationError(f'Un informe admite como máximo {MAX_DIAGNOSTICOS} diagnósticos.')
+        return valor
+
     def validate(self, data):
         self._validar_paciente_y_fecha_ingreso(data)
         self._validar_campos_obligatorios(data)
         return data
+
+    # El informe y sus diagnósticos se guardan juntos: si algo falla, no queda ninguno a medias.
+    def create(self, validated_data):
+        diagnosticos = validated_data.pop('diagnosticos', [])
+        with transaction.atomic():
+            informe = super().create(validated_data)
+            self._guardar_diagnosticos(informe, diagnosticos)
+        return informe
+
+    def update(self, instance, validated_data):
+        diagnosticos = validated_data.pop('diagnosticos', None)
+        with transaction.atomic():
+            informe = super().update(instance, validated_data)
+            if diagnosticos is not None:
+                self._guardar_diagnosticos(informe, diagnosticos)
+        return informe
+
+    def _guardar_diagnosticos(self, informe, diagnosticos):
+        """Reemplaza los diagnósticos del informe; el orden es el de la lista (1, 2, 3...)."""
+        informe.diagnosticos.all().delete()
+        Diagnostico.objects.bulk_create(
+            Diagnostico(informe=informe, orden=orden, **datos)
+            for orden, datos in enumerate(diagnosticos, start=1)
+        )
 
     def _validar_paciente_y_fecha_ingreso(self, data):
         creando = self.instance is None
@@ -172,7 +235,7 @@ class InformeSerializer(serializers.ModelSerializer):
         """Comprueba que estén llenos los campos obligatorios de la plantilla de la patología."""
         patologia = data.get('patologia') or (self.instance and self.instance.patologia)
         # Si la petición no trae datos_ingresados (p. ej. un PATCH que solo cambia las
-        # notas), se validan los datos ya guardados del informe.
+        # comentarios), se validan los datos ya guardados del informe.
         if 'datos_ingresados' in data:
             datos = data['datos_ingresados'] or {}
         else:

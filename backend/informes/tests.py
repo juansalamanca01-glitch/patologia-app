@@ -51,7 +51,7 @@ class PermisosInformeTests(APITestCase):
         return Informe.objects.create(
             patologia=self.patologia,
             autor=self.autor,
-            notas='original',
+            comentarios='original',
             estado=estado,
         )
 
@@ -63,10 +63,10 @@ class PermisosInformeTests(APITestCase):
     def test_autor_no_puede_editar_informe_finalizado(self):
         informe = self.crear_informe(Informe.Estado.FINALIZADO)
         self.client.force_authenticate(self.autor)
-        respuesta = self.client.patch(self.url(informe), {'notas': 'cambiado'}, format='json')
+        respuesta = self.client.patch(self.url(informe), {'comentarios': 'cambiado'}, format='json')
         self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
         informe.refresh_from_db()
-        self.assertEqual(informe.notas, 'original')
+        self.assertEqual(informe.comentarios, 'original')
 
     def test_autor_no_puede_borrar_informe_finalizado(self):
         informe = self.crear_informe(Informe.Estado.FINALIZADO)
@@ -79,22 +79,22 @@ class PermisosInformeTests(APITestCase):
         # Decisión D-3: el bloqueo de informes finalizados también aplica al admin.
         informe = self.crear_informe(Informe.Estado.FINALIZADO)
         self.client.force_authenticate(self.admin)
-        respuesta = self.client.patch(self.url(informe), {'notas': 'cambiado'}, format='json')
+        respuesta = self.client.patch(self.url(informe), {'comentarios': 'cambiado'}, format='json')
         self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
         respuesta = self.client.delete(self.url(informe))
         self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
         informe.refresh_from_db()
-        self.assertEqual(informe.notas, 'original')
+        self.assertEqual(informe.comentarios, 'original')
 
     # ── Informe ajeno: otro patólogo no puede tocarlo (D-2) ───────
 
     def test_otro_patologo_no_puede_editar_informe_ajeno(self):
         informe = self.crear_informe()
         self.client.force_authenticate(self.otro_patologo)
-        respuesta = self.client.patch(self.url(informe), {'notas': 'cambiado'}, format='json')
+        respuesta = self.client.patch(self.url(informe), {'comentarios': 'cambiado'}, format='json')
         self.assertEqual(respuesta.status_code, status.HTTP_403_FORBIDDEN)
         informe.refresh_from_db()
-        self.assertEqual(informe.notas, 'original')
+        self.assertEqual(informe.comentarios, 'original')
 
     def test_otro_patologo_no_puede_borrar_informe_ajeno(self):
         informe = self.crear_informe()
@@ -121,12 +121,12 @@ class PermisosInformeTests(APITestCase):
     def test_autor_puede_editar_y_finalizar_su_borrador(self):
         informe = self.crear_informe()
         self.client.force_authenticate(self.autor)
-        respuesta = self.client.patch(self.url(informe), {'notas': 'cambiado'}, format='json')
+        respuesta = self.client.patch(self.url(informe), {'comentarios': 'cambiado'}, format='json')
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         respuesta = self.client.post(self.url(informe, 'finalizar/'))
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         informe.refresh_from_db()
-        self.assertEqual(informe.notas, 'cambiado')
+        self.assertEqual(informe.comentarios, 'cambiado')
         self.assertEqual(informe.estado, Informe.Estado.FINALIZADO)
 
     def test_autor_puede_borrar_su_borrador(self):
@@ -138,7 +138,7 @@ class PermisosInformeTests(APITestCase):
     def test_admin_puede_editar_y_finalizar_borrador_ajeno(self):
         informe = self.crear_informe()
         self.client.force_authenticate(self.admin)
-        respuesta = self.client.patch(self.url(informe), {'notas': 'revisado'}, format='json')
+        respuesta = self.client.patch(self.url(informe), {'comentarios': 'revisado'}, format='json')
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         respuesta = self.client.post(self.url(informe, 'finalizar/'))
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
@@ -154,7 +154,7 @@ class PermisosInformeTests(APITestCase):
     def test_auditor_no_puede_editar(self):
         informe = self.crear_informe()
         self.client.force_authenticate(self.auditor)
-        respuesta = self.client.patch(self.url(informe), {'notas': 'cambiado'}, format='json')
+        respuesta = self.client.patch(self.url(informe), {'comentarios': 'cambiado'}, format='json')
         self.assertEqual(respuesta.status_code, status.HTTP_403_FORBIDDEN)
 
 
@@ -202,7 +202,7 @@ class PdfConTextoDelUsuarioTests(APITestCase):
             autor=self.patologo,
             datos_ingresados={'hallazgos': 'ver <i>H. pylori', 'campo<br>raro': 'tejido <br> pardo'},
             texto_generado='Lesión <b>grande',
-            notas='<font size=40>ENORME</font> & margen < 2 mm',
+            comentarios='<font size=40>ENORME</font> & margen < 2 mm',
         )
 
     def descargar_pdf(self):
@@ -224,9 +224,9 @@ class PdfConTextoDelUsuarioTests(APITestCase):
         self.assertIn('ver &lt;i&gt;H. pylori', textos)
         self.assertNotIn('<font size=40>', textos)
 
-    def test_los_saltos_de_linea_de_las_notas_se_respetan(self):
+    def test_los_saltos_de_linea_de_los_comentarios_se_respetan(self):
         from reportlab.platypus import Paragraph
-        self.informe.notas = 'Primera línea\r\nSegunda línea\nTercera < línea'
+        self.informe.comentarios = 'Primera línea\r\nSegunda línea\nTercera < línea'
         self.informe.save()
         with mock.patch('informes.utils.Paragraph', wraps=Paragraph) as espia:
             respuesta = self.descargar_pdf()
@@ -399,10 +399,10 @@ class CamposObligatoriosTests(APITestCase):
         # Control.
         self.assertEqual(self.crear(datos_ingresados=self.datos_completos).status_code, status.HTTP_201_CREATED)
 
-    def test_patch_de_solo_notas_no_exige_reenviar_los_datos(self):
-        # Control: editar solo las notas no debe fallar por "faltan campos".
+    def test_patch_de_solo_comentarios_no_exige_reenviar_los_datos(self):
+        # Control: editar solo los comentarios no debe fallar por "faltan campos".
         informe_id = self.crear(datos_ingresados=self.datos_completos).data['id']
-        respuesta = self.client.patch(f'/api/informes/{informe_id}/', {'notas': 'Revisado'}, format='json')
+        respuesta = self.client.patch(f'/api/informes/{informe_id}/', {'comentarios': 'Revisado'}, format='json')
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
 
     def test_patch_que_vacia_un_obligatorio_se_rechaza(self):
@@ -1151,3 +1151,202 @@ class ConsultasListadoInformesTests(APITestCase):
         con_3 = [self.contar(url) for url in urls]
         self.crear_informes(3, 10)
         self.assertEqual([self.contar(url) for url in urls], con_3)
+
+
+class ContenidoInformeTests(APITestCase):
+    """
+    Informe v2, etapa 5 (docs/propuesta-informe-v2.md, secciones 3.4 y 3.6): el
+    informe tiene descripción microscópica, comentarios (antes `notas`, P-5) y
+    una lista de diagnósticos con código CIE-10 opcional. Solo datos ficticios.
+    """
+
+    URL = '/api/informes/'
+
+    def setUp(self):
+        self.patologo = Usuario.objects.create_user(
+            username='patologo_contenido', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+        )
+        self.client.force_authenticate(self.patologo)
+        self.patologia = Patologia.objects.create(nombre='Patología contenido')
+        self.paciente = paciente_ficticio()
+
+    def crear(self, **extra):
+        cuerpo = {'patologia': self.patologia.id, 'paciente': self.paciente.id, 'datos_ingresados': {}, **extra}
+        return self.client.post(self.URL, cuerpo, format='json')
+
+    def url(self, informe_id):
+        return f'{self.URL}{informe_id}/'
+
+    def diagnosticos(self, informe_id):
+        return [
+            (d['descripcion'], d['codigo_cie10'])
+            for d in self.client.get(self.url(informe_id)).data['diagnosticos']
+        ]
+
+    # --- Descripción microscópica y comentarios ---
+
+    def test_guarda_y_devuelve_la_descripcion_microscopica(self):
+        respuesta = self.crear(descripcion_microscopica='Proliferación de células basaloides en nidos.')
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        detalle = self.client.get(self.url(respuesta.data['id'])).data
+        self.assertEqual(detalle['descripcion_microscopica'], 'Proliferación de células basaloides en nidos.')
+
+    def test_comentarios_reemplaza_a_notas(self):
+        respuesta = self.crear(comentarios='Se sugiere correlación clínica.', notas='ignorado')
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        detalle = self.client.get(self.url(respuesta.data['id'])).data
+        self.assertEqual(detalle['comentarios'], 'Se sugiere correlación clínica.')
+        self.assertNotIn('notas', detalle)
+
+    # --- Diagnósticos ---
+
+    def test_guarda_los_diagnosticos_en_el_orden_enviado(self):
+        respuesta = self.crear(diagnosticos=[
+            {'descripcion': 'Carcinoma basocelular nodular', 'codigo_cie10': 'C44.3'},
+            {'descripcion': 'Márgenes libres de lesión', 'codigo_cie10': ''},
+        ])
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        self.assertEqual(self.diagnosticos(respuesta.data['id']), [
+            ('Carcinoma basocelular nodular', 'C44.3'),
+            ('Márgenes libres de lesión', ''),
+        ])
+
+    def test_el_codigo_cie10_es_opcional(self):
+        respuesta = self.crear(diagnosticos=[{'descripcion': 'Dermatitis crónica inespecífica'}])
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        self.assertEqual(self.diagnosticos(respuesta.data['id']), [('Dermatitis crónica inespecífica', '')])
+
+    def test_un_informe_sin_diagnosticos_se_puede_guardar_como_borrador(self):
+        respuesta = self.crear()
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        self.assertEqual(respuesta.data['diagnosticos'], [])
+
+    def test_put_reemplaza_la_lista_de_diagnosticos(self):
+        informe_id = self.crear(diagnosticos=[
+            {'descripcion': 'Primero', 'codigo_cie10': 'C44.3'},
+            {'descripcion': 'Segundo'},
+        ]).data['id']
+        cuerpo = {
+            'patologia': self.patologia.id, 'paciente': self.paciente.id, 'datos_ingresados': {},
+            'diagnosticos': [{'descripcion': 'Segundo'}, {'descripcion': 'Tercero', 'codigo_cie10': 'D22.5'}],
+        }
+        respuesta = self.client.put(self.url(informe_id), cuerpo, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
+        self.assertEqual(self.diagnosticos(informe_id), [('Segundo', ''), ('Tercero', 'D22.5')])
+
+    def test_patch_sin_diagnosticos_los_conserva(self):
+        informe_id = self.crear(diagnosticos=[{'descripcion': 'Nevus intradérmico', 'codigo_cie10': 'D22.5'}]).data['id']
+        respuesta = self.client.patch(self.url(informe_id), {'comentarios': 'Revisado'}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
+        self.assertEqual(self.diagnosticos(informe_id), [('Nevus intradérmico', 'D22.5')])
+
+    def test_una_lista_vacia_quita_todos_los_diagnosticos(self):
+        informe_id = self.crear(diagnosticos=[{'descripcion': 'Nevus intradérmico'}]).data['id']
+        respuesta = self.client.patch(self.url(informe_id), {'diagnosticos': []}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
+        self.assertEqual(self.diagnosticos(informe_id), [])
+
+    def test_el_codigo_cie10_se_normaliza(self):
+        respuesta = self.crear(diagnosticos=[
+            {'descripcion': 'Sin punto', 'codigo_cie10': 'c443'},
+            {'descripcion': 'Con espacios y minúsculas', 'codigo_cie10': ' d22.5 '},
+            {'descripcion': 'Solo categoría', 'codigo_cie10': 'C50'},
+            {'descripcion': 'Subcategoría de dos caracteres', 'codigo_cie10': 'M8090'},
+        ])
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        self.assertEqual([codigo for _, codigo in self.diagnosticos(respuesta.data['id'])],
+                         ['C44.3', 'D22.5', 'C50', 'M80.90'])
+
+    def test_rechaza_un_codigo_cie10_invalido(self):
+        for codigo in ['44.3', 'CC4', 'C4', 'C44.123', 'C44-3', 'Ñ44']:
+            with self.subTest(codigo=codigo):
+                respuesta = self.crear(diagnosticos=[{'descripcion': 'Diagnóstico', 'codigo_cie10': codigo}])
+                self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertIn('diagnosticos', respuesta.data)
+        self.assertEqual(Informe.objects.count(), 0)
+
+    def test_rechaza_un_diagnostico_sin_descripcion(self):
+        for descripcion in ['', '   ']:
+            with self.subTest(descripcion=descripcion):
+                respuesta = self.crear(diagnosticos=[{'descripcion': descripcion, 'codigo_cie10': 'C44.3'}])
+                self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertIn('diagnosticos', respuesta.data)
+        self.assertEqual(Informe.objects.count(), 0)
+
+    def test_maximo_20_diagnosticos(self):
+        lista = [{'descripcion': f'Diagnóstico {i}'} for i in range(21)]
+        respuesta = self.crear(diagnosticos=lista)
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('diagnosticos', respuesta.data)
+        self.assertEqual(self.crear(diagnosticos=lista[:20]).status_code, status.HTTP_201_CREATED)
+
+    def test_un_error_no_borra_los_diagnosticos_anteriores(self):
+        informe_id = self.crear(diagnosticos=[{'descripcion': 'Nevus intradérmico'}]).data['id']
+        respuesta = self.client.patch(
+            self.url(informe_id), {'diagnosticos': [{'descripcion': 'Otro', 'codigo_cie10': 'XYZ'}]}, format='json',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.diagnosticos(informe_id), [('Nevus intradérmico', '')])
+
+    def test_un_informe_finalizado_no_cambia_sus_diagnosticos(self):
+        # Decisión D-3: tampoco se modifican los diagnósticos de un informe finalizado.
+        informe_id = self.crear(diagnosticos=[{'descripcion': 'Nevus intradérmico'}]).data['id']
+        Informe.objects.filter(id=informe_id).update(estado=Informe.Estado.FINALIZADO)
+        respuesta = self.client.patch(self.url(informe_id), {'diagnosticos': []}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.diagnosticos(informe_id), [('Nevus intradérmico', '')])
+
+    def test_el_detalle_no_hace_una_consulta_por_diagnostico(self):
+        # Auditoría M-4: las consultas del detalle no crecen con los diagnósticos.
+        from django.test.utils import CaptureQueriesContext
+        uno = self.crear(diagnosticos=[{'descripcion': 'Uno'}]).data['id']
+        diez = self.crear(diagnosticos=[{'descripcion': f'D{i}'} for i in range(10)]).data['id']
+
+        def contar(informe_id):
+            with CaptureQueriesContext(connection) as consultas:
+                self.client.get(self.url(informe_id))
+            return len(consultas)
+
+        self.assertEqual(contar(diez), contar(uno))
+
+    def test_el_pdf_muestra_microscopica_diagnosticos_y_comentarios_escapados(self):
+        # Auditoría I-3 en los campos nuevos: el texto del usuario sale literal.
+        from reportlab.platypus import Paragraph
+        informe_id = self.crear(
+            descripcion_microscopica='Células <b>atípicas',
+            comentarios='<font size=40>ENORME</font>',
+            diagnosticos=[{'descripcion': 'Carcinoma & <i>algo', 'codigo_cie10': 'C44.3'}],
+        ).data['id']
+        with mock.patch('informes.utils.Paragraph', wraps=Paragraph) as espia:
+            respuesta = self.client.get(f'{self.url(informe_id)}pdf/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        textos = ' '.join(str(llamada.args[0]) for llamada in espia.call_args_list)
+        self.assertIn('DESCRIPCIÓN MICROSCÓPICA', textos)
+        self.assertIn('Células &lt;b&gt;atípicas', textos)
+        self.assertIn('DIAGNÓSTICOS', textos)
+        self.assertIn('1. Carcinoma &amp; &lt;i&gt;algo (CIE-10: C44.3)', textos)
+        self.assertIn('COMENTARIOS', textos)
+        self.assertIn('&lt;font size=40&gt;ENORME&lt;/font&gt;', textos)
+        self.assertNotIn('NOTAS ADICIONALES', textos)
+
+
+class MigracionContenidoTests(TransactionTestCase):
+    """La migración de la etapa 5 conserva las notas de los informes como comentarios (P-5)."""
+
+    ANTES = [('informes', '0008_datos_solicitud')]
+
+    def test_las_notas_pasan_a_comentarios(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(self.ANTES)
+        modelos = executor.loader.project_state(self.ANTES).apps
+        autor = modelos.get_model('accounts', 'Usuario').objects.create(username='autor_migracion_notas')
+        patologia = modelos.get_model('informes', 'Patologia').objects.create(nombre='Patología notas')
+        informe = modelos.get_model('informes', 'Informe').objects.create(
+            numero_peticion='P-2026-09999', patologia=patologia, autor=autor, notas='Nota que debe conservarse',
+        )
+
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        executor.migrate(executor.loader.graph.leaf_nodes())
+
+        self.assertEqual(Informe.objects.get(id=informe.id).comentarios, 'Nota que debe conservarse')

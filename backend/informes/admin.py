@@ -1,10 +1,15 @@
 from django.contrib import admin
-from .models import Categoria, ConsecutivoPeticion, Patologia, Plantilla, Informe, Servicio
+from .models import Categoria, ConsecutivoPeticion, Diagnostico, Patologia, Plantilla, Informe, Servicio
 
 
 class PlantillaInline(admin.TabularInline):
     model = Plantilla
     extra = 1
+
+
+class DiagnosticoInline(admin.TabularInline):
+    model = Diagnostico
+    extra = 0
 
 
 @admin.register(Categoria)
@@ -42,6 +47,7 @@ class InformeAdmin(admin.ModelAdmin):
     autocomplete_fields = ['paciente']
     # numero_peticion no es editable (D-7): se muestra pero no se puede cambiar.
     readonly_fields = ['numero_peticion', 'texto_generado', 'fecha_creacion', 'fecha_actualizacion']
+    inlines = [DiagnosticoInline]
 
 
 @admin.register(ConsecutivoPeticion)

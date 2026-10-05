@@ -104,6 +104,14 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
 - El listado lleva `paciente_nombre`, `paciente_documento` y `tipo_estudio`, con `select_related('paciente', 'eps', 'servicio')`. Lo vigila `ConsultasListadoInformesTests`: si agregas campos relacionados al listado, agrégalos al `select_related`.
 - En el frontend, `InformePage.jsx` usa `components/informe/SelectorPaciente.jsx` y `DatosSolicitud.jsx`. El formulario de paciente (`components/FormularioPaciente.jsx`) se comparte con `PacientesPage` y se dibuja con un portal en `document.body`, porque el informe ya es un `<form>`; su `onSubmit` llama a `stopPropagation()` para que los eventos de React no envíen también el informe. `utils/formularios.js` tiene `hoyISO()` y `conOpcionActual()`, que agrega a la lista de activos el elemento desactivado que el registro ya tenía.
 
+**Contenido del informe (informe v2, etapa 5).**
+- `Informe.descripcion_microscopica` y `Informe.comentarios` (antes `notas`, renombrado por la migración 0009 sin perder datos; `notas` ya no existe en la API).
+- `Diagnostico` (`informe`, `orden`, `descripcion`, `codigo_cie10`; único por `informe` + `orden`) va anidado en `InformeSerializer` como `diagnosticos`. Si la petición lo trae, `_guardar_diagnosticos` **reemplaza** toda la lista en la misma transacción que el informe; si no lo trae, no cambia. El orden es el de la lista enviada. Máximo `MAX_DIAGNOSTICOS` (20).
+- `DiagnosticoSerializer.validate_codigo_cie10` normaliza el código (mayúsculas, sin espacios, agrega el punto: `c443` → `C44.3`) y lo valida con `PATRON_CIE10`. No hay catálogo oficial de CIE-10.
+- `InformeViewSet.get_queryset` hace `prefetch_related('diagnosticos')` solo en las rutas de detalle (`self.detail`): el listado no los muestra. Lo vigila `test_el_detalle_no_hace_una_consulta_por_diagnostico`.
+- El PDF ya imprime microscópica, diagnósticos (`1. … (CIE-10: C44.3)`) y comentarios con `texto_seguro()`; su estructura completa llega en la etapa 7.
+- En el frontend, `components/informe/ListaDiagnosticos.jsx` es controlado: `conClaves()` da a cada fila una `clave` para React y `sinClaves()` la quita antes de enviar. Recibe en `error` un texto o el arreglo de errores por fila que devuelve DRF; `InformePage` conserva ese arreglo sin aplanarlo.
+
 **Rate limiting.** En `settings.REST_FRAMEWORK` están los throttles globales (`anon`, `user`) y otros por scope (`login`, `registro`, `foro_publicacion`, `foro_comentario`). Los de scope se asignan en `accounts/throttles.py` y en `get_throttles()` de las vistas del foro. Si un endpoint nuevo usa un scope nuevo, hay que agregarlo a `DEFAULT_THROTTLE_RATES`.
 
 **Frontend.**

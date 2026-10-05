@@ -5,6 +5,45 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Informe v2, etapa 5: contenido del informe
+
+**Qué se cambió**
+- **Modelo** (`backend/informes/models.py`, migración `0009_contenido`, escrita a mano porque `makemigrations` pregunta de forma interactiva por el cambio de nombre):
+  - `Informe.notas` pasa a llamarse `Informe.comentarios` (`RenameField`). Lo que ya estaba escrito se conserva; lo comprueba `MigracionContenidoTests`.
+  - Campo nuevo `Informe.descripcion_microscopica` (texto, opcional).
+  - Modelo nuevo `Diagnostico`: `informe` (`CASCADE`), `orden`, `descripcion` y `codigo_cie10` (opcional). Restricción única `informe` + `orden`.
+- **`InformeSerializer`** (`backend/informes/serializers.py`):
+  - Devuelve y acepta `descripcion_microscopica`, `comentarios` y `diagnosticos`. **`notas` ya no existe en la API.**
+  - `diagnosticos` es una lista anidada (`DiagnosticoSerializer`). Si se envía, reemplaza a la anterior en la misma transacción que el informe; si no se envía, no cambia. Una lista vacía los quita todos. El orden es el de la lista.
+  - Máximo 20 diagnósticos. La descripción no puede estar vacía ("Escriba la descripción del diagnóstico.").
+  - El código CIE-10 se pasa a mayúsculas, sin espacios, y se le agrega el punto que falte (`c443` → `C44.3`, `M8090` → `M80.90`). Si no es una letra, dos cifras y, de forma opcional, un punto con uno o dos caracteres, responde 400.
+  - Un borrador se puede guardar sin diagnósticos. La regla de "al menos uno para finalizar" es de la etapa 6.
+- **`InformeViewSet`:** en las rutas de detalle (ver, editar, PDF, finalizar) carga los diagnósticos en una sola consulta (`prefetch_related`). El listado no los pide.
+- **PDF** (`backend/informes/utils.py`):
+  - Después de la descripción macroscópica imprime "DESCRIPCIÓN MICROSCÓPICA", "DIAGNÓSTICOS" (numerados: `1. Carcinoma basocelular nodular (CIE-10: C44.3)`) y "COMENTARIOS", que reemplaza a "NOTAS ADICIONALES".
+  - Todo el texto nuevo pasa por `texto_seguro()` (I-3).
+  - Las secciones usan una función auxiliar `seccion()` en lugar de repetir el título y la línea.
+  - La estructura completa del PDF sigue para la etapa 7.
+- **`/admin/`:** los diagnósticos se ven y se editan dentro del informe (`DiagnosticoInline`).
+- **Frontend:**
+  - `components/informe/ListaDiagnosticos.jsx` (nuevo): tarjeta "Diagnósticos" con una fila por diagnóstico (descripción y CIE-10 opcional) y botones para agregar, quitar, subir y bajar. Muestra los errores del backend junto a cada fila. En solo lectura no muestra botones.
+  - `InformePage.jsx`:
+    - tarjetas nuevas "Descripción microscópica", "Diagnósticos" y "Comentarios" (antes "Notas adicionales"), en el orden del informe real;
+    - el texto generado pasa a la tarjeta "Descripción macroscópica";
+    - no deja guardar un diagnóstico sin descripción;
+    - después de guardar muestra los códigos CIE-10 ya normalizados por el backend;
+    - los errores por fila de los diagnósticos ya no se aplanan a texto.
+  - `index.css`: estilos de las filas de diagnósticos y del título del texto generado.
+- **Pruebas:**
+  - 17 nuevas en el backend (de 162 a 179): `ContenidoInformeTests` (16) y `MigracionContenidoTests` (1). Las pruebas que usaban `notas` ahora usan `comentarios`.
+  - 9 nuevas en el frontend (de 70 a 79): `ListaDiagnosticos.test.jsx` (4) y 5 en `InformePage.test.jsx`.
+- **Documentación:** `README.md`, `CLAUDE.md`, `docs/propuesta-informe-v2.md`, `docs/progreso.md` y la colección de Postman ("Crear informe" con microscópica, diagnósticos y comentarios).
+
+**Por qué:** es la etapa 5 de `docs/propuesta-informe-v2.md`. El informe real tiene descripción microscópica, diagnósticos y comentarios, y el cambio de nombre de `notas` a `comentarios` lo aprobó el usuario (P-5). El usuario confirmó el 2026-10-04 tres detalles:
+- el PDF actual ya muestra las secciones nuevas, para que los diagnósticos no falten en el PDF hasta la etapa 7;
+- los diagnósticos se reordenan con botones de subir y bajar;
+- la búsqueda no incluye los diagnósticos por ahora.
+
 ### Informe v2, etapa 4: datos de la solicitud
 
 **Qué se cambió**

@@ -13,14 +13,14 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 - **Ubicación del proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`. El 2026-10-03 se movió de Descargas al Escritorio.
 - **Rama de trabajo:** `informe-v2`, creada el 2026-10-04 desde `main` (`267e91b`) para el informe de anatomía patológica v2. Las ramas anteriores, `desarrollo-un-comando` y `seguridad-critica`, quedaron iguales que `main`. Historial de uniones a `main`: Se unió a `main` el 2026-10-03 en dos ocasiones: hasta `958c2f0` (C-1, C-2, C-3, I-1, I-3, I-4, M-8) luego hasta `da69796` (I-5, I-6, I-8, I-11, I-9a, I-9b). Se hizo con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado. El 2026-10-03 también se unió hasta `0d94a56` (I-10, I-12, I-2), y el 2026-10-04 hasta `bbf8386` (limpieza completa y decisiones D-4 a D-6) y luego hasta el commit que registra esta unión (README sin emojis y arreglo del formulario de Patologías). `main` y `seguridad-critica` quedan iguales. El trabajo sigue en esta rama y se volverá a unir a `main` cuando el usuario lo pida.
-- **Tarea actual:** informe de anatomía patológica v2. Están **terminadas las etapas 1 (número de petición), 2 (catálogos de EPS y servicios, tipo de estudio y `GET /api/opciones/`), 3 (pacientes: modelo, API, `PacientesPage` y `useOpciones`) y 4 (datos de la solicitud: paciente y solicitud en el informe, historial del paciente, borrados protegidos, `SelectorPaciente`, `/catalogos` y columnas de los listados)**. La siguiente es la **etapa 5 (contenido del informe: descripción microscópica, `notas` → `comentarios` y diagnósticos con CIE-10)**, que todavía no se empezó. El plan completo está en `docs/propuesta-informe-v2.md`, que el usuario aprobó el 2026-10-04 (respuestas en su sección 10 y decisiones D-7 a D-11 en `docs/decisiones.md`). La auditoría está completa y `main` tiene todo lo anterior a `informe-v2`.
+- **Tarea actual:** informe de anatomía patológica v2. Están **terminadas las etapas 1 (número de petición), 2 (catálogos de EPS y servicios, tipo de estudio y `GET /api/opciones/`), 3 (pacientes: modelo, API, `PacientesPage` y `useOpciones`) y 4 (datos de la solicitud: paciente y solicitud en el informe, historial del paciente, borrados protegidos, `SelectorPaciente`, `/catalogos` y columnas de los listados) y 5 (contenido del informe: descripción microscópica, `notas` → `comentarios`, diagnósticos con CIE-10, `ListaDiagnosticos` y las tres secciones en el PDF actual)**. La siguiente es la **etapa 6 (firma y finalización: `registro_medico`, reglas para finalizar, `fecha_informe`, `datos_finalizacion`, perfil y `SeccionFirma`)**, que todavía no se empezó. El plan completo está en `docs/propuesta-informe-v2.md`, que el usuario aprobó el 2026-10-04 (respuestas en su sección 10 y decisiones D-7 a D-11 en `docs/decisiones.md`). La auditoría está completa y `main` tiene todo lo anterior a `informe-v2`.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
   1. Escribir una prueba que demuestre el fallo y mostrar que falla.
   2. Explicar el arreglo y esperar confirmación.
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 162 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 70 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 179 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 79 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -63,11 +63,12 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | D-7 | Informe v2, etapa 1: número de petición `P-AÑO-NNNNN` automático (contador con `UPDATE` atómico, prueba de concurrencia), orden externa opcional, se elimina `numero_caso` | `6ca1727` |
 | D-11 | Informe v2, etapa 2: catálogos `EPS` (app nueva `pacientes`) y `Servicio`, `Informe.TipoEstudio`, `GET /api/opciones/`, `seed_data` con 7 servicios y 12 EPS, nombres sin repetir sin importar mayúsculas | `c44bb4f` |
 | D-11 | Informe v2, etapa 3: modelo `Paciente` (edad calculada, documento único y normalizado), `/api/pacientes/` con búsqueda `?q=`, solo el admin borra, 400 al borrar una EPS en uso, 2 pacientes ficticios en `seed_data`, `useOpciones` y `PacientesPage` (`/pacientes`) | `19c92ce` |
-| — | Informe v2, etapa 4: paciente y datos de la solicitud en el informe (migración 0008), edad a la fecha de ingreso, EPS del momento del estudio, búsqueda y filtro por paciente, historial `/api/pacientes/{id}/informes/`, 400 al borrar paciente/EPS/servicio en uso, `SelectorPaciente`, `DatosSolicitud`, `FormularioPaciente` compartido, `CatalogosPage` (`/catalogos`), columnas de los listados y ejecutor de pruebas sin throttles acumulados | commit "feat: datos de la solicitud (informe v2, etapa 4)" |
+| — | Informe v2, etapa 4: paciente y datos de la solicitud en el informe (migración 0008), edad a la fecha de ingreso, EPS del momento del estudio, búsqueda y filtro por paciente, historial `/api/pacientes/{id}/informes/`, 400 al borrar paciente/EPS/servicio en uso, `SelectorPaciente`, `DatosSolicitud`, `FormularioPaciente` compartido, `CatalogosPage` (`/catalogos`), columnas de los listados y ejecutor de pruebas sin throttles acumulados | `f1cda29` |
+| — | Informe v2, etapa 5: `descripcion_microscopica`, `notas` → `comentarios` (migración 0009, conserva los datos), modelo `Diagnostico` anidado en el informe (reemplazo de la lista, máx. 20, CIE-10 validado y normalizado), `prefetch` solo en el detalle, microscópica, diagnósticos y comentarios en el PDF actual, `DiagnosticoInline` en `/admin/`, `ListaDiagnosticos` (agregar, quitar, subir y bajar) y tarjetas nuevas en `InformePage` | commit "feat: contenido del informe (informe v2, etapa 5)" |
 
 ## Siguiente paso
 
-1. **Informe v2:** empezar la etapa 5 (contenido del informe) y seguir con las etapas 6 a 9, en el orden de la sección 9 de `docs/propuesta-informe-v2.md`. Una etapa por vez, con el procedimiento habitual.
+1. **Informe v2:** empezar la etapa 6 (firma y finalización) y seguir con las etapas 7 a 9, en el orden de la sección 9 de `docs/propuesta-informe-v2.md`. Una etapa por vez, con el procedimiento habitual.
 2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
 4. **Opcional:** añadir "Cerrar sesión" (`POST /api/auth/logout/`) a la colección de Postman.
@@ -78,7 +79,7 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 
 ## Pendiente de respuesta del usuario
 
-- Nada por ahora. (Etapa 4: el usuario aprobó el 2026-10-04 la pantalla `/catalogos`, que se copie la EPS del paciente si el informe no la envía y un solo commit.)
+- Nada por ahora. (Etapa 5: el usuario aprobó el 2026-10-04 las secciones nuevas en el PDF actual, los botones para reordenar diagnósticos y dejar la búsqueda sin diagnósticos.)
 
 ## Pendiente de hacer (anotado para no olvidarlo)
 
@@ -87,6 +88,7 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 - **Producción:** agregar un **registro de accesos**: quién consulta qué informe o paciente y cuándo, incluidas las descargas del PDF. Los datos de salud son datos sensibles (Ley 1581 de 2012), y la historia clínica exige saber quién accedió a ella.
 - **Producción:** la búsqueda de pacientes (`GET /api/pacientes/?q=`) lleva el nombre o el documento en la dirección. Hay que configurar los registros del servidor web para que no guarden esos parámetros, o protegerlos como datos sensibles. Lo aprobó así el usuario en la etapa 3.
 - **Navegador:** probar a mano la pantalla Pacientes (`/pacientes`, con el historial de informes) con los tres usuarios de prueba.
+- **Navegador:** probar a mano el contenido del informe de la etapa 5 (microscópica, agregar, reordenar y quitar diagnósticos, CIE-10 normalizado al guardar, comentarios) y revisar el PDF con esas secciones.
 - **Navegador:** probar a mano el informe nuevo de la etapa 4 (buscar y crear paciente desde el informe, datos de la solicitud, EPS precargada) y la pantalla Catálogos (`/catalogos`) con los tres usuarios de prueba. Las pruebas automáticas cubren estos flujos, pero todavía no se probaron en un navegador real.
 - **Navegador:** probar a mano el dashboard y la paginación del buscador (I-4) con más de 20 informes.
 - **Navegador:** probar a mano el cambio de C-2 en el frontend. Otro patólogo debe ver en solo lectura los informes ajenos. Para la prueba hay que crear un segundo patólogo desde `/admin/`.

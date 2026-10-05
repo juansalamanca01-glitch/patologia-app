@@ -36,11 +36,12 @@
 - **Formularios dinámicos**: los campos (texto, número, lista desplegable, área de texto, sí/no) se generan según la patología elegida. Los campos obligatorios se validan en el frontend y en el backend (0 y "No" cuentan como respuestas válidas).
 - **Descripción macroscópica automática**: al guardar un informe, el backend convierte los datos del formulario en un párrafo redactado en lenguaje natural.
 - **Número de petición automático**: al crear un informe, el sistema le asigna un número `P-AÑO-NNNNN` (por ejemplo `P-2026-00045`). El consecutivo vuelve a 1 cada año, no se repite aunque varios usuarios guarden a la vez y no se reutiliza si se borra un borrador. Se puede anotar, de forma opcional, el número de orden de la institución remitente.
-- **Exportación a PDF**: genera con **ReportLab** un informe con título, número de petición (y orden externa, si existe), metadatos (fecha, patología, tipo de muestra, patólogo y estado), datos clínicos, descripción macroscópica y notas.
+- **Exportación a PDF**: genera con **ReportLab** un informe con título, número de petición (y orden externa, si existe), metadatos (fecha, patología, tipo de muestra, patólogo y estado), datos clínicos, descripción macroscópica, descripción microscópica, diagnósticos numerados con su código CIE-10 y comentarios.
 - **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
 - **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables. Una patología se puede desactivar: deja de ofrecerse en los informes nuevos sin perder el historial.
 - **Pacientes**: registro de los pacientes con su documento, nombres, fecha de nacimiento, sexo y EPS. La edad se calcula a partir de la fecha de nacimiento: en años, o en meses o días si el paciente es menor de 1 año. Se buscan por documento, nombres o apellidos, y cada paciente muestra su historial de informes. Solo se guardan los datos que aparecen en el informe.
 - **Datos de la solicitud**: cada informe tiene su paciente (se busca o se crea desde el mismo formulario), médico tratante, fecha de ingreso, EPS, servicio, estudios solicitados y tipo de estudio (histología, citología, inmunohistoquímica, etc.). La EPS se guarda en el informe, porque el paciente puede cambiar de EPS. La edad del paciente se calcula a la fecha de ingreso, así que no cambia si el informe se reimprime años después.
+- **Contenido del informe**: descripción microscópica, diagnósticos y comentarios. Los diagnósticos son una lista ordenada (se agregan, quitan, suben y bajan), con un código CIE-10 opcional que se valida y se normaliza (`c443` se guarda como `C44.3`). No se carga el catálogo oficial de la CIE-10.
 - **Catálogos de EPS y servicios**: se administran en la pantalla Catálogos. Lo que ya no se usa se desactiva en lugar de borrarse.
 - **Búsqueda y filtros**: por número de petición, nombre o documento del paciente, número de orden externa, patología o tipo de muestra, rango de fechas y estado. Resultados paginados de 20 en 20.
 - **Panel de inicio**: totales de informes (todos, borradores y finalizados) y los 10 más recientes.
@@ -143,7 +144,7 @@ patologia-app/
 │   │   └── tests.py           # Pruebas de la configuración (SECRET_KEY y DEBUG)
 │   ├── informes/
 │   │   ├── management/commands/seed_data.py  # Datos iniciales: usuarios, 14 patologías, temas, servicios, EPS y 2 pacientes ficticios
-│   │   ├── models.py          # Categoria, Patologia, Plantilla, Servicio, Informe
+│   │   ├── models.py          # Categoria, Patologia, Plantilla, Servicio, Informe, Diagnostico
 │   │   ├── serializers.py
 │   │   ├── utils.py           # Generador de la descripción macroscópica y del PDF
 │   │   ├── views.py / urls.py # Endpoints /api/ (catálogo, servicios, opciones, informes, PDF)
@@ -166,7 +167,7 @@ patologia-app/
 │   │   ├── api/client.js      # Cliente Axios: dirección de la API (VITE_API_URL) y token JWT
 │   │   ├── context/AuthContext.jsx  # Sesión y rol del usuario
 │   │   ├── components/        # Navbar, Footer, FormularioPaciente, CeldaPaciente, EstadoBadge
-│   │   │   └── informe/       # Partes del informe: SelectorPaciente y DatosSolicitud
+│   │   │   └── informe/       # Partes del informe: SelectorPaciente, DatosSolicitud y ListaDiagnosticos
 │   │   ├── hooks/useOpciones.js  # Listas fijas de /api/opciones/ (se piden una vez)
 │   │   ├── utils/formularios.js  # hoyISO() y conOpcionActual() (catálogos desactivados)
 │   │   ├── pages/             # Login, Dashboard, Informe, Buscar, Pacientes, Patologías, Catálogos,
@@ -349,8 +350,8 @@ npm run test:watch                        # se repiten al guardar cambios
 npm test
 ```
 
-- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones, búsqueda e historial), los datos de la solicitud del informe (paciente obligatorio, fecha de ingreso, EPS del momento del estudio, búsqueda por paciente), los catálogos de EPS y servicios (y su borrado cuando están en uso), las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
-- **Frontend:** cubre el formulario del informe (paciente, datos de la solicitud y orden de las tarjetas), la página de pacientes y su historial, la pantalla de catálogos, los listados, la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
+- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones, búsqueda e historial), los datos de la solicitud del informe (paciente obligatorio, fecha de ingreso, EPS del momento del estudio, búsqueda por paciente), el contenido del informe (microscópica, comentarios, diagnósticos y validación del CIE-10), los catálogos de EPS y servicios (y su borrado cuando están en uso), las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
+- **Frontend:** cubre el formulario del informe (paciente, datos de la solicitud, diagnósticos y orden de las tarjetas), la página de pacientes y su historial, la pantalla de catálogos, los listados, la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
 
 ---
 
@@ -445,6 +446,12 @@ Datos de la solicitud del informe (etapa 4 del informe v2):
 - `tipo_estudio`: uno de los valores de `tipos_estudio` en `/api/opciones/`. Por defecto, `histologia`.
 - Al leer un informe llegan además `paciente_datos` (nombre, documento, fecha de nacimiento, sexo y edad **a la fecha de ingreso**), `eps_nombre` y `servicio_nombre`.
 
+Contenido del informe (etapa 5 del informe v2):
+- `descripcion_microscopica` y `comentarios`: texto, opcionales. `comentarios` reemplaza al antiguo `notas`, que ya no existe en la API; la migración conservó lo que estaba escrito.
+- `diagnosticos`: lista de `{"descripcion": "...", "codigo_cie10": "C44.3"}` en el orden del informe (al leerla, cada uno trae también su `orden`). Si se envía, **reemplaza** a la lista anterior; si no se envía (por ejemplo, en un PATCH), no cambia. Máximo 20; la descripción no puede estar vacía.
+- `codigo_cie10` es opcional. Se pasa a mayúsculas, se quitan los espacios y se agrega el punto si falta (`c443` → `C44.3`). Debe ser una letra, dos cifras y, si aplica, un punto con uno o dos caracteres (`C44`, `C44.3`, `M80.90`); si no → 400.
+- Un borrador se puede guardar sin diagnósticos.
+
 ### Foro (`/api/foro/`)
 
 | Método | Endpoint | Descripción | Acceso |
@@ -473,7 +480,7 @@ graph TD
     P --> S[Datos de la solicitud y tipo de estudio]
     S --> E[Seleccionar patología]
     E --> F[Se carga el formulario de la plantilla]
-    F --> G[Llenar los datos macroscópicos]
+    F --> G[Llenar la macroscópica, la microscópica, los diagnósticos y los comentarios]
     G --> H[Guardar como borrador: se asigna el número de petición]
     H --> I[El backend genera la descripción macroscópica]
     I --> J{¿Revisión satisfactoria?}
@@ -528,7 +535,8 @@ Para publicar la app en un servidor:
 
 ## Hoja de Ruta (Roadmap)
 
-- [ ] **Descripción microscópica**: plantillas de diagnóstico microscópico e inmunohistoquímica (IHQ).
+- [ ] **Plantillas microscópicas e IHQ**: textos predefinidos para la descripción microscópica y la inmunohistoquímica (la descripción microscópica libre ya existe).
+- [ ] **Catálogo CIE-10 y CIE-O**: autocompletado de los códigos de diagnóstico y de morfología tumoral.
 - [ ] **Imágenes en los informes**: adjuntar microfotografías al informe y al PDF (hoy solo el foro admite imágenes).
 - [ ] **Firma digital**: firma electrónica del patólogo con certificado o trazo digital.
 - [ ] **Integración HL7 / FHIR**: interoperabilidad con sistemas de información hospitalaria (HIS/LIS).

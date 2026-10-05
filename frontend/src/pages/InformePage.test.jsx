@@ -37,7 +37,12 @@ const INFORME = {
   autor: 1,
   estado: 'borrador',
   tipo_muestra: '',
-  notas: '',
+  descripcion_microscopica: 'Nidos de células basaloides.',
+  diagnosticos: [
+    { orden: 1, descripcion: 'Carcinoma basocelular nodular', codigo_cie10: 'C44.3' },
+    { orden: 2, descripcion: 'Márgenes libres de lesión', codigo_cie10: '' },
+  ],
+  comentarios: 'Se sugiere correlación clínica.',
   datos_ingresados: {},
   texto_generado: '',
 };
@@ -305,5 +310,90 @@ describe('InformePage: paciente y datos de la solicitud', () => {
     expect(screen.getByLabelText('Estudios solicitados')).toHaveValue('Biopsia de piel');
     expect(await screen.findByRole('option', { name: 'Citología no ginecológica' })).toBeInTheDocument();
     expect(screen.getByLabelText('Tipo de estudio')).toHaveValue('citologia_no_ginecologica');
+  });
+});
+
+// Informe v2, etapa 5 (docs/propuesta-informe-v2.md, 3.4, 3.6 y 6.3): descripción
+// microscópica, diagnósticos con CIE-10 y comentarios (antes "notas", P-5).
+describe('InformePage: contenido del informe', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    reiniciarOpciones();
+    simularApi();
+  });
+
+  function renderNuevo() {
+    return render(
+      <MemoryRouter initialEntries={['/informes/nuevo']}>
+        <Routes>
+          <Route path="/informes/nuevo" element={<InformePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+  }
+
+  it('muestra las tarjetas del contenido en el orden del informe real', async () => {
+    renderNuevo();
+    await screen.findByRole('option', { name: 'Piel' });
+    const titulos = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+    expect(titulos).toEqual([
+      'Paciente', 'Datos de la solicitud', 'Estudio',
+      'Descripción microscópica', 'Diagnósticos', 'Comentarios',
+    ]);
+    expect(screen.queryByText(/Notas/i)).toBeNull();
+  });
+
+  it('al guardar envía la microscópica, los diagnósticos en orden y los comentarios', async () => {
+    client.post.mockResolvedValue({ data: { id: 9, numero_peticion: 'P-2026-00002' } });
+    renderNuevo();
+    await screen.findByRole('option', { name: 'Piel' });
+    await seleccionarPaciente();
+    fireEvent.change(screen.getByLabelText(/Tipo de Patología/i), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText('Descripción microscópica'), { target: { value: 'Nidos basaloides.' } });
+    fireEvent.click(screen.getByRole('button', { name: /Agregar diagnóstico/ }));
+    fireEvent.change(screen.getByLabelText('Diagnóstico 1'), { target: { value: 'Carcinoma basocelular' } });
+    fireEvent.change(screen.getByLabelText('CIE-10 del diagnóstico 1'), { target: { value: 'C44.3' } });
+    fireEvent.change(screen.getByLabelText('Comentarios'), { target: { value: 'Correlación clínica.' } });
+    fireEvent.click(screen.getByRole('button', { name: /Guardar Informe/i }));
+
+    await vi.waitFor(() => expect(client.post).toHaveBeenCalled());
+    const datos = client.post.mock.calls[0][1];
+    expect(datos).toMatchObject({
+      descripcion_microscopica: 'Nidos basaloides.',
+      diagnosticos: [{ descripcion: 'Carcinoma basocelular', codigo_cie10: 'C44.3' }],
+      comentarios: 'Correlación clínica.',
+    });
+    expect(datos).not.toHaveProperty('notas');
+    expect(datos.diagnosticos[0]).not.toHaveProperty('clave');
+  });
+
+  it('no deja guardar un diagnóstico sin descripción', async () => {
+    renderNuevo();
+    await screen.findByRole('option', { name: 'Piel' });
+    await seleccionarPaciente();
+    fireEvent.change(screen.getByLabelText(/Tipo de Patología/i), { target: { value: '1' } });
+    fireEvent.click(screen.getByRole('button', { name: /Agregar diagnóstico/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Guardar Informe/i }));
+    expect(await screen.findByText('Escriba la descripción del diagnóstico.')).toBeInTheDocument();
+    expect(client.post).not.toHaveBeenCalled();
+  });
+
+  it('al editar carga la microscópica, los diagnósticos y los comentarios', async () => {
+    renderInforme();
+    expect(await screen.findByLabelText('Descripción microscópica')).toHaveValue('Nidos de células basaloides.');
+    expect(screen.getByLabelText('Diagnóstico 1')).toHaveValue('Carcinoma basocelular nodular');
+    expect(screen.getByLabelText('CIE-10 del diagnóstico 1')).toHaveValue('C44.3');
+    expect(screen.getByLabelText('Diagnóstico 2')).toHaveValue('Márgenes libres de lesión');
+    expect(screen.getByLabelText('Comentarios')).toHaveValue('Se sugiere correlación clínica.');
+  });
+
+  it('muestra junto a la fila el error del backend en un diagnóstico', async () => {
+    client.put.mockRejectedValue({
+      response: { data: { diagnosticos: [{}, { codigo_cie10: ['Código CIE-10 no válido.'] }] } },
+    });
+    renderInforme();
+    await screen.findByLabelText('Diagnóstico 2');
+    fireEvent.click(screen.getByRole('button', { name: /Actualizar Informe/i }));
+    expect(await screen.findByText('Código CIE-10 no válido.')).toBeInTheDocument();
   });
 });

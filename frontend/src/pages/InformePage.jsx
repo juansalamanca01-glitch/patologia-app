@@ -5,6 +5,7 @@ import client, { LISTA_COMPLETA, resultados } from '../api/client';
 import EstadoBadge from '../components/EstadoBadge';
 import SelectorPaciente from '../components/informe/SelectorPaciente';
 import DatosSolicitud from '../components/informe/DatosSolicitud';
+import ListaDiagnosticos, { conClaves, sinClaves } from '../components/informe/ListaDiagnosticos';
 import useOpciones from '../hooks/useOpciones';
 import { conOpcionActual, hoyISO } from '../utils/formularios';
 
@@ -35,7 +36,10 @@ export default function InformePage() {
   const [epsActivas, setEpsActivas] = useState([]);
   const [serviciosActivos, setServiciosActivos] = useState([]);
   const [tipoMuestra, setTipoMuestra] = useState('');
-  const [notas, setNotas] = useState('');
+  // Contenido del informe (informe v2, etapa 5). `comentarios` era `notas` (P-5).
+  const [microscopica, setMicroscopica] = useState('');
+  const [diagnosticos, setDiagnosticos] = useState([]);
+  const [comentarios, setComentarios] = useState('');
   const [informe, setInforme] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -89,7 +93,9 @@ export default function InformePage() {
         });
         setTipoEstudio(data.tipo_estudio || 'histologia');
         setTipoMuestra(data.tipo_muestra || '');
-        setNotas(data.notas || '');
+        setMicroscopica(data.descripcion_microscopica || '');
+        setDiagnosticos(conClaves(data.diagnosticos));
+        setComentarios(data.comentarios || '');
         setFormData(data.datos_ingresados || {});
         setSelectedPatologia(data.patologia);
       }).catch(() => navigate('/')).finally(() => setLoading(false));
@@ -150,6 +156,12 @@ export default function InformePage() {
       }
     });
 
+    // Errores por fila, con la misma forma que los del backend.
+    const erroresDiagnosticos = diagnosticos.map((d) => (
+      d.descripcion.trim() ? {} : { descripcion: 'Escriba la descripción del diagnóstico.' }
+    ));
+    if (erroresDiagnosticos.some((e) => e.descripcion)) newErrors.diagnosticos = erroresDiagnosticos;
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -171,13 +183,17 @@ export default function InformePage() {
       patologia: selectedPatologia,
       tipo_muestra: tipoMuestra,
       datos_ingresados: formData,
-      notas,
+      descripcion_microscopica: microscopica,
+      diagnosticos: sinClaves(diagnosticos),
+      comentarios,
     };
 
     try {
       if (isEditing) {
         const { data } = await client.put(`/informes/${id}/`, payload);
         setInforme(data);
+        // El backend normaliza los códigos CIE-10 ("c443" → "C44.3").
+        setDiagnosticos(conClaves(data.diagnosticos));
         setSuccessMsg('Informe actualizado correctamente.');
       } else {
         const { data } = await client.post('/informes/', payload);
@@ -189,7 +205,10 @@ export default function InformePage() {
       if (typeof detail === 'object') {
         const flatErrors = {};
         Object.entries(detail).forEach(([key, val]) => {
-          flatErrors[key] = Array.isArray(val) ? val.join(' ') : val;
+          // Los errores de los diagnósticos vienen por fila ([{}, {codigo_cie10: [...]}]):
+          // se conservan así para mostrarlos junto a cada fila.
+          const porFila = Array.isArray(val) && val.some((v) => typeof v === 'object');
+          flatErrors[key] = Array.isArray(val) && !porFila ? val.join(' ') : val;
         });
         setErrors(flatErrors);
       } else {
@@ -431,46 +450,74 @@ export default function InformePage() {
           </div>
         </div>
 
-        {/* Campos dinámicos */}
-        {plantillas.length > 0 && (
+        {/* Contenido en el orden del informe real (informe v2, etapa 5): macroscópica
+            (campos dinámicos y texto generado), microscópica, diagnósticos y comentarios */}
+        {(plantillas.length > 0 || informe?.texto_generado) && (
           <div className="card">
-            <div className="card-header"><h2>Descripción Macroscópica</h2></div>
+            <div className="card-header"><h2>Descripción macroscópica</h2></div>
             <div className="card-body">
-              <div className="dynamic-fields">
-                {plantillas.map(renderField)}
-              </div>
+              {plantillas.length > 0 && (
+                <div className="dynamic-fields">
+                  {plantillas.map(renderField)}
+                </div>
+              )}
+              {informe?.texto_generado && (
+                <>
+                  <h3 className="texto-generado-titulo">Texto generado</h3>
+                  <div className="generated-text">
+                    {informe.texto_generado}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
 
-        {/* Notas */}
         <div className="card">
-          <div className="card-header"><h2>Notas Adicionales</h2></div>
+          <div className="card-header"><h2>Descripción microscópica</h2></div>
           <div className="card-body">
-            <div className="form-group">
+            <div className={`form-group ${errors.descripcion_microscopica ? 'has-error' : ''}`}>
               <textarea
-                id="notas"
-                value={notas}
-                onChange={(e) => setNotas(e.target.value)}
-                rows={3}
-                placeholder="Observaciones o notas adicionales..."
-                disabled={informe?.estado === 'finalizado' || !puedeEditar}
+                id="descripcionMicroscopica"
+                aria-label="Descripción microscópica"
+                value={microscopica}
+                onChange={(e) => setMicroscopica(e.target.value)}
+                rows={5}
+                placeholder="Hallazgos al microscopio..."
+                disabled={soloLectura}
               />
+              {errors.descripcion_microscopica && <span className="field-error">{errors.descripcion_microscopica}</span>}
             </div>
           </div>
         </div>
 
-        {/* Vista previa del texto generado */}
-        {informe?.texto_generado && (
-          <div className="card">
-            <div className="card-header"><h2>Texto Generado</h2></div>
-            <div className="card-body">
-              <div className="generated-text">
-                {informe.texto_generado}
-              </div>
+        <ListaDiagnosticos
+          diagnosticos={diagnosticos}
+          onCambiar={(lista) => {
+            setDiagnosticos(lista);
+            setErrors((prev) => ({ ...prev, diagnosticos: null }));
+          }}
+          disabled={soloLectura}
+          error={errors.diagnosticos}
+        />
+
+        <div className="card">
+          <div className="card-header"><h2>Comentarios</h2></div>
+          <div className="card-body">
+            <div className={`form-group ${errors.comentarios ? 'has-error' : ''}`}>
+              <textarea
+                id="comentarios"
+                aria-label="Comentarios"
+                value={comentarios}
+                onChange={(e) => setComentarios(e.target.value)}
+                rows={3}
+                placeholder="Comentarios para el médico tratante..."
+                disabled={soloLectura}
+              />
+              {errors.comentarios && <span className="field-error">{errors.comentarios}</span>}
             </div>
           </div>
-        )}
+        </div>
 
         {puedeEditar && informe?.estado !== 'finalizado' && (
           <div className="form-actions">

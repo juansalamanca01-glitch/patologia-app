@@ -463,6 +463,23 @@ textarea { resize: vertical; min-height: 80px; }
   color: var(--gray-700);
 }
 
+.dynamic-fields + .texto-generado-titulo { margin-top: 1.25rem; }
+.texto-generado-titulo {
+  font-size: 0.9rem;
+  color: var(--gray-500);
+  margin-bottom: 0.5rem;
+}
+
+/* ── Diagnósticos del informe (informe v2, etapa 5) ────── */
+.lista-diagnosticos { list-style: none; padding: 0; margin: 0 0 1rem; }
+.diagnostico-fila {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.diagnostico-acciones { display: flex; gap: 0.5rem; justify-content: flex-end; }
+
 /* ── Search form ───────────────────────────────────────── */
 .search-form .form-row {
   flex-wrap: wrap;
