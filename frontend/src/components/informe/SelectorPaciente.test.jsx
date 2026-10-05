@@ -109,3 +109,26 @@ describe('SelectorPaciente', () => {
     expect(screen.queryByLabelText('Buscar paciente')).not.toBeInTheDocument();
   });
 });
+
+// Prueba manual del 2026-10-05 (Pendientes, punto 1): en pantalla, cada dato del
+// paciente salía pegado a su etiqueta ("PacientePaciente Ficticio Uno"). Cada dato
+// es ahora un par etiqueta–valor (<dt>/<dd>), separado aunque falte el CSS.
+describe('SelectorPaciente: datos del paciente seleccionado', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    reiniciarOpciones();
+    client.get.mockImplementation((url) => (
+      url === '/opciones/' ? Promise.resolve({ data: OPCIONES }) : Promise.resolve(pagina([]))
+    ));
+  });
+
+  it('cada dato va separado de su etiqueta', async () => {
+    const seleccionado = { ...PACIENTE, nombre_completo: 'Paciente Ficticio Uno' };
+    render(<SelectorPaciente paciente={seleccionado} onSeleccionar={vi.fn()} />);
+    await screen.findByText('Femenino');
+    expect(screen.getAllByRole('term').map((t) => t.textContent)).toEqual(['Paciente', 'Identificación', 'Edad', 'Sexo']);
+    expect(screen.getAllByRole('definition').map((d) => d.textContent)).toEqual([
+      'Paciente Ficticio Uno', 'CC PRUEBA0001', '45 años', 'Femenino',
+    ]);
+  });
+});

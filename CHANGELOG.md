@@ -5,6 +5,15 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-05
 
+### Datos del paciente separados de su etiqueta en el informe (Pendientes, punto 1)
+
+**Qué se cambió**
+- `frontend/src/components/informe/SelectorPaciente.jsx`: en la tarjeta "Paciente" del informe, los cuatro datos (paciente, identificación, edad y sexo) pasan a ser una lista de definiciones: la etiqueta en un `<dt>` y el valor en un `<dd>`. Antes eran dos `<span>` seguidos.
+- `frontend/src/index.css`: clase `.datos-paciente`, con la etiqueta pequeña y gris encima del valor, en columnas.
+- **Pruebas:** nueva en `SelectorPaciente.test.jsx`, que comprueba que cada etiqueta y su valor van separados. El frontend pasa de 105 a 106 pruebas.
+
+**Por qué:** en la prueba manual del 2026-10-05 el usuario vio los datos pegados a su etiqueta ("Nombreluis"). Pasaba solo en pantalla: el PDF arma el texto de otra forma y se veía bien. Con `<dt>`/`<dd>` la separación está en la estructura, no solo en el aspecto, y los lectores de pantalla anuncian bien cada dato.
+
 ### Documentación: pendientes de la prueba manual
 
 **Qué se cambió:** `docs/progreso.md` tiene una sección nueva, "Pendientes", con las observaciones del usuario en la prueba manual. Están divididas en Bloque A (funcional: datos del paciente pegados a su etiqueta, imágenes del foro sin ampliar, pérdida de lo escrito al salir del informe) y Bloque B (estética: colores del PDF y rediseño general). La rama de trabajo pasa a ser `ajustes-prueba-manual`, creada desde `main`.

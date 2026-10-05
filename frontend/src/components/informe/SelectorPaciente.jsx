@@ -62,24 +62,26 @@ export default function SelectorPaciente({ paciente, onSeleccionar, disabled = f
       <div className="card-body">
         {paciente && !cambiando && (
           <div className="paciente-seleccionado">
-            <div className="form-row">
-              <div className="form-group">
-                <span className="text-muted">Paciente</span>
-                <strong>{paciente.nombre_completo}</strong>
+            {/* Cada dato es un par etiqueta–valor (<dt>/<dd>): antes eran dos <span> seguidos
+                y en pantalla salían pegados ("PacienteLuis…"). */}
+            <dl className="datos-paciente">
+              <div>
+                <dt>Paciente</dt>
+                <dd><strong>{paciente.nombre_completo}</strong></dd>
               </div>
-              <div className="form-group">
-                <span className="text-muted">Identificación</span>
-                <span>{paciente.tipo_documento} {paciente.numero_documento}</span>
+              <div>
+                <dt>Identificación</dt>
+                <dd>{paciente.tipo_documento} {paciente.numero_documento}</dd>
               </div>
-              <div className="form-group">
-                <span className="text-muted">Edad</span>
-                <span>{paciente.edad || '—'}</span>
+              <div>
+                <dt>Edad</dt>
+                <dd>{paciente.edad || '—'}</dd>
               </div>
-              <div className="form-group">
-                <span className="text-muted">Sexo</span>
-                <span>{paciente.sexo ? etiquetaDe(opciones.sexos, paciente.sexo) : '—'}</span>
+              <div>
+                <dt>Sexo</dt>
+                <dd>{paciente.sexo ? etiquetaDe(opciones.sexos, paciente.sexo) : '—'}</dd>
               </div>
-            </div>
+            </dl>
             {!disabled && (
               <button type="button" className="btn btn-outline btn-sm" onClick={() => setCambiando(true)}>
                 Cambiar

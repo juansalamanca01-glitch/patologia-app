@@ -652,6 +652,21 @@ textarea { resize: vertical; min-height: 80px; }
 .alert-lista p { margin: 0 0 0.25rem; }
 .alert-lista ul { margin: 0; padding-left: 1.25rem; }
 
+/* ── Datos del paciente seleccionado en el informe ── */
+.datos-paciente {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem 1.5rem;
+  margin: 0 0 1rem;
+}
+.datos-paciente dt {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  margin-bottom: 0.15rem;
+}
+.datos-paciente dd { margin: 0; }
+
 /* ── Firma del informe (informe v2, etapa 6) ── */
 .firma-informe {
   display: flex;
