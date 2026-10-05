@@ -70,7 +70,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 ## Siguiente paso
 
-1. **Informe v2:** empezar la etapa 8 (adendas) y seguir con la etapa 9, en el orden de la sección 9 de `docs/propuesta-informe-v2.md`. Una etapa por vez, con el procedimiento habitual.
+1. **Informe v2 (próxima sesión, 2026-10-05):** primero, la prueba manual del PDF de la etapa 7 (borrador y finalizado); después, empezar la etapa 8 (adendas) y seguir con la etapa 9, en el orden de la sección 9 de `docs/propuesta-informe-v2.md`. Una etapa por vez, con el procedimiento habitual.
 2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
 4. **Opcional:** añadir "Cerrar sesión" (`POST /api/auth/logout/`) a la colección de Postman.
@@ -86,13 +86,13 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 ## Pendiente de hacer (anotado para no olvidarlo)
 
 - **Propuesta futura (decisión del usuario en la etapa 7):** que el encabezado del PDF se lea de `backend/.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION` y `LABORATORIO_TELEFONO`, opcional) en lugar de ser fijo. Está en la hoja de ruta del README.
-- **Navegador:** descargar a mano el PDF de un borrador y de un informe finalizado (etapa 7) y revisar que se vea bien. Antes hay que correr `python manage.py migrate`: la base local todavía no tiene la migración de la etapa 6.
+- **Navegador (pendiente para la próxima sesión):** descargar a mano el PDF de un borrador y de un informe finalizado (etapa 7) y revisar que se vea bien. El usuario ya aplicó las migraciones en su base local el 2026-10-04.
 
 - **Producción:** al publicar la app, configurar en el servidor web un límite de tamaño de petición (por ejemplo, `client_max_body_size 60m;` en Nginx). Ver la nota de I-6 en `settings.py`.
 - **Producción:** migrar la base de datos de SQLite a **PostgreSQL**. `settings.py` ya lo permite definiendo `DB_NAME`. Hay que pasar los datos y correr todas las pruebas contra PostgreSQL, en especial la de concurrencia del número de petición.
 - **Producción:** agregar un **registro de accesos**: quién consulta qué informe o paciente y cuándo, incluidas las descargas del PDF. Los datos de salud son datos sensibles (Ley 1581 de 2012), y la historia clínica exige saber quién accedió a ella.
 - **Producción:** la búsqueda de pacientes (`GET /api/pacientes/?q=`) lleva el nombre o el documento en la dirección. Hay que configurar los registros del servidor web para que no guarden esos parámetros, o protegerlos como datos sensibles. Lo aprobó así el usuario en la etapa 3.
-- **Navegador:** probar a mano la etapa 6. Después de `python manage.py migrate` y `python manage.py seed_data` (que da a `patologo1` el registro `RM-PRUEBA-0001`): finalizar un informe completo, intentar finalizar uno sin diagnósticos para ver la lista de requisitos, ver la tarjeta Firma y el registro médico en Mi cuenta, y descargar el PDF de un informe finalizado.
+- **Navegador:** probar a mano la etapa 6 (las migraciones ya están aplicadas en la base local). Después de `python manage.py seed_data` (que da a `patologo1` el registro `RM-PRUEBA-0001`): finalizar un informe completo, intentar finalizar uno sin diagnósticos para ver la lista de requisitos, ver la tarjeta Firma y el registro médico en Mi cuenta, y descargar el PDF de un informe finalizado.
 - **Navegador:** probar a mano la pantalla Pacientes (`/pacientes`, con el historial de informes) con los tres usuarios de prueba.
 - **Navegador:** probar a mano el informe nuevo de la etapa 4 (buscar y crear paciente desde el informe, datos de la solicitud, EPS precargada) y la pantalla Catálogos (`/catalogos`) con los tres usuarios de prueba. Las pruebas automáticas cubren estos flujos, pero todavía no se probaron en un navegador real.
 - **Navegador:** probar a mano el dashboard y la paginación del buscador (I-4) con más de 20 informes.
