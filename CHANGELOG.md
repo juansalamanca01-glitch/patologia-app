@@ -5,6 +5,12 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-05
 
+### Documentación: pendientes de la prueba manual
+
+**Qué se cambió:** `docs/progreso.md` tiene una sección nueva, "Pendientes", con las observaciones del usuario en la prueba manual. Están divididas en Bloque A (funcional: datos del paciente pegados a su etiqueta, imágenes del foro sin ampliar, pérdida de lo escrito al salir del informe) y Bloque B (estética: colores del PDF y rediseño general). La rama de trabajo pasa a ser `ajustes-prueba-manual`, creada desde `main`.
+
+**Por qué:** a pedido del usuario, para registrar las observaciones antes de trabajar el Bloque A.
+
 ### Documentación: `docs/progreso.md` resumido y al día
 
 **Qué se cambió** (solo documentación; el código no cambia)

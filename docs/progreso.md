@@ -12,7 +12,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 ## Dónde estamos
 
 - **Proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`.
-- **Rama de trabajo:** `informe-v2`. Se unió a `main` el 2026-10-05; lo que se haga después queda solo en esta rama hasta la próxima unión. Para trabajo nuevo, crear una rama desde `main`.
+- **Rama de trabajo:** `ajustes-prueba-manual`, creada el 2026-10-05 desde `main` (que es igual a `informe-v2`) para las observaciones de la prueba manual (sección "Pendientes"). Se trabaja solo el Bloque A, en el orden 1, 2, 3.
 - **Estado:** la auditoría inicial y el informe de anatomía patológica v2 (etapas 1 a 9, D-12 y los arreglos que salieron de la prueba manual final) están terminados y en `main`. El detalle está en la tabla "Hecho" y en `CHANGELOG.md`.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
   1. Escribir una prueba que demuestre el fallo y mostrar que falla.
@@ -75,9 +75,29 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Prueba manual final del flujo completo, hecha por el usuario el 2026-10-05 con `patologo1`, `patologo2`, `auditor1` y `admin`: todo salió bien. Reemplazó las pruebas de navegador que estaban pendientes (etapas 3, 4 y 6, Catálogos, C-2 e I-4) | `420b91f` |
 | — | Unión de `informe-v2` a `main` (fast-forward, con todas las pruebas en verde) | `64c6e22` |
 
+## Pendientes
+
+Observaciones del usuario en la prueba manual del 2026-10-05.
+
+**Bloque A (funcional), en la rama `ajustes-prueba-manual`, en este orden:**
+1. En la pantalla del informe, los datos del paciente aparecen pegados a su etiqueta (por ejemplo, "Nombreluis"). Pasa solo en pantalla; en el PDF se ve bien.
+2. En el foro, las imágenes se ven pequeñas y no se pueden abrir en grande. Al hacer clic deberían verse ampliadas.
+3. Si el usuario sale del formulario del informe sin guardar, pierde todo lo que escribió. **Primero se proponen opciones, sin implementar.** Idea del usuario:
+   - avisar antes de salir si hay cambios sin guardar;
+   - en informes que ya existen como borrador, autoguardar en el servidor;
+   - no autoguardar informes nuevos (gastaría números de petición);
+   - no guardar copias en el navegador (serían datos de pacientes en el computador).
+
+   Cuando el usuario apruebe una opción, se registra como decisión nueva en `docs/decisiones.md`.
+
+**Bloque B (estética), todavía sin empezar:**
+
+4. PDF: todo en negro (sin azul), títulos en negrita y sin la línea azul debajo del título.
+5. Rediseño general: sin bordes redondeados, tipografía más sobria, aspecto profesional y clínico.
+
 ## Siguiente paso
 
-1. **Informe v2 terminado y unido a `main` (2026-10-05).** La etapa 10 (imagen de la firma) es opcional y no se ha pedido. Para trabajo nuevo, crear una rama desde `main` (punto 5).
+1. **Bloque A de "Pendientes"** en la rama `ajustes-prueba-manual`: puntos 1 y 2 con el procedimiento habitual; en el punto 3, proponer opciones y esperar la aprobación. El informe v2 está terminado y en `main` desde el 2026-10-05; la etapa 10 (imagen de la firma) es opcional y no se ha pedido.
 2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
 4. **Ideas de la Hoja de Ruta del README:** plantillas microscópicas e IHQ, catálogo CIE-10 y CIE-O, imágenes en los informes, encabezado del PDF configurable, firma digital, integración HL7/FHIR, registro de accesos y contenedores Docker.
