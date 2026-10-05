@@ -29,7 +29,7 @@ Backend (desde `backend/`, con el venv activado: `.\venv\Scripts\Activate.ps1`):
 ```powershell
 pip install -r requirements.txt
 python manage.py migrate
-python manage.py seed_data        # usuarios de prueba, 14 patologías con sus plantillas, temas del foro, servicios y EPS (idempotente)
+python manage.py seed_data        # usuarios de prueba, 14 patologías con sus plantillas, temas del foro, servicios, EPS y 2 pacientes ficticios (idempotente)
 python manage.py runserver        # http://127.0.0.1:8000
 python manage.py makemigrations <app>
 python manage.py test                                  # todas las pruebas
@@ -65,11 +65,12 @@ Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234`, `auditor1/
 **Apps Django** (rutas en `config/urls.py`):
 - `accounts` → `/api/auth/`: `AUTH_USER_MODEL = accounts.Usuario` con campo `rol` (`admin` | `patologo` | `auditor`). El login (`CustomTokenView`) devuelve `access`, `refresh` y `user`.
 - `informes` → `/api/`: `Categoria` → `Patologia` → `Plantilla` (campos del formulario dinámico), `Servicio` e `Informe`. También `GET /api/opciones/` (`OpcionesView`).
-- `pacientes` → `/api/pacientes/`: por ahora solo el catálogo `EPS` (`/api/pacientes/eps/`) y las listas fijas `TipoDocumento` y `Sexo`. El modelo `Paciente` llega en la etapa 3 del informe v2 (`docs/propuesta-informe-v2.md`).
+- `pacientes` → `/api/pacientes/`: `Paciente` (en la raíz, `/api/pacientes/{id}/`), el catálogo `EPS` (`/api/pacientes/eps/`) y las listas fijas `TipoDocumento` y `Sexo`. En `urls.py`, `eps` se registra antes que los pacientes y `PacienteViewSet.lookup_value_regex` solo acepta números, para que las dos rutas no se confundan. Todavía no hay `Informe.paciente`: llega en la etapa 4 del informe v2 (`docs/propuesta-informe-v2.md`).
 - `foro` → `/api/foro/`: `TemaForo`, `Publicacion` (con `ImagenPublicacion`, subidas a `media/foro/publicaciones/<id>/`) y `Comentario`.
 
 **Permisos por rol.** DRF exige autenticación por defecto. Las clases están en `accounts/permissions.py`, y comparan `request.user.rol` como string:
 - `EsPatologoOAdmin`: todos leen; escriben solo admin y patólogo.
+- `EsPatologoOAdminYSoloAdminBorra` (pacientes, decisión D-11): igual que el anterior, pero `DELETE` es solo del admin.
 - En el foro, `fijado` solo lo puede cambiar un admin y la `publicacion` de un comentario no se puede cambiar después de crearlo. Se controla en `get_fields()` de `foro/serializers.py` (auditoría I-8).
 - `EsAutorOAdminOSoloLectura` (informes y foro): todos leen; crear requiere admin o patólogo; editar, borrar o finalizar requiere ser el autor o admin (decisión D-2).
 - Un `Informe` finalizado no se puede editar ni borrar, ni siquiera por un admin: `InformeViewSet.update` y `destroy` responden 400 (decisión D-3).
@@ -89,6 +90,12 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
 **Listas de opciones (informe v2).**
 - Las listas fijas son `TextChoices` en el código: `Sexo` y `TipoDocumento` en `pacientes/models.py`, `Informe.TipoEstudio` en `informes/models.py`. `GET /api/opciones/` las devuelve como `{sexos, tipos_documento, tipos_estudio}`, cada elemento con `valor` y `etiqueta`. El frontend debe pedirlas ahí y no copiarlas en `constants.js`. Si agregas una lista fija, agrégala también a `OpcionesView`.
 - EPS y servicios son catálogos editables (`EsPatologoOAdmin`, decisión D-11). Se desactivan en lugar de borrarse (D-4), con el filtro `?activa=` (EPS) o `?activo=` (servicios): cada filtro se llama como su campo. Comparten `config/catalogos.py`: `NombreCatalogoMixin` rechaza nombres repetidos sin importar mayúsculas ni espacios, y `filtrar_por_activo()` aplica el filtro. Úsalos en cualquier catálogo nuevo.
+- Una EPS en uso (`Paciente.eps` es `PROTECT`) no se borra: `EPSViewSet.destroy` responde 400 y pide desactivarla.
+
+**Pacientes (informe v2, etapa 3).**
+- **Solo datos ficticios** en pruebas, `seed_data`, Postman y ejemplos: nombres como "Paciente Ficticio Uno" y documentos con el prefijo `PRUEBA`. Nunca datos de personas reales. No agregues campos que no salen en el informe (dirección, teléfono, correo): son datos sensibles (Ley 1581 de 2012).
+- **La edad no se guarda.** `Paciente.edad_en(fecha)` la devuelve como texto ("45 años", "8 meses", "28 días") y `Paciente.edad` la calcula a hoy (`timezone.localdate()`). El informe tendrá que usar `edad_en(fecha_ingreso)`, para que no cambie al reimprimirlo.
+- `PacienteSerializer` normaliza el documento (sin espacios ni puntos, en mayúsculas) y comprueba en `validate()` que el tipo y el número no se repitan. Por eso tiene `validators = []`: el validador automático de DRF daría un mensaje en inglés. No se asigna una EPS desactivada, pero el paciente que ya la tenía la conserva.
 
 **Rate limiting.** En `settings.REST_FRAMEWORK` están los throttles globales (`anon`, `user`) y otros por scope (`login`, `registro`, `foro_publicacion`, `foro_comentario`). Los de scope se asignan en `accounts/throttles.py` y en `get_throttles()` de las vistas del foro. Si un endpoint nuevo usa un scope nuevo, hay que agregarlo a `DEFAULT_THROTTLE_RATES`.
 
@@ -99,4 +106,5 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
   - `PublicRoute`: solo para `/login`.
   - `LegalRoute`: páginas legales, visibles con o sin sesión.
 - Los estilos globales están en `src/index.css`; no hay librería de UI.
+- `hooks/useOpciones.js` pide `/api/opciones/` una sola vez y la guarda para toda la sesión del navegador; `etiquetaDe(lista, valor)` da la etiqueta de un valor. En las pruebas, llama a `reiniciarOpciones()` en `beforeEach` para que cada prueba vuelva a pedir las opciones a su simulación.
 - Código compartido: las etiquetas de rol (`ROL_LABELS`) y de estado del informe están en `src/constants.js`; la etiqueta de estado se dibuja con `<EstadoBadge estado={...} />`, y `resultados(data)` de `api/client.js` saca la lista de un listado paginado. En el backend, el nombre para mostrar de un usuario es `Usuario.nombre_visible`. Úsalos en lugar de repetir esa lógica.

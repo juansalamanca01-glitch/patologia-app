@@ -17,6 +17,14 @@ class EsPatologoOAdmin(permissions.BasePermission):
         return request.user.rol in ('admin', 'patologo')
 
 
+class EsPatologoOAdminYSoloAdminBorra(EsPatologoOAdmin):
+    """Como EsPatologoOAdmin, pero borrar (DELETE) es solo del admin. Pacientes (decisión D-11)."""
+    def has_permission(self, request, view):
+        if request.method == 'DELETE':
+            return request.user.is_authenticated and request.user.rol == 'admin'
+        return super().has_permission(request, view)
+
+
 class EsAutorOAdminOSoloLectura(permissions.BasePermission):
     """
     Permiso compartido por informes y foro (ver decisión D-2 en docs/decisiones.md).

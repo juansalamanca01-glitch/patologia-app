@@ -5,6 +5,48 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Informe v2, etapa 3: pacientes
+
+**Qué se cambió**
+- **Modelo `Paciente`** en `backend/pacientes/models.py`, con la migración `0002_paciente`:
+  - Campos: tipo y número de documento, nombres, apellidos, fecha de nacimiento, sexo y EPS (opcional, `PROTECT`).
+  - El tipo y el número de documento no se repiten (`paciente_documento_unico`).
+  - Se ordena por apellidos y nombres. Tiene admin con búsqueda.
+  - **La edad no se guarda.** `edad_en(fecha)` la da como texto: en años cumplidos ("45 años"), en meses si el paciente es menor de 1 año ("8 meses") y en días si es menor de 1 mes ("28 días"). Quien nace un 29 de febrero cumple años el 1 de marzo en los años no bisiestos. La propiedad `edad` la calcula a la fecha de hoy.
+- **`PacienteSerializer`** en `pacientes/serializers.py`:
+  - Normaliza el número de documento: lo guarda sin espacios ni puntos y en mayúsculas.
+  - Si el documento se repite, responde 400 con un mensaje en español. Por eso desactiva el validador automático de DRF (`validators = []`).
+  - Rechaza una fecha de nacimiento en el futuro o de hace más de 130 años.
+  - Quita los espacios sobrantes de nombres y apellidos.
+  - No deja asignar una EPS desactivada, pero el paciente que ya la tenía la conserva (confirmado por el usuario).
+  - Devuelve `edad` y `eps_nombre`.
+- **`PacienteViewSet`** en `/api/pacientes/` y `/api/pacientes/{id}/`:
+  - `?q=` busca por documento, nombres y apellidos. Cada palabra debe aparecer en alguno de ellos, así que "ficticio uno" encuentra a "Paciente Ficticio Uno". Usa `select_related('eps')`.
+  - Solo acepta ids numéricos (`lookup_value_regex`), y en `pacientes/urls.py` la ruta `eps` se registra antes, para que `/api/pacientes/eps/` siga funcionando.
+- **Permiso nuevo** `EsPatologoOAdminYSoloAdminBorra` en `accounts/permissions.py`: todos leen, patólogo y admin crean y editan, y solo el admin borra (decisión D-11).
+- **Borrar una EPS que usa un paciente** (`EPSViewSet.destroy`) responde 400 en lugar de un error 500: "No se puede eliminar: esta EPS tiene N paciente(s) asociado(s). Desactívela en su lugar." Es lo mismo que I-1 hizo con las patologías.
+- **`seed_data`** crea 2 pacientes ficticios (`PRUEBA0001` y `PRUEBA0002`) y no los duplica si se ejecuta otra vez.
+- **Frontend:**
+  - `src/hooks/useOpciones.js` (nuevo): pide `/api/opciones/` una sola vez por sesión del navegador. Si la petición falla, se vuelve a intentar la próxima vez. `etiquetaDe()` da la etiqueta de un valor. `reiniciarOpciones()` se usa en las pruebas.
+  - `src/pages/PacientesPage.jsx` (nuevo, ruta `/pacientes`):
+    - Búsqueda y tabla paginada de 20 en 20, con documento, nombre, edad, sexo y EPS.
+    - Formulario para crear y editar, con los errores del backend junto a cada campo. El calendario no ofrece fechas futuras.
+    - Si la EPS del paciente está desactivada, aparece como "(desactivada)" y se conserva.
+    - "Editar" se ve para patólogo y admin; "Eliminar", con confirmación, solo para el admin.
+  - `App.jsx` (ruta `/pacientes`) y `Navbar.jsx` (enlace "Pacientes", visible para todos los roles).
+- **Pruebas:**
+  - 26 nuevas en el backend (de 108 a 134): `EdadTests` (6), `PacienteAPITests` (18: permisos, edad, validaciones, documento repetido, EPS desactivada, búsqueda y `seed_data`) y `BorrarEPSConPacientesTests` (2).
+  - 8 nuevas en el frontend (de 38 a 46), en `PacientesPage.test.jsx`.
+- **Documentación:**
+  - `README.md`: características, permisos, estructura, API, datos de prueba, pruebas y seguridad.
+  - `CLAUDE.md`, `docs/propuesta-informe-v2.md` y `docs/progreso.md`.
+  - Colección de Postman: carpeta nueva "3. Pacientes" y variable `{{paciente_id}}`.
+
+**Qué queda para la etapa 4**
+- El historial `GET /api/pacientes/{id}/informes/` y la respuesta 400 al borrar un paciente con informes. Los dos necesitan `Informe.paciente`, que se agrega en esa etapa. Por ahora un admin puede borrar cualquier paciente, porque ninguno tiene informes todavía.
+
+**Por qué:** es la etapa 3 de `docs/propuesta-informe-v2.md`. El informe real lleva el nombre, el documento, la edad, el sexo y la EPS del paciente, y un mismo paciente puede tener varios informes. La edad se calcula y no se guarda, para que siempre sea correcta y el informe pueda mostrarla a su fecha de ingreso. Solo se guardan los datos que aparecen en el informe, porque los datos de salud son sensibles (Ley 1581 de 2012). Todos los datos de prueba son ficticios.
+
 ### Informe v2, etapa 2: catálogos de EPS y servicios, tipo de estudio y `GET /api/opciones/`
 
 **Qué se cambió**

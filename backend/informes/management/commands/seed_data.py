@@ -1,19 +1,21 @@
 """
 Comando para cargar datos iniciales: usuarios de prueba, 14 patologías con sus
-plantillas, temas del foro y los catálogos de servicios y EPS.
+plantillas, temas del foro, los catálogos de servicios y EPS y 2 pacientes ficticios.
 Uso: python manage.py seed_data (se puede ejecutar varias veces sin duplicar datos).
 """
+from datetime import date
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from foro.models import TemaForo
 from informes.models import Patologia, Plantilla, Servicio
-from pacientes.models import EPS
+from pacientes.models import EPS, Paciente, Sexo, TipoDocumento
 
 Usuario = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'Carga usuarios de prueba, 14 patologías con sus plantillas, temas del foro, servicios y EPS.'
+    help = 'Carga usuarios de prueba, 14 patologías con sus plantillas, temas del foro, servicios, EPS y pacientes ficticios.'
 
     def handle(self, *args, **options):
         # ── Superusuario (administrador) ────────────────────────────
@@ -336,5 +338,22 @@ class Command(BaseCommand):
             _, creado = EPS.objects.get_or_create(nombre=nombre)
             if creado:
                 self.stdout.write(self.style.SUCCESS(f'[OK] EPS "{nombre}" creada'))
+
+        # ── Pacientes ficticios (sección 8): nunca datos de personas reales ─────
+        # Los documentos llevan el prefijo PRUEBA para que no coincidan con uno real.
+        pacientes = [
+            {'numero_documento': 'PRUEBA0001', 'nombres': 'Paciente Ficticio', 'apellidos': 'Uno',
+             'fecha_nacimiento': date(1980, 5, 14), 'sexo': Sexo.FEMENINO, 'eps': 'Particular'},
+            {'numero_documento': 'PRUEBA0002', 'nombres': 'Prueba', 'apellidos': 'Apellido Dos',
+             'fecha_nacimiento': date(1962, 11, 3), 'sexo': Sexo.MASCULINO, 'eps': 'Otra'},
+        ]
+        for datos in pacientes:
+            datos = {**datos, 'eps': EPS.objects.get(nombre=datos['eps'])}
+            _, creado = Paciente.objects.get_or_create(
+                tipo_documento=TipoDocumento.CC, numero_documento=datos.pop('numero_documento'),
+                defaults=datos,
+            )
+            if creado:
+                self.stdout.write(self.style.SUCCESS(f'[OK] Paciente ficticio "{datos["nombres"]} {datos["apellidos"]}" creado'))
 
         self.stdout.write(self.style.SUCCESS('\n[DONE] Seed data completo.'))

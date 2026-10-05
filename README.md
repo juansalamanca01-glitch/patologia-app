@@ -39,6 +39,7 @@
 - **Exportación a PDF**: genera con **ReportLab** un informe con título, número de petición (y orden externa, si existe), metadatos (fecha, patología, tipo de muestra, patólogo y estado), datos clínicos, descripción macroscópica y notas.
 - **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
 - **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables. Una patología se puede desactivar: deja de ofrecerse en los informes nuevos sin perder el historial.
+- **Pacientes**: registro de los pacientes con su documento, nombres, fecha de nacimiento, sexo y EPS. La edad se calcula a partir de la fecha de nacimiento: en años, o en meses o días si el paciente es menor de 1 año. Se buscan por documento, nombres o apellidos. Solo se guardan los datos que aparecen en el informe.
 - **Búsqueda y filtros**: por número de petición, número de orden externa, patología o tipo de muestra, rango de fechas y estado. Resultados paginados de 20 en 20.
 - **Panel de inicio**: totales de informes (todos, borradores y finalizados) y los 10 más recientes.
 - **Foro de patólogos**: publicaciones por temas (los patólogos y administradores pueden crear temas nuevos), con hasta 6 imágenes (máximo 10 MB cada una) y comentarios. Un administrador puede fijar publicaciones importantes.
@@ -55,6 +56,9 @@
 | Editar, borrar o finalizar un informe | Sí (cualquiera) | Solo los suyos | No |
 | Editar o borrar un informe **finalizado** | No | No | No |
 | Administrar patologías, plantillas, categorías y temas del foro | Sí | Sí | No |
+| Ver pacientes | Sí | Sí | Sí |
+| Crear y editar pacientes; administrar EPS y servicios | Sí | Sí | No |
+| Borrar pacientes | Sí | No | No |
 | Publicar y comentar en el foro | Sí | Sí | No (solo lectura) |
 | Editar o borrar publicaciones y comentarios | Sí (moderación) | Solo los suyos | No |
 | Fijar publicaciones del foro | Sí | No | No |
@@ -65,6 +69,7 @@ Estas reglas responden a decisiones del proyecto registradas en [`docs/decisione
 - **D-1:** los patólogos también administran el catálogo.
 - **D-2:** solo el autor o un administrador modifica un informe.
 - **D-3:** un informe finalizado no se modifica, ni siquiera por un administrador.
+- **D-11:** patólogos y administradores crean y editan pacientes y administran EPS y servicios; solo un administrador borra pacientes.
 
 Si hace falta una corrección excepcional sobre un informe finalizado, el administrador puede hacerla desde el panel de Django (`/admin/`).
 
@@ -122,7 +127,7 @@ patologia-app/
 ├── backend/
 │   ├── accounts/              # Usuarios, roles, login JWT, perfil y contraseñas
 │   │   ├── models.py          # Modelo Usuario con rol (admin, patologo, auditor)
-│   │   ├── permissions.py     # Permisos: EsAdmin, EsPatologoOAdmin, EsAutorOAdminOSoloLectura
+│   │   ├── permissions.py     # Permisos: EsAdmin, EsPatologoOAdmin, EsPatologoOAdminYSoloAdminBorra, EsAutorOAdminOSoloLectura
 │   │   ├── serializers.py     # Perfil, registro y cambio de contraseña (con validadores)
 │   │   ├── throttles.py       # Límites de intentos de login y de registro
 │   │   ├── views.py / urls.py # Endpoints /api/auth/
@@ -134,14 +139,14 @@ patologia-app/
 │   │   ├── catalogos.py       # Piezas comunes de los catálogos de EPS y servicios
 │   │   └── tests.py           # Pruebas de la configuración (SECRET_KEY y DEBUG)
 │   ├── informes/
-│   │   ├── management/commands/seed_data.py  # Datos iniciales: usuarios, 14 patologías, temas, servicios y EPS
+│   │   ├── management/commands/seed_data.py  # Datos iniciales: usuarios, 14 patologías, temas, servicios, EPS y 2 pacientes ficticios
 │   │   ├── models.py          # Categoria, Patologia, Plantilla, Servicio, Informe
 │   │   ├── serializers.py
 │   │   ├── utils.py           # Generador de la descripción macroscópica y del PDF
 │   │   ├── views.py / urls.py # Endpoints /api/ (catálogo, servicios, opciones, informes, PDF)
 │   │   └── tests.py
 │   ├── pacientes/
-│   │   ├── models.py          # EPS y listas fijas de sexo y tipo de documento
+│   │   ├── models.py          # Paciente (con la edad calculada), EPS y listas fijas de sexo y tipo de documento
 │   │   ├── serializers.py
 │   │   ├── views.py / urls.py # Endpoints /api/pacientes/
 │   │   └── tests.py
@@ -158,7 +163,8 @@ patologia-app/
 │   │   ├── api/client.js      # Cliente Axios: dirección de la API (VITE_API_URL) y token JWT
 │   │   ├── context/AuthContext.jsx  # Sesión y rol del usuario
 │   │   ├── components/        # Navbar y Footer
-│   │   ├── pages/             # Login, Dashboard, Informe, Buscar, Patologías, Foro,
+│   │   ├── hooks/useOpciones.js  # Listas fijas de /api/opciones/ (se piden una vez)
+│   │   ├── pages/             # Login, Dashboard, Informe, Buscar, Pacientes, Patologías, Foro,
 │   │   │                      # Detalle de publicación, Perfil y páginas legales
 │   │   ├── test/setup.js      # Configuración de las pruebas
 │   │   ├── App.jsx            # Rutas (protegidas, públicas y legales)
@@ -317,6 +323,8 @@ También se pueden arrancar por separado, en dos terminales: `python manage.py r
 
 Los permisos de cada rol están en [Roles y Permisos](#roles-y-permisos).
 
+`seed_data` crea también 2 pacientes **ficticios** ("Paciente Ficticio Uno", documento `PRUEBA0001`, y "Prueba Apellido Dos", `PRUEBA0002`). Nunca se usan datos de pacientes reales: los documentos de prueba llevan el prefijo `PRUEBA` para que no coincidan con uno real.
+
 > **Importante:** son contraseñas de **demostración**: no las uses en un servidor real. Además, la API rechaza contraseñas así de débiles cuando se registra un usuario o se cambia una contraseña, porque aplica los validadores de Django.
 
 ---
@@ -336,8 +344,8 @@ npm run test:watch                        # se repiten al guardar cambios
 npm test
 ```
 
-- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los catálogos de EPS y servicios, las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
-- **Frontend:** cubre la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
+- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones y búsqueda), los catálogos de EPS y servicios, las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
+- **Frontend:** cubre la página de pacientes, la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
 
 ---
 
@@ -397,7 +405,16 @@ Todas las rutas exigen la cabecera `Authorization: Bearer <token>`, excepto el l
 | Método | Endpoint | Descripción | Acceso |
 |---|---|---|---|
 | GET / POST | `/api/pacientes/eps/` | Listar o crear EPS (`?search=`, `?activa=true`/`false`). El nombre no se puede repetir, sin importar mayúsculas ni espacios | Leer: todos · Escribir: patólogo/admin |
-| GET / PUT / PATCH / DELETE | `/api/pacientes/eps/{id}/` | Ver, editar, desactivar (`activa: false`) o borrar una EPS | Igual |
+| GET / PUT / PATCH / DELETE | `/api/pacientes/eps/{id}/` | Ver, editar, desactivar (`activa: false`) o borrar una EPS. Una EPS que tiene pacientes no se borra (400): hay que desactivarla | Igual |
+| GET / POST | `/api/pacientes/` | Listar (paginado, por apellidos) o crear pacientes. `?q=` busca por documento, nombres y apellidos; cada palabra debe aparecer en alguno de ellos | Leer: todos · Crear: patólogo/admin |
+| GET / PUT / PATCH | `/api/pacientes/{id}/` | Ver o editar un paciente | Leer: todos · Editar: patólogo/admin |
+| DELETE | `/api/pacientes/{id}/` | Borrar un paciente | Solo admin |
+
+Cada paciente se devuelve con `edad` (calculada a la fecha de hoy; no se guarda) y `eps_nombre`. Reglas:
+- El tipo y el número de documento no se pueden repetir. El número se guarda sin espacios ni puntos y en mayúsculas.
+- La fecha de nacimiento no puede estar en el futuro ni ser de hace más de 130 años.
+- La EPS es opcional. No se puede asignar una EPS desactivada, pero el paciente que ya la tenía la conserva.
+- Solo se guardan los datos que aparecen en el informe: no se piden dirección, teléfono ni correo.
 
 Las EPS y los servicios se desactivan en lugar de borrarse (decisión D-4), para que los informes antiguos los sigan mostrando. `seed_data` carga 7 servicios y 12 EPS (una lista corta de EPS reales más "Particular" y "Otra"), que se pueden editar.
 
@@ -472,11 +489,13 @@ graph TD
 - **Configuración segura por defecto**: sin `SECRET_KEY` la app no arranca, y `DEBUG` es `False` si no se define. Con `DEBUG=False` se activan HTTPS, cookies seguras y HSTS, y CORS solo acepta los orígenes de `CORS_ALLOWED_ORIGINS`.
 - **PDF**: el texto escrito por el usuario se escapa, así que no puede romper ni alterar el documento.
 - **Imágenes del foro**: se comprueban el tamaño y que sean imágenes reales.
+- **Datos de pacientes**: son datos de salud, que la Ley 1581 de 2012 considera sensibles. Solo los ven usuarios con sesión y se guardan solo los que aparecen en el informe. Antes de un uso real haría falta una revisión legal.
 
 Para publicar la app en un servidor:
 - Define una `SECRET_KEY` propia, `DEBUG=False`, `ALLOWED_HOSTS` y `CORS_ALLOWED_ORIGINS`.
 - Configura en el servidor web un límite de tamaño de petición (por ejemplo, `client_max_body_size 60m;` en Nginx).
 - Sirve la carpeta `media/`, porque Django solo la sirve en modo desarrollo.
+- La búsqueda de pacientes (`?q=`) envía el nombre o el documento en la dirección de la petición. Configura los registros del servidor web para que no guarden esos parámetros, o protégelos como datos sensibles.
 
 ---
 

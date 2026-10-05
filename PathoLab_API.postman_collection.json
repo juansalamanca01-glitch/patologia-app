@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "8bbc54a1-patologia-app-collection",
 		"name": "PathoLab API - Informes de Patología",
-		"description": "Colección para probar la API de PathoLab.\n\nUso: 1) ejecuta \"Login (patólogo)\", que guarda el token en {{access_token}}. 2) Ejecuta las demás peticiones en orden: \"Crear informe\" guarda {{informe_id}} y \"Crear publicación\" guarda {{publicacion_id}}.\n\nTodas las peticiones usan el token de la colección (Authorization: Bearer), excepto el login. Los listados vienen paginados de 20 en 20 (?page=2).",
+		"description": "Colección para probar la API de PathoLab.\n\nUso: 1) ejecuta \"Login (patólogo)\", que guarda el token en {{access_token}}. 2) Ejecuta las demás peticiones en orden: \"Crear paciente\" guarda {{paciente_id}}, \"Crear informe\" guarda {{informe_id}} y \"Crear publicación\" guarda {{publicacion_id}}.\n\nTodas las peticiones usan el token de la colección (Authorization: Bearer), excepto el login. Los listados vienen paginados de 20 en 20 (?page=2).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -33,6 +33,11 @@
 		},
 		{
 			"key": "publicacion_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "paciente_id",
 			"value": "",
 			"type": "string"
 		}
@@ -269,7 +274,125 @@
 			]
 		},
 		{
-			"name": "3. Informes",
+			"name": "3. Pacientes",
+			"item": [
+				{
+					"name": "Listar pacientes (con búsqueda)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/pacientes/?q=ficticio",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pacientes",
+								""
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "ficticio",
+									"description": "Busca por documento, nombres y apellidos; cada palabra debe aparecer en alguno de ellos",
+									"disabled": false
+								}
+							]
+						},
+						"description": "Pacientes paginados de 20 en 20, ordenados por apellidos. Cada uno trae edad (calculada a hoy) y eps_nombre. seed_data crea 2 pacientes ficticios. Solo datos ficticios: nunca uses datos de pacientes reales."
+					},
+					"response": []
+				},
+				{
+					"name": "Crear paciente",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/pacientes/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pacientes",
+								""
+							]
+						},
+						"description": "Patólogo o admin. Datos ficticios (documento con prefijo PRUEBA). El documento se guarda sin espacios ni puntos y en mayúsculas, y no se puede repetir con el mismo tipo. La EPS es opcional (id de /api/pacientes/eps/; no puede estar desactivada). Guarda el id en {{paciente_id}}.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tipo_documento\": \"CC\",\n  \"numero_documento\": \"PRUEBA0003\",\n  \"nombres\": \"Paciente Ficticio\",\n  \"apellidos\": \"Tres\",\n  \"fecha_nacimiento\": \"1990-01-15\",\n  \"sexo\": \"femenino\",\n  \"eps\": null\n}"
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    pm.collectionVariables.set('paciente_id', pm.response.json().id);",
+									"    console.log('Guardado en paciente_id: ' + pm.response.json().id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Ver paciente",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/pacientes/{{paciente_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pacientes",
+								"{{paciente_id}}",
+								""
+							]
+						},
+						"description": "Usa el {{paciente_id}} que guardó \"Crear paciente\"."
+					},
+					"response": []
+				},
+				{
+					"name": "Borrar paciente (solo admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/pacientes/{{paciente_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pacientes",
+								"{{paciente_id}}",
+								""
+							]
+						},
+						"description": "Solo un admin (decisión D-11): con el token de patologo1 responde 403. Para probarlo, haz login como admin."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Informes",
 			"item": [
 				{
 					"name": "Crear informe (Biopsia de Piel)",
@@ -461,7 +584,7 @@
 			]
 		},
 		{
-			"name": "4. Foro",
+			"name": "5. Foro",
 			"item": [
 				{
 					"name": "Listar publicaciones",
