@@ -5,6 +5,23 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-05
 
+### Finalizar, vista previa y cerrar sesión con cambios sin guardar (ampliación de D-13)
+
+**Qué se cambió**
+- **Finalizar** (`frontend/src/pages/InformePage.jsx`): si hay cambios sin guardar, primero se guardan (`guardarCambiosPendientes()`). Si la validación falla o el servidor los rechaza, no se finaliza y se muestra qué falta. Antes se finalizaba lo que estaba en el servidor: lo escrito en los últimos segundos (o con datos no válidos) se perdía, y la pantalla quedaba en solo lectura mostrándolo como si estuviera guardado.
+- **Vista previa del PDF de un borrador:** con la misma regla, el PDF muestra lo que hay en pantalla.
+- **Cerrar sesión:**
+  - "Salir" (`Navbar.jsx`) ya no cierra la sesión: navega a la ruta nueva `/salir` (`pages/CerrarSesionPage.jsx`), que la cierra y lleva a `/login`.
+  - Si hay un informe con cambios sin guardar, el aviso de D-13 aparece antes, con la sesión todavía abierta, así que "Guardar y salir" funciona.
+  - Antes, cerrar sesión borraba la sesión primero y el aviso no podía aparecer.
+- **Pruebas:**
+  - 8 nuevas en `InformePage.test.jsx`: finalizar sin cambios, con cambios, con cambios no válidos y con rechazo del servidor; vista previa con cambios y con cambios no válidos; cerrar sesión con "Salir sin guardar" y con "Guardar y salir".
+  - `Navbar.test.jsx` (1) y `CerrarSesionPage.test.jsx` (2), los dos nuevos.
+  - El frontend pasa de 123 a 134 pruebas.
+- **Documentación:** `docs/decisiones.md` (ampliación de D-13), `CLAUDE.md`, `README.md` y `docs/progreso.md`.
+
+**Por qué:** se encontró al hacer el punto 3 de "Pendientes", y el usuario aprobó el arreglo el 2026-10-05. También pidió que cerrar sesión mostrara el mismo aviso si era sencillo, y lo era.
+
 ### Aviso al salir con cambios sin guardar y autoguardado de borradores (decisión D-13, Pendientes, punto 3)
 
 **Qué se cambió**

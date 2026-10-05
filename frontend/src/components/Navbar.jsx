@@ -4,13 +4,12 @@ import { ROL_LABELS } from '../constants';
 
 
 export default function Navbar() {
-  const { user, logout, canWrite } = useAuth();
+  const { user, canWrite } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  // La sesión se cierra en /salir (D-13): si hay un informe con cambios sin guardar,
+  // su aviso aparece antes, con la sesión todavía abierta.
+  const handleLogout = () => navigate('/salir');
 
   return (
     <nav className="navbar">

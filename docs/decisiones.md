@@ -117,5 +117,8 @@ Los códigos como "I-7" o "C-2" remiten a `docs/auditoria-inicial.md`.
   - **Autoguardado:** solo en un **borrador que ya existe** y que el usuario puede editar. Se guarda en el servidor 5 segundos después del último cambio, y solo si pasa la validación del formulario. Un indicador muestra el estado: guardado y su hora, guardando, o cambios sin guardar y por qué.
   - **Informes nuevos:** no se autoguardan, porque cada informe creado gasta un número de petición (D-7). Solo llevan el aviso al salir.
   - **Navegador:** no se guarda ninguna copia en el navegador (`localStorage`, `sessionStorage` ni similares), porque serían datos de pacientes en el computador.
+  - **Ampliación del mismo día (aprobada por el usuario):**
+    - **Finalizar y la vista previa del PDF** usan lo que hay en pantalla: si hay cambios sin guardar, primero se guardan. Si la validación falla o el servidor los rechaza, no se finaliza ni se descarga, y se muestra qué falta.
+    - **Cerrar sesión** también avisa. "Salir" navega a `/salir`, donde se cierra la sesión. Así, el aviso aparece antes, con la sesión todavía abierta.
 - **Motivo:** en la prueba manual del 2026-10-05 el usuario notó que al salir del formulario sin guardar se perdía todo lo escrito. Avisar cubre los informes nuevos sin gastar números de petición, y el autoguardado protege el trabajo largo sobre un borrador sin dejar datos sensibles en el equipo.
 

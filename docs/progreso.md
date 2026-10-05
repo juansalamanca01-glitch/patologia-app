@@ -20,7 +20,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 245 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 123 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 245 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 134 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -76,7 +76,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Unión de `informe-v2` a `main` (fast-forward, con todas las pruebas en verde) | `64c6e22` |
 | — | Pendientes, punto 1: los datos del paciente en el informe ya no salen pegados a su etiqueta (`<dt>`/`<dd>` en `SelectorPaciente`) | `a31c5e1` |
 | — | Pendientes, punto 2: miniaturas del foro más grandes y visor para ampliarlas (anterior y siguiente, teclado, Escape, clic fuera) | `ee28886` |
-| D-13 | Pendientes, punto 3: aviso al salir con cambios sin guardar (Seguir editando, Salir sin guardar, Guardar y salir) y autoguardado a los 5 s de los borradores existentes, con indicador de estado; `App.jsx` pasa a `createBrowserRouter` para usar `useBlocker`; se muestran los errores de `datos_ingresados` del backend | commit "feat: aviso al salir y autoguardado de borradores (D-13)" |
+| D-13 | Pendientes, punto 3: aviso al salir con cambios sin guardar (Seguir editando, Salir sin guardar, Guardar y salir) y autoguardado a los 5 s de los borradores existentes, con indicador de estado; `App.jsx` pasa a `createBrowserRouter` para usar `useBlocker`; se muestran los errores de `datos_ingresados` del backend | `0c05b68` |
+| D-13 | Ampliación: finalizar y la vista previa del PDF guardan primero los cambios pendientes (si no son válidos, no siguen y muestran qué falta); "Salir" pasa por `/salir`, así que cerrar sesión con cambios sin guardar también avisa. Encontrado al hacer el punto 3 y aprobado por el usuario | commit "fix: finalizar, vista previa y cerrar sesión con cambios sin guardar (D-13)" |
 
 ## Pendientes
 
@@ -98,14 +99,9 @@ Observaciones del usuario en la prueba manual del 2026-10-05.
 4. PDF: todo en negro (sin azul), títulos en negrita y sin la línea azul debajo del título.
 5. Rediseño general: sin bordes redondeados, tipografía más sobria, aspecto profesional y clínico.
 
-## Pendiente de confirmar (encontrado al hacer el punto 3)
-
-- **Finalizar con cambios sin guardar:** "Finalizar Informe" finaliza lo que está guardado en el servidor, no lo que hay en pantalla. Si el usuario edita y finaliza antes del autoguardado (5 s) o en un informe con datos no válidos, lo que escribió se pierde sin aviso. La pantalla queda en solo lectura mostrando el texto no guardado, y salir ya no avisa. Propuesta: si hay cambios sin guardar, "Finalizar" guarda primero; si la validación falla, no finaliza y muestra qué falta. Pasa algo parecido con la vista previa del PDF de un borrador, que muestra lo guardado. Falta la confirmación del usuario.
-- **Cerrar sesión con cambios sin guardar:** el aviso no aparece al cerrar sesión, porque para entonces la sesión ya se cerró y "Guardar y salir" fallaría. En un borrador existente, el autoguardado ya habrá guardado todo salvo los últimos 5 segundos; en un informe nuevo se pierde. Es una limitación conocida, anotada para más adelante.
-
 ## Siguiente paso
 
-1. **Bloque A de "Pendientes" hecho** en la rama `ajustes-prueba-manual` (puntos 1, 2 y 3). Falta: la confirmación del usuario sobre "Finalizar con cambios sin guardar" (sección anterior), su prueba manual del Bloque A y preguntarle si se une la rama a `main`. Después, el Bloque B. El informe v2 está terminado y en `main` desde el 2026-10-05; la etapa 10 (imagen de la firma) es opcional y no se ha pedido.
+1. **Bloque A de "Pendientes" hecho** en la rama `ajustes-prueba-manual` (puntos 1, 2 y 3, con la ampliación de D-13). Falta la prueba manual del usuario. Si sale bien, se une la rama a `main` (el usuario pidió hacer la prueba antes). Después, el Bloque B. El informe v2 está terminado y en `main` desde el 2026-10-05; la etapa 10 (imagen de la firma) es opcional y no se ha pedido.
 2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
 4. **Ideas de la Hoja de Ruta del README:** plantillas microscópicas e IHQ, catálogo CIE-10 y CIE-O, imágenes en los informes, encabezado del PDF configurable, firma digital, integración HL7/FHIR, registro de accesos y contenedores Docker.

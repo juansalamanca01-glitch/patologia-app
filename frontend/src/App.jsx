@@ -17,6 +17,7 @@ import PublicacionDetallePage from './pages/PublicacionDetallePage';
 import PerfilPage from './pages/PerfilPage';
 import PoliticaPrivacidadPage from './pages/PoliticaPrivacidadPage';
 import TerminosCondicionesPage from './pages/TerminosCondicionesPage';
+import CerrarSesionPage from './pages/CerrarSesionPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -68,6 +69,7 @@ function LegalRoute({ children }) {
 const rutas = createRoutesFromElements(
   <>
     <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+    <Route path="/salir" element={<CerrarSesionPage />} />
     <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
     <Route path="/informes/nuevo" element={<ProtectedRoute><InformePage /></ProtectedRoute>} />
     <Route path="/informes/:id" element={<ProtectedRoute><InformePage /></ProtectedRoute>} />

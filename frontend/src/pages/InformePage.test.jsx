@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import client from '../api/client';
@@ -87,6 +87,7 @@ function crearRouter(ruta) {
     { path: '/', element: <h1>Pantalla de inicio</h1> },
     { path: '/informes/nuevo', element: <InformePage /> },
     { path: '/informes/:id', element: <InformePage /> },
+    { path: '/salir', element: <h1>Cerrando sesión</h1> },
   ], { initialEntries: [ruta] });
 }
 
@@ -682,5 +683,117 @@ describe('InformePage: no perder lo escrito (D-13)', () => {
     expect(cerrar()).toBe(false);
     fireEvent.change(screen.getByLabelText('Comentarios'), { target: { value: 'Cambio' } });
     expect(cerrar()).toBe(true);
+  });
+});
+
+// D-13, ampliación: finalizar y la vista previa del PDF usan lo que hay en pantalla.
+// Si hay cambios sin guardar, primero se guardan; si la validación falla o el
+// servidor los rechaza, no se finaliza ni se descarga, y se muestra qué falta.
+// Cerrar sesión pasa por /salir, así que con cambios sin guardar también avisa.
+describe('InformePage: finalizar, vista previa y cerrar sesión con cambios sin guardar (D-13)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    reiniciarOpciones();
+    simularApi();
+    URL.createObjectURL = vi.fn(() => 'blob:pdf');
+    URL.revokeObjectURL = vi.fn();
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    client.put.mockImplementation((url, datos) => Promise.resolve({ data: { ...INFORME, ...datos } }));
+    client.post.mockImplementation((url) => (
+      url === '/informes/5/finalizar/'
+        ? Promise.resolve({ data: { ...INFORME, estado: 'finalizado', fecha_informe: '2026-10-05T15:00:00Z' } })
+        : Promise.reject(new Error(`POST no simulado: ${url}`))
+    ));
+  });
+
+  async function cambiarComentario(texto) {
+    const campo = await screen.findByDisplayValue('Se sugiere correlación clínica.');
+    fireEvent.change(campo, { target: { value: texto } });
+  }
+
+  function finalizar() {
+    fireEvent.click(screen.getByRole('button', { name: /Finalizar Informe/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Confirmar/i }));
+  }
+
+  const llamadaPdf = () => client.get.mock.calls.findIndex(([url]) => url === '/informes/5/pdf/');
+
+  // --- Finalizar ---
+
+  it('sin cambios, finaliza sin volver a guardar', async () => {
+    renderInforme();
+    await screen.findByDisplayValue('Se sugiere correlación clínica.');
+    finalizar();
+    expect(await screen.findByText('Informe finalizado correctamente.')).toBeInTheDocument();
+    expect(client.put).not.toHaveBeenCalled();
+  });
+
+  it('con cambios, guarda primero y después finaliza', async () => {
+    renderInforme();
+    await cambiarComentario('Escrito justo antes de finalizar');
+    finalizar();
+    expect(await screen.findByText('Informe finalizado correctamente.')).toBeInTheDocument();
+    expect(client.put).toHaveBeenCalledWith('/informes/5/', expect.objectContaining({ comentarios: 'Escrito justo antes de finalizar' }));
+    expect(client.put.mock.invocationCallOrder[0]).toBeLessThan(client.post.mock.invocationCallOrder[0]);
+  });
+
+  it('con cambios no válidos, no guarda ni finaliza y muestra qué falta', async () => {
+    renderInforme();
+    fireEvent.change(await screen.findByLabelText('Diagnóstico 1'), { target: { value: '' } });
+    finalizar();
+    expect(await screen.findByText('Escriba la descripción del diagnóstico.')).toBeInTheDocument();
+    expect(client.put).not.toHaveBeenCalled();
+    expect(client.post).not.toHaveBeenCalled();
+  });
+
+  it('si el servidor rechaza los cambios, no finaliza', async () => {
+    client.put.mockRejectedValue({ response: { status: 400, data: { datos_ingresados: ['Faltan campos obligatorios: Localización'] } } });
+    renderInforme();
+    await cambiarComentario('Cambio');
+    finalizar();
+    expect(await screen.findByText(/Faltan campos obligatorios: Localización/)).toBeInTheDocument();
+    expect(client.post).not.toHaveBeenCalled();
+  });
+
+  // --- Vista previa del PDF ---
+
+  it('con cambios, la vista previa guarda primero y después pide el PDF', async () => {
+    renderInforme();
+    await cambiarComentario('Para la vista previa');
+    fireEvent.click(screen.getByRole('button', { name: /Vista previa \(borrador\)/i }));
+    await vi.waitFor(() => expect(llamadaPdf()).toBeGreaterThan(-1));
+    expect(client.put).toHaveBeenCalledWith('/informes/5/', expect.objectContaining({ comentarios: 'Para la vista previa' }));
+    expect(client.put.mock.invocationCallOrder[0]).toBeLessThan(client.get.mock.invocationCallOrder[llamadaPdf()]);
+  });
+
+  it('con cambios no válidos, la vista previa no se descarga y muestra qué falta', async () => {
+    renderInforme();
+    fireEvent.change(await screen.findByLabelText('Diagnóstico 1'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: /Vista previa \(borrador\)/i }));
+    expect(await screen.findByText('Escriba la descripción del diagnóstico.')).toBeInTheDocument();
+    expect(client.put).not.toHaveBeenCalled();
+    expect(llamadaPdf()).toBe(-1);
+  });
+
+  // --- Cerrar sesión ---
+
+  it('cerrar sesión con cambios sin guardar muestra el aviso; "Salir sin guardar" cierra la sesión', async () => {
+    const router = crearRouter('/informes/5');
+    render(<RouterProvider router={router} />);
+    await cambiarComentario('Sin guardar');
+    act(() => { router.navigate('/salir'); });
+    expect(await screen.findByRole('dialog', { name: /cambios sin guardar/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Salir sin guardar' }));
+    expect(await screen.findByRole('heading', { name: 'Cerrando sesión' })).toBeInTheDocument();
+  });
+
+  it('cerrar sesión con "Guardar y salir" guarda antes de cerrar la sesión', async () => {
+    const router = crearRouter('/informes/5');
+    render(<RouterProvider router={router} />);
+    await cambiarComentario('Guardado al cerrar sesión');
+    act(() => { router.navigate('/salir'); });
+    fireEvent.click(await screen.findByRole('button', { name: 'Guardar y salir' }));
+    expect(await screen.findByRole('heading', { name: 'Cerrando sesión' })).toBeInTheDocument();
+    expect(client.put).toHaveBeenCalledWith('/informes/5/', expect.objectContaining({ comentarios: 'Guardado al cerrar sesión' }));
   });
 });

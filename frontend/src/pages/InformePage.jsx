@@ -94,8 +94,9 @@ export default function InformePage() {
     setAutoguardado(null);
   };
 
-  // Salir de la pantalla con cambios sin guardar pide confirmar (D-13). No se frena la
-  // salida hacia /login (cerrar sesión), porque para entonces la sesión ya se cerró.
+  // Salir de la pantalla con cambios sin guardar pide confirmar (D-13), también al cerrar
+  // sesión ("Salir" pasa por /salir). No se frena la salida hacia /login: solo ocurre
+  // cuando la sesión ya terminó (por ejemplo, porque venció).
   const blocker = useBlocker(useCallback(({ currentLocation, nextLocation }) => (
     sucioRef.current
       && currentLocation.pathname !== nextLocation.pathname
@@ -295,6 +296,27 @@ export default function InformePage() {
     return () => clearTimeout(temporizador);
   }, [autoguardable, version, versionGuardada]);
 
+  // Finalizar y la vista previa del PDF usan lo que hay en pantalla (D-13): si hay cambios
+  // sin guardar, primero se guardan. Devuelve false si la validación falla o el servidor
+  // los rechaza; los errores quedan a la vista.
+  const guardarCambiosPendientes = async () => {
+    if (!hayCambiosSinGuardar) return true;
+    if (!validate()) return false;
+    const versionInicio = versionRef.current;
+    guardandoRef.current = true;
+    setSaving(true);
+    try {
+      alGuardarExistente(await guardarEnServidor(), versionInicio);
+      return true;
+    } catch (err) {
+      setErrors(erroresDeRespuesta(err));
+      return false;
+    } finally {
+      guardandoRef.current = false;
+      setSaving(false);
+    }
+  };
+
   // "Guardar y salir" del aviso: si falla la validación o el servidor rechaza los datos,
   // no se sale y se muestra qué falta (D-13).
   const guardarYSalir = async () => {
@@ -356,6 +378,7 @@ export default function InformePage() {
     setConfirmFinalizar(false);
     setSuccessMsg('');
     setErrors({});
+    if (!(await guardarCambiosPendientes())) return;
     try {
       const { data } = await client.post(`/informes/${id}/finalizar/`);
       setInforme(data);
@@ -376,6 +399,8 @@ export default function InformePage() {
   const downloadPDF = async () => {
     const numero = (informe?.numero_peticion || id).toString().replace(/[^a-zA-Z0-9\-]/g, '_');
     const safeName = borrador ? `${numero}_borrador` : numero;
+    // La vista previa de un borrador muestra lo que hay en pantalla: se guarda antes (D-13).
+    if (borrador && !(await guardarCambiosPendientes())) return;
     try {
       const { data } = await client.get(`/informes/${id}/pdf/`, { responseType: 'blob' });
       // Enlace temporal "blob:" para que el navegador guarde el archivo con su nombre.

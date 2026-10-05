@@ -136,7 +136,9 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
 
 **Cambios sin guardar en el informe (decisión D-13).**
 - `InformePage` cuenta los cambios del usuario (`version`; cada `onChange` llama a `marcarCambio()`) y compara con `versionGuardada`. Si se agrega un campo editable al informe, su `onChange` debe llamar a `marcarCambio()`.
-- Con cambios sin guardar, `useBlocker` muestra el aviso (Seguir editando, Salir sin guardar, Guardar y salir) y `beforeunload` cubre cerrar o recargar. "Guardar y salir" no sale si falla la validación. No se frena la salida a `/login`.
+- Con cambios sin guardar, `useBlocker` muestra el aviso (Seguir editando, Salir sin guardar, Guardar y salir) y `beforeunload` cubre cerrar o recargar. "Guardar y salir" no sale si falla la validación. No se frena la salida a `/login` (solo ocurre si la sesión ya terminó).
+- **Cerrar sesión pasa por `/salir`:** "Salir" del `Navbar` solo navega a `/salir` (`CerrarSesionPage`), que llama a `logout()` y lleva a `/login`. No llames a `logout()` directamente desde un botón: el aviso del informe no aparecería.
+- Finalizar y la vista previa del PDF de un borrador llaman a `guardarCambiosPendientes()`: si hay cambios sin guardar, se guardan primero, y si no son válidos no siguen.
 - Un borrador existente se autoguarda `ESPERA_AUTOGUARDADO_MS` (5 s) después del último cambio, solo si `calcularErrores()` está vacío. Un informe nuevo nunca se autoguarda (gastaría un número de petición, D-7), y nunca se guarda nada en el navegador.
 
 **Rate limiting.** En `settings.REST_FRAMEWORK` están los throttles globales (`anon`, `user`) y otros por scope (`login`, `registro`, `foro_publicacion`, `foro_comentario`). Los de scope se asignan en `accounts/throttles.py` y en `get_throttles()` de las vistas del foro. Si un endpoint nuevo usa un scope nuevo, hay que agregarlo a `DEFAULT_THROTTLE_RATES`.
