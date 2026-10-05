@@ -15,6 +15,7 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
   - las ideas de la hoja de ruta coinciden con la del README; ya no menciona la descripción microscópica, que existe desde la etapa 5 del informe v2;
   - las instrucciones para unir a `main` dicen ahora que se hace con fast-forward, sin pull request, porque `gh` no está instalado. Ese dato estaba antes en el historial de uniones.
 - Se revisó que el README siga coherente con `progreso.md` (hoja de ruta y pendientes de producción); no necesitó cambios.
+- "Dónde estamos" deja solo la ubicación actual del proyecto: se quita el dato de su traslado de Descargas al Escritorio (2026-10-03), a pedido del usuario.
 
 **Por qué:** a pedido del usuario. "Dónde estamos" se había vuelto un historial largo y difícil de leer, y "Siguiente paso" tenía la numeración rota y una idea ya hecha.
 

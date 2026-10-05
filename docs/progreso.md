@@ -11,7 +11,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 ## Dónde estamos
 
-- **Proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app` (se movió de Descargas al Escritorio el 2026-10-03).
+- **Proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`.
 - **Rama de trabajo:** `informe-v2`. Se unió a `main` el 2026-10-05; lo que se haga después queda solo en esta rama hasta la próxima unión. Para trabajo nuevo, crear una rama desde `main`.
 - **Estado:** la auditoría inicial y el informe de anatomía patológica v2 (etapas 1 a 9, D-12 y los arreglos que salieron de la prueba manual final) están terminados y en `main`. El detalle está en la tabla "Hecho" y en `CHANGELOG.md`.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
