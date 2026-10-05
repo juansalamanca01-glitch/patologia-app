@@ -5,6 +5,30 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Informe v2, etapa 2: catálogos de EPS y servicios, tipo de estudio y `GET /api/opciones/`
+
+**Qué se cambió**
+- **App nueva `backend/pacientes/`** (rutas en `/api/pacientes/`). Por ahora tiene solo:
+  - el modelo `EPS` (`nombre` único, `activa`), con su admin, y `EPSViewSet` en `/api/pacientes/eps/` (filtro `?activa=true`/`false` y `?search=`);
+  - las listas fijas `TipoDocumento` (CC, TI, RC, CE, PA, PPT, MS, AS) y `Sexo` (Femenino, Masculino, Indeterminado), como `TextChoices`.
+  - El modelo `Paciente` llega en la etapa 3. La migración `0001_initial` crea solo `EPS`.
+- **`backend/informes/`:**
+  - Modelo `Servicio` (`nombre` único, `activo`), con su admin, y `ServicioViewSet` en `/api/servicios/` (filtro `?activo=true`/`false` y `?search=`). Migración `0007_servicio`.
+  - `Informe.TipoEstudio` (`TextChoices`): Histología, Citología no ginecológica, Citología cérvico-vaginal, Inmunohistoquímica, Estudio intraoperatorio por congelación y Revisión de láminas. Por ahora es solo la lista; el campo `tipo_estudio` se agrega en la etapa 4.
+  - `OpcionesView` en `GET /api/opciones/`: devuelve `{sexos, tipos_documento, tipos_estudio}`, cada elemento con `valor` y `etiqueta`, sacados de los `TextChoices`. Cualquier usuario con sesión la lee; no acepta escritura (405).
+  - `seed_data` carga 7 servicios y 12 EPS: "Particular", "Otra" y una lista corta de EPS reales. Se puede ejecutar varias veces sin duplicar.
+- **`backend/config/catalogos.py` (nuevo):** piezas comunes de los dos catálogos.
+  - `NombreCatalogoMixin`: rechaza un nombre repetido aunque cambien las mayúsculas o haya espacios de más ("Sura" y " SURA "), y guarda el nombre sin espacios sobrantes.
+  - `filtrar_por_activo()`: aplica el filtro `?activa=` o `?activo=`.
+- **Permisos:** los dos catálogos usan `EsPatologoOAdmin`: todos leen y solo patólogo y admin escriben (decisión D-11). Se desactivan en lugar de borrarse (D-4). Mientras nada los use se pueden borrar; la respuesta 400 "en uso" llega en las etapas 3 y 4.
+- **`config/settings.py` y `config/urls.py`:** se registra la app `pacientes` y su ruta `/api/pacientes/`.
+- **Pruebas:** 18 nuevas en el backend (de 90 a 108).
+  - `OpcionesTests` (6): contenido de cada lista, sesión obligatoria y solo lectura.
+  - `CatalogoServiciosTests` (6) y `CatalogoEPSTests` (6, en `pacientes/tests.py`): permisos por rol, filtro de activos, desactivar, nombre repetido y `seed_data` sin duplicados.
+- **Documentación:** `README.md` (estructura, referencia de la API y pruebas), `CLAUDE.md`, la colección de Postman (Listar servicios, Listar EPS y Opciones), `docs/propuesta-informe-v2.md` y `docs/progreso.md`.
+
+**Por qué:** es la etapa 2 de `docs/propuesta-informe-v2.md`. El informe necesita estas listas para registrar la EPS, el servicio, el sexo, el documento y el tipo de estudio (etapas 3 y 4). Las listas fijas salen de un solo lugar del backend para que el frontend no tenga copias que haya que mantener iguales. Los filtros se llaman como su campo (`activa` en EPS, `activo` en servicios), como `?activa=` en patologías. Los nombres repetidos se rechazan sin importar mayúsculas para no tener dos veces la misma EPS en el menú.
+
 ### Informe v2, etapa 1: número de petición automático (decisión D-7)
 
 **Qué se cambió**

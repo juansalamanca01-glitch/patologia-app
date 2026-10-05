@@ -29,7 +29,7 @@ Backend (desde `backend/`, con el venv activado: `.\venv\Scripts\Activate.ps1`):
 ```powershell
 pip install -r requirements.txt
 python manage.py migrate
-python manage.py seed_data        # usuarios de prueba + 14 patologías con sus plantillas (idempotente)
+python manage.py seed_data        # usuarios de prueba, 14 patologías con sus plantillas, temas del foro, servicios y EPS (idempotente)
 python manage.py runserver        # http://127.0.0.1:8000
 python manage.py makemigrations <app>
 python manage.py test                                  # todas las pruebas
@@ -64,7 +64,8 @@ Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234`, `auditor1/
 
 **Apps Django** (rutas en `config/urls.py`):
 - `accounts` → `/api/auth/`: `AUTH_USER_MODEL = accounts.Usuario` con campo `rol` (`admin` | `patologo` | `auditor`). El login (`CustomTokenView`) devuelve `access`, `refresh` y `user`.
-- `informes` → `/api/`: `Categoria` → `Patologia` → `Plantilla` (campos del formulario dinámico) e `Informe`.
+- `informes` → `/api/`: `Categoria` → `Patologia` → `Plantilla` (campos del formulario dinámico), `Servicio` e `Informe`. También `GET /api/opciones/` (`OpcionesView`).
+- `pacientes` → `/api/pacientes/`: por ahora solo el catálogo `EPS` (`/api/pacientes/eps/`) y las listas fijas `TipoDocumento` y `Sexo`. El modelo `Paciente` llega en la etapa 3 del informe v2 (`docs/propuesta-informe-v2.md`).
 - `foro` → `/api/foro/`: `TemaForo`, `Publicacion` (con `ImagenPublicacion`, subidas a `media/foro/publicaciones/<id>/`) y `Comentario`.
 
 **Permisos por rol.** DRF exige autenticación por defecto. Las clases están en `accounts/permissions.py`, y comparan `request.user.rol` como string:
@@ -84,6 +85,10 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
 - El PDF se descarga solo por `GET /api/informes/{id}/pdf/` (acción `exportar_pdf`), con el token en la cabecera `Authorization`. `InformePage.jsx` lo pide con `client.get(..., { responseType: 'blob' })` y lo guarda con un enlace temporal `blob:`. Nunca se debe pasar el token por la URL: la antigua ruta `/api/descargar-pdf/...?token=` se eliminó (auditoría I-5).
 - `POST /api/informes/{id}/finalizar/` cambia el estado `borrador` → `finalizado`.
 - `GET /api/informes/estadisticas/` devuelve los totales por estado calculados en el backend. El listado está paginado de 20 en 20 (`PAGE_SIZE`): el frontend usa `count`, `next` y `previous` y nunca debe contar los resultados de una sola página. Los menús desplegables y las listas que deben mostrarlo todo piden `params: LISTA_COMPLETA` (`?page_size=1000`, que permite `config/paginacion.py`). `BuscarPage.jsx` tiene `TAMANO_PAGINA = 20`, que debe coincidir con `PAGE_SIZE`.
+
+**Listas de opciones (informe v2).**
+- Las listas fijas son `TextChoices` en el código: `Sexo` y `TipoDocumento` en `pacientes/models.py`, `Informe.TipoEstudio` en `informes/models.py`. `GET /api/opciones/` las devuelve como `{sexos, tipos_documento, tipos_estudio}`, cada elemento con `valor` y `etiqueta`. El frontend debe pedirlas ahí y no copiarlas en `constants.js`. Si agregas una lista fija, agrégala también a `OpcionesView`.
+- EPS y servicios son catálogos editables (`EsPatologoOAdmin`, decisión D-11). Se desactivan en lugar de borrarse (D-4), con el filtro `?activa=` (EPS) o `?activo=` (servicios): cada filtro se llama como su campo. Comparten `config/catalogos.py`: `NombreCatalogoMixin` rechaza nombres repetidos sin importar mayúsculas ni espacios, y `filtrar_por_activo()` aplica el filtro. Úsalos en cualquier catálogo nuevo.
 
 **Rate limiting.** En `settings.REST_FRAMEWORK` están los throttles globales (`anon`, `user`) y otros por scope (`login`, `registro`, `foro_publicacion`, `foro_comentario`). Los de scope se asignan en `accounts/throttles.py` y en `get_throttles()` de las vistas del foro. Si un endpoint nuevo usa un scope nuevo, hay que agregarlo a `DEFAULT_THROTTLE_RATES`.
 

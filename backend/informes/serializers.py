@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Categoria, Patologia, Plantilla, Informe
+
+from config.catalogos import NombreCatalogoMixin
+from .models import Categoria, Patologia, Plantilla, Informe, Servicio
 
 
 def esta_vacio(valor):
@@ -65,6 +67,13 @@ class PatologiaListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patologia
         fields = ['id', 'nombre', 'categoria', 'categoria_nombre', 'activa']
+
+
+class ServicioSerializer(NombreCatalogoMixin, serializers.ModelSerializer):
+    class Meta:
+        model = Servicio
+        fields = ['id', 'nombre', 'activo']
+        read_only_fields = ['id']
 
 
 class InformeSerializer(serializers.ModelSerializer):

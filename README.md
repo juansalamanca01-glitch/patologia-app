@@ -130,13 +130,20 @@ patologia-app/
 │   ├── config/
 │   │   ├── settings.py        # Configuración (lee el .env), JWT, CORS, límites de peticiones
 │   │   ├── urls.py            # Rutas principales
+│   │   ├── paginacion.py      # Paginación (20 por página, ?page_size= hasta 1000)
+│   │   ├── catalogos.py       # Piezas comunes de los catálogos de EPS y servicios
 │   │   └── tests.py           # Pruebas de la configuración (SECRET_KEY y DEBUG)
 │   ├── informes/
-│   │   ├── management/commands/seed_data.py  # Datos iniciales: usuarios + 14 patologías
-│   │   ├── models.py          # Categoria, Patologia, Plantilla, Informe
+│   │   ├── management/commands/seed_data.py  # Datos iniciales: usuarios, 14 patologías, temas, servicios y EPS
+│   │   ├── models.py          # Categoria, Patologia, Plantilla, Servicio, Informe
 │   │   ├── serializers.py
 │   │   ├── utils.py           # Generador de la descripción macroscópica y del PDF
-│   │   ├── views.py / urls.py # Endpoints /api/ (catálogo, informes, estadísticas, PDF)
+│   │   ├── views.py / urls.py # Endpoints /api/ (catálogo, servicios, opciones, informes, PDF)
+│   │   └── tests.py
+│   ├── pacientes/
+│   │   ├── models.py          # EPS y listas fijas de sexo y tipo de documento
+│   │   ├── serializers.py
+│   │   ├── views.py / urls.py # Endpoints /api/pacientes/
 │   │   └── tests.py
 │   ├── foro/
 │   │   ├── models.py          # TemaForo, Publicacion, ImagenPublicacion, Comentario
@@ -329,7 +336,7 @@ npm run test:watch                        # se repiten al guardar cambios
 npm test
 ```
 
-- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
+- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los catálogos de EPS y servicios, las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
 - **Frontend:** cubre la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
 
 ---
@@ -381,6 +388,18 @@ Todas las rutas exigen la cabecera `Authorization: Bearer <token>`, excepto el l
 | GET / PUT / PATCH / DELETE | `/api/patologias/{id}/` | Detalle con sus campos de plantilla. No se borra si tiene informes (400) | Igual |
 | GET / POST | `/api/plantillas/` | Listar o crear campos de formulario (`?patologia=`) | Igual |
 | GET / PUT / PATCH / DELETE | `/api/plantillas/{id}/` | Ver, editar o borrar un campo | Igual |
+| GET / POST | `/api/servicios/` | Listar o crear servicios (`?search=`, `?activo=true`/`false`). El nombre no se puede repetir, sin importar mayúsculas ni espacios | Igual |
+| GET / PUT / PATCH / DELETE | `/api/servicios/{id}/` | Ver, editar, desactivar (`activo: false`) o borrar un servicio | Igual |
+| GET | `/api/opciones/` | Listas fijas: `sexos`, `tipos_documento` y `tipos_estudio`, cada una con `valor` y `etiqueta` | Todos |
+
+### Pacientes (`/api/pacientes/`)
+
+| Método | Endpoint | Descripción | Acceso |
+|---|---|---|---|
+| GET / POST | `/api/pacientes/eps/` | Listar o crear EPS (`?search=`, `?activa=true`/`false`). El nombre no se puede repetir, sin importar mayúsculas ni espacios | Leer: todos · Escribir: patólogo/admin |
+| GET / PUT / PATCH / DELETE | `/api/pacientes/eps/{id}/` | Ver, editar, desactivar (`activa: false`) o borrar una EPS | Igual |
+
+Las EPS y los servicios se desactivan en lugar de borrarse (decisión D-4), para que los informes antiguos los sigan mostrando. `seed_data` carga 7 servicios y 12 EPS (una lista corta de EPS reales más "Particular" y "Otra"), que se pueden editar.
 
 ### Informes (`/api/informes/`)
 

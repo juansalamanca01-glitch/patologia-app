@@ -98,6 +98,21 @@ class Plantilla(models.Model):
         return f'{self.patologia.nombre} → {self.campo_label or self.campo_nombre}'
 
 
+class Servicio(models.Model):
+    """Servicio que remite la muestra. Catálogo editable; se desactiva en lugar de borrarse (D-4)."""
+
+    nombre = models.CharField(max_length=150, unique=True, verbose_name='Nombre')
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'Servicio'
+        verbose_name_plural = 'Servicios'
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
 class ConsecutivoPeticion(models.Model):
     """Último número de petición usado en cada año (decisión D-7)."""
 
@@ -138,6 +153,16 @@ class Informe(models.Model):
     class Estado(models.TextChoices):
         BORRADOR = 'borrador', 'Borrador'
         FINALIZADO = 'finalizado', 'Finalizado'
+
+    # Lista fija que se ofrece en GET /api/opciones/. El campo tipo_estudio se
+    # agrega en la etapa 4 del informe v2 (docs/propuesta-informe-v2.md, 3.3).
+    class TipoEstudio(models.TextChoices):
+        HISTOLOGIA = 'histologia', 'Histología'
+        CITOLOGIA_NO_GINECOLOGICA = 'citologia_no_ginecologica', 'Citología no ginecológica'
+        CITOLOGIA_CERVICOVAGINAL = 'citologia_cervicovaginal', 'Citología cérvico-vaginal'
+        INMUNOHISTOQUIMICA = 'inmunohistoquimica', 'Inmunohistoquímica'
+        INTRAOPERATORIO = 'intraoperatorio', 'Estudio intraoperatorio por congelación'
+        REVISION_LAMINAS = 'revision_laminas', 'Revisión de láminas (segunda opinión)'
 
     # Lo asigna save() al crear el informe; no se puede cambiar (decisión D-7).
     numero_peticion = models.CharField(

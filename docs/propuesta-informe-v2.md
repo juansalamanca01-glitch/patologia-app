@@ -1,7 +1,7 @@
 # Propuesta: informe de anatomía patológica v2
 
 **Fecha:** 2026-10-04
-**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); la etapa 1 (número de petición) se terminó el 2026-10-04.
+**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); las etapas 1 (número de petición) y 2 (catálogos y opciones) se terminaron el 2026-10-04.
 
 **Objetivo:** que el informe tenga los datos y el orden de un informe real de laboratorio:
 
@@ -126,7 +126,7 @@ class Servicio(models.Model):
 
 **Tipo de estudio** (`Informe.TipoEstudio`): Histología (por defecto), Citología no ginecológica, Citología cérvico-vaginal, Inmunohistoquímica, Estudio intraoperatorio por congelación y Revisión de láminas (segunda opinión).
 
-**Una sola fuente para las opciones fijas.** El endpoint nuevo `GET /api/opciones/` devuelve `{sexos, tipos_documento, tipos_estudio}` con `valor` y `etiqueta`, sacados de los `TextChoices`. El frontend no los copia en `constants.js`. Así se evita tener el mismo valor en dos sitios, como pasa con `FORO_MAX_TAMANO_IMAGEN`. Las EPS y los servicios se piden a sus endpoints (`/api/pacientes/eps/` y `/api/servicios/`) con `?activa=true` y `LISTA_COMPLETA`.
+**Una sola fuente para las opciones fijas.** El endpoint nuevo `GET /api/opciones/` devuelve `{sexos, tipos_documento, tipos_estudio}` con `valor` y `etiqueta`, sacados de los `TextChoices`. El frontend no los copia en `constants.js`. Así se evita tener el mismo valor en dos sitios, como pasa con `FORO_MAX_TAMANO_IMAGEN`. Las EPS y los servicios se piden a sus endpoints (`/api/pacientes/eps/?activa=true` y `/api/servicios/?activo=true`) con `LISTA_COMPLETA`. Cada filtro se llama como su campo (ajuste de la etapa 2).
 
 **Quién administra los catálogos de EPS y servicios:** patólogo o admin (`EsPatologoOAdmin`), lo mismo que D-1 establece para el catálogo de patologías. El auditor solo lee. Es una extensión de D-1, confirmada por el usuario (P-4, decisión D-11).
 
@@ -274,7 +274,7 @@ Para **guardar un borrador** solo se exigen la patología, el paciente (en infor
 |---|---|
 | `GET/POST /api/pacientes/`, `GET/PUT/PATCH/DELETE /api/pacientes/{id}/` | **Nuevo.** Todos leen; crean y editan patólogo y admin; **borra solo admin** y solo si el paciente no tiene informes (P-4, decisión D-11). Búsqueda `?q=` por documento, nombres o apellidos. |
 | `GET /api/pacientes/{id}/informes/` | **Nuevo.** Historial de informes del paciente. También se puede usar `?paciente=` en `/api/informes/`. |
-| `/api/pacientes/eps/`, `/api/servicios/` | **Nuevos** catálogos con filtro `?activa=`. |
+| `/api/pacientes/eps/`, `/api/servicios/` | **Nuevos** catálogos con filtro `?activa=` (EPS) o `?activo=` (servicios). El nombre no se repite sin importar mayúsculas ni espacios. Hechos en la etapa 2. |
 | `GET /api/opciones/` | **Nuevo.** Opciones de las listas fijas. |
 | `POST/PUT /api/informes/` | Se dejan de aceptar `numero_caso` y `notas`. Se aceptan los campos de 3.4, `paciente` (id) y `diagnosticos` (lista). |
 | `GET /api/informes/{id}/` | Devuelve además `numero_peticion`, `paciente` (objeto resumido con la `edad` calculada), `eps_nombre`, `servicio_nombre`, `diagnosticos`, `adendas`, `fecha_informe` y `firma`. En un informe finalizado, estos datos salen de `datos_finalizacion`. |
@@ -334,7 +334,8 @@ Para **guardar un borrador** solo se exigen la patología, el paciente (en infor
 
 | Migración | Contenido | Datos que ya existen |
 |---|---|---|
-| `pacientes/0001_initial` | `EPS`, `Paciente` | — |
+| `pacientes/0001_initial` (etapa 2) | `EPS` | — |
+| `pacientes/0002_paciente` (etapa 3) | `Paciente` | — |
 | `accounts/0002_registro_medico` | `Usuario.registro_medico` (y luego `firma_imagen`) | Queda vacío. Un admin lo llena. |
 | `informes/0004_numero_peticion` (etapa 1) | `ConsecutivoPeticion`; agrega `numero_peticion` (nulo de forma temporal) y `numero_orden_externa` | — |
 | `informes/0005_numerar_informes_existentes` (etapa 1) | **Migración de datos:** recorre los informes por `fecha_creacion`, les asigna `P-<año de creación>-NNNNN` y deja `ConsecutivoPeticion` en el último número de cada año | Todos los informes quedan numerados |
@@ -445,9 +446,9 @@ Se actualiza en cada etapa, según las reglas 2, 3 y 6 de `CLAUDE.md`:
 | Etapa | Contenido | Toca |
 |---|---|---|
 | **1. Número de petición** (hecha, 2026-10-04) | `ConsecutivoPeticion`, `numero_peticion` automático, migración de datos, se elimina `numero_caso`, `numero_orden_externa`, prueba de concurrencia y base de pruebas en archivo. Nombre del PDF, listados, formulario y Postman. | backend, frontend, PDF (solo el número), pruebas |
-| **2. Catálogos y opciones** | `EPS`, `Servicio`, `TipoEstudio`, `GET /api/opciones/` y `seed_data`. Solo backend, con sus pruebas. | backend |
-| **3. Pacientes** | App `pacientes`, CRUD, búsqueda, edad calculada, permisos, `PacientesPage` y enlace en el Navbar. | backend, frontend |
-| **4. Datos de la solicitud** | Paciente y campos de 3.4 en el informe, `SelectorPaciente`, tarjeta "Datos de la solicitud", búsqueda ampliada y columnas de los listados. | backend, frontend |
+| **2. Catálogos y opciones** (hecha, 2026-10-04) | `EPS`, `Servicio`, `TipoEstudio`, `GET /api/opciones/` y `seed_data`. Solo backend, con sus pruebas. La app `pacientes` se crea aquí con solo la EPS. | backend |
+| **3. Pacientes** | Modelo `Paciente` en la app `pacientes`, CRUD, búsqueda, edad calculada, permisos, `PacientesPage` y enlace en el Navbar. Borrar una EPS que usa un paciente responde 400 ("desactívela"). | backend, frontend |
+| **4. Datos de la solicitud** | Paciente y campos de 3.4 en el informe, `SelectorPaciente`, tarjeta "Datos de la solicitud", búsqueda ampliada, columnas de los listados y pantalla para administrar EPS y servicios (6.3). Borrar un servicio o una EPS que usa un informe responde 400. | backend, frontend |
 | **5. Contenido del informe** | Descripción microscópica, `notas` → `comentarios` y diagnósticos con CIE-10 (`ListaDiagnosticos`). | backend, frontend |
 | **6. Firma y finalización** | `registro_medico`, reglas para finalizar, `fecha_informe`, `datos_finalizacion`, perfil y `SeccionFirma`. | backend, frontend |
 | **7. PDF nuevo** | Estructura de la sección 5, encabezado configurable, numeración de páginas y borrador. | PDF |

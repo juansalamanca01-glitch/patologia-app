@@ -1,17 +1,19 @@
 """
-Comando para cargar datos iniciales: usuarios de prueba y 14 patologías con sus plantillas.
+Comando para cargar datos iniciales: usuarios de prueba, 14 patologías con sus
+plantillas, temas del foro y los catálogos de servicios y EPS.
 Uso: python manage.py seed_data (se puede ejecutar varias veces sin duplicar datos).
 """
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from foro.models import TemaForo
-from informes.models import Patologia, Plantilla
+from informes.models import Patologia, Plantilla, Servicio
+from pacientes.models import EPS
 
 Usuario = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'Carga usuarios de prueba y 14 patologías con sus plantillas.'
+    help = 'Carga usuarios de prueba, 14 patologías con sus plantillas, temas del foro, servicios y EPS.'
 
     def handle(self, *args, **options):
         # ── Superusuario (administrador) ────────────────────────────
@@ -312,5 +314,27 @@ class Command(BaseCommand):
             _, creado = TemaForo.objects.get_or_create(nombre=nombre, defaults={'descripcion': descripcion})
             if creado:
                 self.stdout.write(self.style.SUCCESS(f'[OK] Tema del foro "{nombre}" creado'))
+
+        # ── Catálogos del informe v2 (docs/propuesta-informe-v2.md, 3.2 y sección 8) ─────
+        # Son editables: se pueden agregar, renombrar o desactivar desde la aplicación.
+        servicios = [
+            'Consulta externa', 'Urgencias', 'Hospitalización', 'Cirugía',
+            'Unidad de cuidados intensivos', 'Ginecología', 'Dermatología',
+        ]
+        for nombre in servicios:
+            _, creado = Servicio.objects.get_or_create(nombre=nombre)
+            if creado:
+                self.stdout.write(self.style.SUCCESS(f'[OK] Servicio "{nombre}" creado'))
+
+        # Lista corta de EPS reales (nombres de entidades, no datos de personas) más
+        # "Particular" y "Otra" (P-8).
+        eps = [
+            'Particular', 'Otra', 'Nueva EPS', 'EPS Sura', 'EPS Sanitas', 'Salud Total',
+            'Compensar', 'Famisanar', 'Coosalud', 'Mutual Ser', 'Emssanar', 'Asmet Salud',
+        ]
+        for nombre in eps:
+            _, creado = EPS.objects.get_or_create(nombre=nombre)
+            if creado:
+                self.stdout.write(self.style.SUCCESS(f'[OK] EPS "{nombre}" creada'))
 
         self.stdout.write(self.style.SUCCESS('\n[DONE] Seed data completo.'))

@@ -772,3 +772,114 @@ class MigracionNumeroPeticionTests(TransactionTestCase):
                 patologia=Patologia.objects.get(id=patologia.id), autor=Usuario.objects.get(id=autor.id),
             )
         self.assertEqual(nuevo.numero_peticion, 'P-2026-00003')
+
+
+class OpcionesTests(APITestCase):
+    """
+    Informe v2, etapa 2 (docs/propuesta-informe-v2.md, sección 3.3): GET /api/opciones/
+    devuelve las listas fijas (sexo, tipo de documento, tipo de estudio) sacadas de
+    los TextChoices del backend, para que el frontend no tenga que copiarlas.
+    """
+
+    def setUp(self):
+        self.auditor = Usuario.objects.create_user(username='opciones', password='x', rol=Usuario.Rol.AUDITOR)
+
+    def opciones(self):
+        self.client.force_authenticate(self.auditor)
+        respuesta = self.client.get('/api/opciones/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        return respuesta.data
+
+    def test_cualquier_rol_las_lee(self):
+        self.assertEqual(set(self.opciones()), {'sexos', 'tipos_documento', 'tipos_estudio'})
+
+    def test_sexos(self):
+        # Etiqueta "Sexo" con estas tres opciones (P-3).
+        self.assertEqual(self.opciones()['sexos'], [
+            {'valor': 'femenino', 'etiqueta': 'Femenino'},
+            {'valor': 'masculino', 'etiqueta': 'Masculino'},
+            {'valor': 'indeterminado', 'etiqueta': 'Indeterminado'},
+        ])
+
+    def test_tipos_documento(self):
+        tipos = self.opciones()['tipos_documento']
+        self.assertEqual([t['valor'] for t in tipos], ['CC', 'TI', 'RC', 'CE', 'PA', 'PPT', 'MS', 'AS'])
+        self.assertEqual(tipos[0], {'valor': 'CC', 'etiqueta': 'Cédula de ciudadanía'})
+
+    def test_tipos_estudio(self):
+        tipos = self.opciones()['tipos_estudio']
+        self.assertEqual([t['etiqueta'] for t in tipos], [
+            'Histología',
+            'Citología no ginecológica',
+            'Citología cérvico-vaginal',
+            'Inmunohistoquímica',
+            'Estudio intraoperatorio por congelación',
+            'Revisión de láminas (segunda opinión)',
+        ])
+        self.assertEqual(tipos[0]['valor'], 'histologia')
+
+    def test_requiere_sesion(self):
+        self.assertEqual(self.client.get('/api/opciones/').status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_es_solo_lectura(self):
+        self.client.force_authenticate(self.auditor)
+        self.assertEqual(self.client.post('/api/opciones/', {}).status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class CatalogoServiciosTests(APITestCase):
+    """
+    Informe v2, etapa 2 (sección 3.2): catálogo de servicios. Lo administran
+    patólogos y admin (decisión D-11); el auditor solo lee. Se desactiva en lugar
+    de borrarse (D-4) y se filtra con ?activo=.
+    """
+
+    URL = '/api/servicios/'
+
+    def setUp(self):
+        self.patologo = Usuario.objects.create_user(username='serv_pat', password='x', rol=Usuario.Rol.PATOLOGO)
+        self.auditor = Usuario.objects.create_user(username='serv_aud', password='x', rol=Usuario.Rol.AUDITOR)
+
+    def crear(self, nombre, usuario=None, **extra):
+        self.client.force_authenticate(usuario or self.patologo)
+        return self.client.post(self.URL, {'nombre': nombre, **extra}, format='json')
+
+    def nombres(self, **params):
+        return [s['nombre'] for s in self.client.get(self.URL, params).data['results']]
+
+    def test_patologo_crea_y_auditor_lee(self):
+        self.assertEqual(self.crear('Urgencias').status_code, status.HTTP_201_CREATED)
+        self.client.force_authenticate(self.auditor)
+        self.assertEqual(self.nombres(), ['Urgencias'])
+
+    def test_auditor_no_crea(self):
+        self.assertEqual(self.crear('Urgencias', usuario=self.auditor).status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_filtro_activo(self):
+        self.crear('Urgencias')
+        self.crear('Cirugía', activo=False)
+        self.assertEqual(self.nombres(activo='true'), ['Urgencias'])
+        self.assertEqual(self.nombres(activo='false'), ['Cirugía'])
+        self.assertEqual(self.nombres(), ['Cirugía', 'Urgencias'])
+
+    def test_se_puede_desactivar(self):
+        servicio_id = self.crear('Urgencias').data['id']
+        respuesta = self.client.patch(f'{self.URL}{servicio_id}/', {'activo': False}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertFalse(respuesta.data['activo'])
+
+    def test_nombre_repetido_sin_importar_mayusculas_ni_espacios(self):
+        self.crear('Urgencias')
+        respuesta = self.crear('  urgencias ')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('nombre', respuesta.data)
+
+    def test_seed_data_carga_los_servicios(self):
+        from io import StringIO
+        from django.core.management import call_command
+        call_command('seed_data', stdout=StringIO())
+        call_command('seed_data', stdout=StringIO())  # dos veces: no duplica
+        self.client.force_authenticate(self.auditor)
+        self.assertEqual(sorted(self.nombres()), sorted([
+            'Consulta externa', 'Urgencias', 'Hospitalización', 'Cirugía',
+            'Unidad de cuidados intensivos', 'Ginecología', 'Dermatología',
+        ]))

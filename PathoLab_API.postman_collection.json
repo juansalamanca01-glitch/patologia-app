@@ -188,6 +188,83 @@
 						"description": "Categorías que agrupan las patologías. seed_data no crea ninguna."
 					},
 					"response": []
+				},
+				{
+					"name": "Listar servicios",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/servicios/?activo=true",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"servicios",
+								""
+							],
+							"query": [
+								{
+									"key": "activo",
+									"value": "true",
+									"description": "true: solo los activos (los que se ofrecen en los formularios)",
+									"disabled": false
+								}
+							]
+						},
+						"description": "Catálogo de servicios (los 7 de seed_data). Patólogo y admin pueden crearlos, editarlos o desactivarlos."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar EPS",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/pacientes/eps/?activa=true",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pacientes",
+								"eps",
+								""
+							],
+							"query": [
+								{
+									"key": "activa",
+									"value": "true",
+									"description": "true: solo las activas (las que se ofrecen en los formularios)",
+									"disabled": false
+								}
+							]
+						},
+						"description": "Catálogo de EPS (las 12 de seed_data). Patólogo y admin pueden crearlas, editarlas o desactivarlas."
+					},
+					"response": []
+				},
+				{
+					"name": "Opciones de las listas fijas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/opciones/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"opciones",
+								""
+							]
+						},
+						"description": "Devuelve sexos, tipos_documento y tipos_estudio, cada uno con valor y etiqueta."
+					},
+					"response": []
 				}
 			]
 		},

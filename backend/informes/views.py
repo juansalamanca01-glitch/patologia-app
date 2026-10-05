@@ -3,15 +3,19 @@ import re
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.http import HttpResponse
 from django.db.models import Count, Q, ProtectedError
 
 from accounts.permissions import EsPatologoOAdmin, EsAutorOAdminOSoloLectura
-from .models import Categoria, Patologia, Plantilla, Informe
+from config.catalogos import filtrar_por_activo
+from pacientes.models import Sexo, TipoDocumento
+from .models import Categoria, Patologia, Plantilla, Informe, Servicio
 from .serializers import (
     CategoriaSerializer,
     PatologiaSerializer, PatologiaListSerializer,
     PlantillaSerializer,
+    ServicioSerializer,
     InformeSerializer, InformeListSerializer,
 )
 from .utils import generar_descripcion_macroscopica, generar_pdf_informe
@@ -86,6 +90,38 @@ class PlantillaViewSet(viewsets.ModelViewSet):
         if patologia_id:
             qs = qs.filter(patologia_id=patologia_id)
         return qs
+
+
+class ServicioViewSet(viewsets.ModelViewSet):
+    """Catálogo de servicios. Todos leen; patólogo o admin lo administran (decisión D-11)."""
+    queryset = Servicio.objects.all()
+    serializer_class = ServicioSerializer
+    permission_classes = [EsPatologoOAdmin]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nombre']
+
+    def get_queryset(self):
+        # ?activo=true: los formularios ofrecen solo los servicios activos (D-4).
+        return filtrar_por_activo(super().get_queryset(), self.request, 'activo')
+
+
+def _opciones(choices):
+    return [{'valor': valor, 'etiqueta': etiqueta} for valor, etiqueta in choices.choices]
+
+
+class OpcionesView(APIView):
+    """
+    GET /api/opciones/: listas fijas sacadas de los TextChoices, para que el
+    frontend no las copie (docs/propuesta-informe-v2.md, 3.3). Las EPS y los
+    servicios son catálogos editables y tienen sus propios endpoints.
+    """
+
+    def get(self, request):
+        return Response({
+            'sexos': _opciones(Sexo),
+            'tipos_documento': _opciones(TipoDocumento),
+            'tipos_estudio': _opciones(Informe.TipoEstudio),
+        })
 
 
 class InformeViewSet(viewsets.ModelViewSet):
