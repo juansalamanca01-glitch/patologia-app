@@ -63,7 +63,7 @@ Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234` (registro m
 ## Arquitectura
 
 **Apps Django** (rutas en `config/urls.py`):
-- `accounts` → `/api/auth/`: `AUTH_USER_MODEL = accounts.Usuario` con campo `rol` (`admin` | `patologo` | `auditor`). El login (`CustomTokenView`) devuelve `access`, `refresh` y `user`.
+- `accounts` → `/api/auth/`: `AUTH_USER_MODEL = accounts.Usuario` con campo `rol` (`admin` | `patologo` | `auditor`). El login (`CustomTokenView`) devuelve `access`, `refresh` y `user`. En `/admin/`, `Usuario` usa el `UserAdmin` de Django, con formularios adaptados a `Usuario` (`accounts/admin.py`), para que la contraseña se cifre al crear un usuario. No lo cambies por un `ModelAdmin` común: guardaría la contraseña tal cual (lo vigila `AdminUsuariosTests`).
 - `informes` → `/api/`: `Categoria` → `Patologia` → `Plantilla` (campos del formulario dinámico), `Servicio` e `Informe`. También `GET /api/opciones/` (`OpcionesView`).
 - `pacientes` → `/api/pacientes/`: `Paciente` (en la raíz, `/api/pacientes/{id}/`, con el historial en `/api/pacientes/{id}/informes/`), el catálogo `EPS` (`/api/pacientes/eps/`) y las listas fijas `TipoDocumento` y `Sexo`. En `urls.py`, `eps` se registra antes que los pacientes y `PacienteViewSet.lookup_value_regex` solo acepta números, para que las dos rutas no se confundan.
 - `foro` → `/api/foro/`: `TemaForo`, `Publicacion` (con `ImagenPublicacion`, subidas a `media/foro/publicaciones/<id>/`) y `Comentario`.

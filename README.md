@@ -342,7 +342,7 @@ También se pueden arrancar por separado, en dos terminales: `python manage.py r
 
 | Usuario | Contraseña | Rol |
 |---|---|---|
-| `admin` | `admin1234` | **Administrador** (también tiene acceso a `/admin/`) |
+| `admin` | `admin1234` | **Administrador** (también tiene acceso a `/admin/`, donde puede crear usuarios y asignarles rol y registro médico) |
 | `patologo1` | `patologo1234` | **Patólogo** (registro médico ficticio `RM-PRUEBA-0001`, para poder finalizar informes) |
 | `auditor1` | `auditor1234` | **Auditor** |
 

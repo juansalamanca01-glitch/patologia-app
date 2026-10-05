@@ -1,3 +1,5 @@
+from django import forms
+from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -235,3 +237,50 @@ class RegistroMedicoTests(APITestCase):
         )
         call_command('seed_data', stdout=StringIO())
         self.assertEqual(Usuario.objects.get(username='patologo1').registro_medico, 'RM-PRUEBA-0777')
+
+
+class AdminUsuariosTests(TestCase):
+    """
+    Hallazgo del 2026-10-05: /admin/ registraba Usuario con un ModelAdmin común, así
+    que al crear un usuario la contraseña no se cifraba y ese usuario no podía entrar.
+    Con el UserAdmin de Django la contraseña se cifra, y se siguen editando el rol,
+    la especialidad y el registro médico (D-8: solo un admin lo asigna).
+    """
+
+    def setUp(self):
+        self.superusuario = Usuario.objects.create_superuser(
+            username='super_admin_usuarios', password='ClaveSegura-2026', rol=Usuario.Rol.ADMIN,
+        )
+        self.client.force_login(self.superusuario)
+
+    def test_crear_un_usuario_en_admin_cifra_la_contrasena(self):
+        respuesta = self.client.post('/admin/accounts/usuario/add/', {
+            'username': 'patologo_desde_admin',
+            'password1': 'ClaveSegura-2026',
+            'password2': 'ClaveSegura-2026',
+            'rol': Usuario.Rol.PATOLOGO,
+            'registro_medico': 'RM-PRUEBA-0003',
+        })
+        self.assertEqual(respuesta.status_code, 302)  # redirige: el usuario se creó
+        usuario = Usuario.objects.get(username='patologo_desde_admin')
+        self.assertTrue(usuario.password.startswith('pbkdf2_sha256$'))
+        self.assertTrue(usuario.check_password('ClaveSegura-2026'))
+        self.assertEqual(usuario.rol, Usuario.Rol.PATOLOGO)
+        self.assertEqual(usuario.registro_medico, 'RM-PRUEBA-0003')
+
+    def test_el_usuario_creado_en_admin_puede_iniciar_sesion(self):
+        self.test_crear_un_usuario_en_admin_cifra_la_contrasena()
+        respuesta = self.client.post('/api/auth/login/', {
+            'username': 'patologo_desde_admin', 'password': 'ClaveSegura-2026',
+        }, content_type='application/json')
+        self.assertEqual(respuesta.status_code, 200)
+
+    def test_la_ficha_del_usuario_no_muestra_la_contrasena_editable_y_si_los_campos_propios(self):
+        usuario = Usuario.objects.create_user(username='patologo_ficha', password='ClaveSegura-2026')
+        respuesta = self.client.get(f'/admin/accounts/usuario/{usuario.id}/change/')
+        self.assertEqual(respuesta.status_code, 200)
+        formulario = respuesta.context['adminform'].form
+        for campo in ('rol', 'especialidad', 'registro_medico', 'telefono', 'nombre_completo'):
+            self.assertIn(campo, formulario.fields)
+        # El hash se muestra en solo lectura; la contraseña se cambia con el formulario de Django.
+        self.assertNotIsInstance(formulario.fields['password'].widget, forms.TextInput)
