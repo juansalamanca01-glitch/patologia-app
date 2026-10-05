@@ -448,3 +448,57 @@ describe('InformePage: firma y finalización (etapa 6)', () => {
     expect(screen.queryByText(/Al finalizar, el informe llevará/)).not.toBeInTheDocument();
   });
 });
+
+describe('InformePage: adendas (etapa 8)', () => {
+  const FINALIZADO = {
+    ...INFORME,
+    estado: 'finalizado',
+    fecha_informe: '2026-10-04T20:30:00Z',
+    adendas: [{
+      id: 1, numero: 1, motivo: 'Corrección del diagnóstico', texto: 'Se aclara el diagnóstico.',
+      autor: 1, fecha: '2026-10-05T14:15:00Z', firma: INFORME.firma,
+    }],
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    reiniciarOpciones();
+    simularApi();
+    const simulado = client.get.getMockImplementation();
+    client.get.mockImplementation((url, ...resto) => (
+      url === '/informes/5/' ? Promise.resolve({ data: FINALIZADO }) : simulado(url, ...resto)
+    ));
+  });
+
+  it('un informe finalizado termina con la tarjeta Adendas, después de la Firma', async () => {
+    renderInforme();
+    await screen.findByText('Corrección del diagnóstico');
+    const titulos = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+    expect(titulos.slice(-2)).toEqual(['Firma', 'Adendas']);
+  });
+
+  it('una adenda nueva se agrega a la lista sin recargar el informe', async () => {
+    client.post.mockResolvedValue({
+      data: { ...FINALIZADO.adendas[0], id: 2, numero: 2, motivo: 'Resultado de inmunohistoquímica', texto: 'CK5/6 positivo.' },
+    });
+    renderInforme();
+    fireEvent.click(await screen.findByRole('button', { name: /Agregar adenda/i }));
+    fireEvent.change(screen.getByLabelText(/Motivo/), { target: { value: 'Resultado de inmunohistoquímica' } });
+    fireEvent.change(screen.getByLabelText(/Texto/), { target: { value: 'CK5/6 positivo.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar adenda' }));
+    fireEvent.click(screen.getByRole('button', { name: /Sí, guardar adenda/i }));
+    expect(await screen.findByText(/Adenda N\.º 2/)).toBeInTheDocument();
+    expect(screen.getByText(/Adenda N\.º 1/)).toBeInTheDocument();
+    // La adenda no es el informe: no se envía con el formulario del informe.
+    expect(client.put).not.toHaveBeenCalled();
+  });
+
+  it('un borrador no muestra la tarjeta Adendas', async () => {
+    client.get.mockImplementation((url) => (
+      url === '/informes/5/' ? Promise.resolve({ data: INFORME }) : Promise.resolve({ data: { results: [], plantillas: [], ...(url === '/opciones/' ? OPCIONES : {}) } })
+    ));
+    renderInforme();
+    await screen.findByText('Dra. Ficticia Firma');
+    expect(screen.queryByRole('heading', { name: 'Adendas' })).not.toBeInTheDocument();
+  });
+});

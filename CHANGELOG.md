@@ -3,6 +3,39 @@
 Todos los cambios de código del proyecto se documentan aquí, del más reciente al más antiguo.
 Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1" remiten a `docs/auditoria-inicial.md`.
 
+## 2026-10-05
+
+### Informe v2, etapa 8: adendas
+
+**Qué se cambió**
+- **Modelo `Adenda`** (`backend/informes/models.py`, migración `informes/0011_adenda`). Campos:
+  - `informe` y `autor` (los dos `PROTECT`);
+  - `numero` (1, 2, 3... dentro de cada informe; único por `informe` + `numero`);
+  - `motivo` (máximo 300 caracteres) y `texto`;
+  - `fecha` (`auto_now_add`) y `firma` (JSON con nombre, especialidad y registro médico de quien la crea, congelados).
+  - La firma sale de la función nueva `firma_de(usuario)`, que ahora también usa `Informe.firma_actual()` (antes armaba el mismo diccionario por su cuenta).
+- **API** (`backend/informes/views.py`, `serializers.py`):
+  - `GET /api/informes/{id}/adendas/` (todos los roles) y `POST /api/informes/{id}/adendas/` (autor del informe o admin; el auditor y los demás patólogos reciben 403).
+  - El POST responde 400 si el informe es un borrador o si quien crea la adenda no tiene registro médico, aunque sea admin. No hay PUT, PATCH ni DELETE (405).
+  - El número se calcula con el informe bloqueado (`select_for_update`). Si aun así choca con la restricción única, responde 400 "intente de nuevo" en lugar de un error 500.
+  - Agregar una adenda no cambia el informe: ni su contenido, ni `fecha_actualizacion`, ni `fecha_informe`, ni los datos congelados.
+  - `AdendaSerializer` solo acepta `motivo` y `texto`. `InformeSerializer` devuelve la lista `adendas` (solo lectura), cargada con `prefetch_related` solo en las rutas de detalle. El listado no cambia.
+- **`/admin/`** (`backend/informes/admin.py`): `AdendaInline` en el informe, de solo lectura (no se agregan, cambian ni borran).
+- **PDF** (`backend/informes/utils.py`):
+  - Si el informe tiene adendas, bajo el título va el aviso en rojo "Este informe tiene N adenda(s); ver al final." (en singular con 1).
+  - Después de la firma va la sección "ADENDAS", con número, fecha (hora de Bogotá), motivo, texto y la firma de cada una, todo escapado con `texto_seguro()` (I-3). Cada adenda va entera en una página si cabe, y el título de la sección va con la primera.
+  - Las líneas de la firma pasan a `_lineas_firma()`, que comparten la firma del informe y la de las adendas.
+- **Frontend:**
+  - `components/informe/SeccionAdendas.jsx` (nuevo): tarjeta "Adendas", solo en informes finalizados. Muestra la lista. Al autor y al admin les ofrece "+ Agregar adenda", con motivo y texto, y pide confirmación antes de guardar ("Las adendas no se pueden modificar ni borrar"). Muestra los errores del backend, como la falta de registro médico.
+  - `InformePage.jsx` la dibuja después de la Firma y fuera de su `<form>`, porque la adenda se guarda con su propia petición. La adenda nueva se agrega a la lista sin recargar.
+  - `SeccionFirma.jsx` exporta `LineasFirma` y `formatoFechaHora` para reutilizarlos. `index.css` tiene los estilos de las adendas.
+- **Pruebas:**
+  - Backend, de 212 a 235: `AdendaTests` (19) y 4 en `PdfInformeTests` (orden, aviso en singular, sin adendas no hay aviso, texto escapado).
+  - Frontend, de 89 a 100: `SeccionAdendas.test.jsx` (8) y 3 en `InformePage.test.jsx`.
+- **Documentación:** `README.md` (características, permisos, API, pruebas, flujo), `CLAUDE.md`, `docs/propuesta-informe-v2.md`, `docs/progreso.md` y la colección de Postman ("Agregar adenda" y "Ver adendas").
+
+**Por qué:** es la etapa 8 de `docs/propuesta-informe-v2.md` y aplica la decisión D-9. D-3 no permite modificar un informe finalizado, y las adendas permiten corregirlo sin perder lo que se entregó, dejando constancia de quién corrigió qué y cuándo. El usuario aprobó el plan el 2026-10-05, incluido que un admin necesite su propio registro médico para firmar una adenda.
+
 ## 2026-10-04
 
 ### Informe v2, etapa 7: PDF nuevo

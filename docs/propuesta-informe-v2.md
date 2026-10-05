@@ -255,6 +255,7 @@ class Adenda(models.Model):
 - **No contradice D-3:** el contenido original del informe no cambia. La adenda es un texto nuevo, fechado y firmado, que se agrega al final. Se propone registrarlo como una decisión nueva que complementa D-3 (D-9 en la sección 7).
 - **En `/admin/`:** las adendas se ven en solo lectura.
 - **En el PDF:** van después de la firma, en la sección "ADENDAS", con número, fecha, motivo, texto y firma. Además, al principio del informe aparece el aviso "Este informe tiene N adenda(s); ver al final", para que nadie lea el diagnóstico original sin saber que se corrigió.
+- **Hecho en la etapa 8:** el aviso va en singular o plural ("1 adenda", "2 adendas"), en rojo y con borde, debajo del título. Cada adenda va entera en una página si cabe, y el título "ADENDAS" va con la primera. Un choque de numeración (dos adendas a la vez en SQLite, sin bloqueo) responde 400 "intente de nuevo" en lugar de un error 500.
 
 ### 3.9 Reglas para finalizar (ampliación de `finalizar`)
 
@@ -460,7 +461,7 @@ Se actualiza en cada etapa, según las reglas 2, 3 y 6 de `CLAUDE.md`:
 | **5. Contenido del informe** (hecha, 2026-10-04) | Descripción microscópica, `notas` → `comentarios` y diagnósticos con CIE-10 (`ListaDiagnosticos`, que se reordena con botones de subir y bajar). El PDF actual ya imprime las tres secciones (decisión del usuario en la etapa 5); su estructura completa sigue en la etapa 7. | backend, frontend, PDF (secciones nuevas) |
 | **6. Firma y finalización** (hecha, 2026-10-04) | `registro_medico`, reglas para finalizar, `fecha_informe`, `datos_finalizacion`, perfil y `SeccionFirma`. El PDF actual ya usa la firma congelada y muestra el registro médico y la fecha de informe (decisión del usuario en la etapa 6). | backend, frontend, PDF (firma y fecha de informe) |
 | **7. PDF nuevo** (hecha, 2026-10-04) | Estructura de la sección 5, numeración de páginas y borrador. El encabezado quedó fijo; hacerlo configurable es una propuesta futura (decisión del usuario). Las adendas (aviso y sección) llegan en la etapa 8. | PDF |
-| **8. Adendas** | Modelo, endpoints, sección en el frontend y en el PDF. | backend, frontend, PDF |
+| **8. Adendas** (hecha, 2026-10-05) | Modelo, endpoints, sección en el frontend y en el PDF. Quien crea la adenda (también un admin) necesita su propio registro médico, porque la firma es la suya. En el frontend se pide confirmación antes de guardar; el Dashboard y el Buscador no muestran si un informe tiene adendas. | backend, frontend, PDF |
 | **9. Cierre** | Política de privacidad, revisión completa del README y de Postman, comprobar que el código cumple D-7 a D-11 y prueba manual de todo el flujo en el navegador. | documentación |
 | *(Opcional)* **10. Imagen de la firma** | `firma_imagen` en el usuario y en el PDF. | backend, PDF |
 

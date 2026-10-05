@@ -588,6 +588,59 @@
 					"response": []
 				},
 				{
+					"name": "Agregar adenda",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/informes/{{informe_id}}/adendas/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"informes",
+								"{{informe_id}}",
+								"adendas",
+								""
+							]
+						},
+						"description": "Corrige un informe finalizado sin modificarlo (decisión D-9). Solo en informes finalizados (en un borrador responde 400: se corrige editándolo). Solo el autor del informe o un admin; el auditor recibe 403. Quien la crea la firma y necesita registro médico (si no, 400). El número (1, 2, 3... dentro del informe), la fecha y la firma los pone el sistema. No hay PUT, PATCH ni DELETE: una adenda no se modifica.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"motivo\": \"Resultado de inmunohistoquímica\",\n  \"texto\": \"CK5/6 positivo. Se confirma el diagnóstico.\"\n}"
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Ver adendas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/informes/{{informe_id}}/adendas/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"informes",
+								"{{informe_id}}",
+								"adendas",
+								""
+							]
+						},
+						"description": "Adendas del informe en orden, con número, motivo, texto, autor, fecha y firma congelada. Las ven todos los roles. También vienen en el detalle del informe (campo adendas)."
+					},
+					"response": []
+				},
+				{
 					"name": "Descargar PDF",
 					"request": {
 						"method": "GET",

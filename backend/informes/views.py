@@ -5,19 +5,20 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http import HttpResponse
-from django.db import transaction
-from django.db.models import Count, Q, ProtectedError
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Max, Q, ProtectedError
 from django.utils import timezone
 
 from accounts.permissions import EsPatologoOAdmin, EsAutorOAdminOSoloLectura
 from config.catalogos import filtrar_por_activo
 from pacientes.models import Sexo, TipoDocumento
-from .models import Categoria, Patologia, Plantilla, Informe, Servicio
+from .models import Categoria, Patologia, Plantilla, Informe, Servicio, firma_de
 from .serializers import (
     CategoriaSerializer,
     PatologiaSerializer, PatologiaListSerializer,
     PlantillaSerializer,
     ServicioSerializer,
+    AdendaSerializer,
     InformeSerializer, InformeListSerializer,
 )
 from .utils import generar_descripcion_macroscopica, generar_pdf_informe
@@ -178,10 +179,10 @@ class InformeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         params = self.request.query_params
-        # El detalle, el PDF y finalizar devuelven los diagnósticos: se cargan en una
-        # sola consulta (M-4). El listado no los muestra y no los pide.
+        # El detalle, el PDF y finalizar devuelven los diagnósticos y las adendas: se
+        # cargan en una consulta cada uno (M-4). El listado no los muestra y no los pide.
         if self.detail:
-            qs = qs.prefetch_related('diagnosticos')
+            qs = qs.prefetch_related('diagnosticos', 'adendas')
 
         # Filtros de búsqueda
         # Cada palabra de ?q= debe aparecer en alguno de los campos: así "ficticio uno"
@@ -299,3 +300,43 @@ class InformeViewSet(viewsets.ModelViewSet):
             informe.save(update_fields=['estado', 'fecha_informe', 'datos_finalizacion'])
         return Response(InformeSerializer(informe).data)
 
+    @action(detail=True, methods=['get', 'post'], url_path='adendas')
+    def adendas(self, request, pk=None):
+        """
+        GET: adendas del informe, en orden. POST: agrega una (decisión D-9). Solo en
+        informes finalizados; la crea el autor del informe o un admin (D-2) y la firma
+        quien la crea, que necesita registro médico. No hay PUT, PATCH ni DELETE: una
+        adenda no se modifica, y agregarla no cambia el informe (D-3).
+        """
+        # get_object() comprueba el permiso: en un POST, autor o admin (si no, 403).
+        informe = self.get_object()
+        if request.method == 'GET':
+            return Response(AdendaSerializer(informe.adendas.all(), many=True).data)
+
+        if not informe.esta_finalizado:
+            return Response(
+                {'detail': 'Un informe en borrador no lleva adendas: corríjalo editándolo.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not request.user.registro_medico.strip():
+            return Response(
+                {'detail': 'Para firmar una adenda necesita registro médico; un administrador debe registrarlo.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = AdendaSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            with transaction.atomic():
+                # Se bloquea el informe: dos adendas a la vez no reciben el mismo número.
+                # En SQLite el bloqueo no existe y la restricción única hace de respaldo.
+                bloqueado = Informe.objects.select_for_update().get(pk=informe.pk)
+                numero = (bloqueado.adendas.aggregate(ultimo=Max('numero'))['ultimo'] or 0) + 1
+                serializer.save(
+                    informe=bloqueado, numero=numero, autor=request.user, firma=firma_de(request.user),
+                )
+        except IntegrityError:
+            return Response(
+                {'detail': 'Otra adenda se guardó al mismo tiempo. Intente de nuevo.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -663,6 +663,17 @@ textarea { resize: vertical; min-height: 80px; }
   max-width: 22rem;
 }
 
+/* ── Adendas del informe (informe v2, etapa 8) ── */
+.adenda {
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+.adenda h3 { font-size: 0.95rem; margin: 0 0 0.5rem; }
+.adenda p { margin: 0 0 0.5rem; }
+.adenda-texto { white-space: pre-wrap; }
+.adenda-formulario .alert-warning p { margin: 0 0 0.75rem; }
+
 /* ── Modales (categorías, patologías, confirmaciones) ── */
 .modal-overlay {
   position: fixed;

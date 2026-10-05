@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Categoria, ConsecutivoPeticion, Diagnostico, Patologia, Plantilla, Informe, Servicio
+from .models import Adenda, Categoria, ConsecutivoPeticion, Diagnostico, Patologia, Plantilla, Informe, Servicio
 
 
 class PlantillaInline(admin.TabularInline):
@@ -10,6 +10,23 @@ class PlantillaInline(admin.TabularInline):
 class DiagnosticoInline(admin.TabularInline):
     model = Diagnostico
     extra = 0
+
+
+class AdendaInline(admin.StackedInline):
+    """Solo consulta: las adendas no se agregan, cambian ni borran desde /admin/ (decisión D-9)."""
+    model = Adenda
+    extra = 0
+    fields = ['numero', 'fecha', 'autor', 'motivo', 'texto', 'firma']
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Categoria)
@@ -51,7 +68,7 @@ class InformeAdmin(admin.ModelAdmin):
         'numero_peticion', 'texto_generado', 'fecha_informe', 'datos_finalizacion',
         'fecha_creacion', 'fecha_actualizacion',
     ]
-    inlines = [DiagnosticoInline]
+    inlines = [DiagnosticoInline, AdendaInline]
 
 
 @admin.register(ConsecutivoPeticion)

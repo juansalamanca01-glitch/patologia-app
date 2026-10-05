@@ -1806,3 +1806,301 @@ class PdfInformeTests(APITestCase):
             ' · Generado el 03/10/2026 22:30'
             for n in range(1, paginas + 1)
         ])
+
+    # --- Adendas (informe v2, etapa 8) ---
+
+    def agregar_adenda(self, informe_id, momento, **extra):
+        cuerpo = {'motivo': 'Corrección del diagnóstico', 'texto': 'Se aclara el diagnóstico.', **extra}
+        with mock.patch('django.utils.timezone.now', return_value=momento):
+            respuesta = self.client.post(f'{self.URL}{informe_id}/adendas/', cuerpo, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+
+    def test_las_adendas_van_al_final_con_un_aviso_al_principio(self):
+        # Sección 3.8: el aviso evita que se lea el diagnóstico original sin saber que se corrigió.
+        informe_id = self.crear()
+        self.finalizar(informe_id)
+        self.agregar_adenda(informe_id, timezone.make_aware(datetime(2026, 10, 5, 9, 15)))
+        self.agregar_adenda(
+            informe_id, timezone.make_aware(datetime(2026, 10, 6, 11, 0)),
+            motivo='Resultado de inmunohistoquímica', texto='CK5/6 positivo.',
+        )
+        textos = self.generar(informe_id)['textos']
+        orden = [
+            'INFORME DE ANATOMÍA PATOLÓGICA',
+            'Este informe tiene 2 adendas; ver al final.',
+            'DESCRIPCIÓN MACROSCÓPICA',
+            'DIAGNÓSTICOS',
+            'Registro médico N.º RM-PRUEBA-0001',  # firma del informe
+            'ADENDAS',
+            'Adenda N.º 1 — 05/10/2026 09:15',
+            '<b>Motivo:</b> Corrección del diagnóstico',
+            'Se aclara el diagnóstico.',
+            'Adenda N.º 2 — 06/10/2026 11:00',
+            '<b>Motivo:</b> Resultado de inmunohistoquímica',
+            'CK5/6 positivo.',
+        ]
+        posiciones = [textos.index(texto) for texto in orden]
+        self.assertEqual(posiciones, sorted(posiciones))
+        # Cada adenda lleva su firma: la del informe y una por adenda.
+        self.assertEqual(textos.count('Registro médico N.º RM-PRUEBA-0001'), 3)
+
+    def test_con_una_sola_adenda_el_aviso_va_en_singular(self):
+        informe_id = self.crear()
+        self.finalizar(informe_id)
+        self.agregar_adenda(informe_id, timezone.make_aware(datetime(2026, 10, 5, 9, 15)))
+        self.assertIn('Este informe tiene 1 adenda; ver al final.', self.generar(informe_id)['textos'])
+
+    def test_sin_adendas_no_hay_aviso_ni_seccion(self):
+        informe_id = self.crear()
+        self.finalizar(informe_id)
+        textos = self.generar(informe_id)['textos']
+        self.assertNotIn('ADENDAS', textos)
+        self.assertFalse(any('adenda' in texto.lower() for texto in textos))
+
+    def test_el_texto_de_las_adendas_sale_escapado(self):
+        # Auditoría I-3 también en las adendas.
+        informe_id = self.crear()
+        self.finalizar(informe_id)
+        self.agregar_adenda(
+            informe_id, timezone.make_aware(datetime(2026, 10, 5, 9, 15)),
+            motivo='<b>Motivo', texto='Línea 1 & <font size=40>\nLínea 2',
+        )
+        textos = self.generar(informe_id)['textos']
+        self.assertIn('<b>Motivo:</b> &lt;b&gt;Motivo', textos)
+        self.assertIn('Línea 1 &amp; &lt;font size=40&gt;<br/>Línea 2', textos)
+
+
+class AdendaTests(APITestCase):
+    """
+    Informe v2, etapa 8 (docs/propuesta-informe-v2.md, 3.8; decisión D-9):
+    - un informe finalizado se corrige con adendas, que no lo modifican (D-3);
+    - solo en informes finalizados; las crea el autor del informe o un admin (D-2);
+    - quien la crea la firma y necesita registro médico; la firma queda congelada;
+    - se numeran 1, 2, 3... dentro de cada informe;
+    - no se editan ni se borran (ni por la API ni en /admin/).
+    Solo datos ficticios.
+    """
+
+    URL = '/api/informes/'
+
+    def setUp(self):
+        def usuario(username, rol, **extra):
+            return Usuario.objects.create_user(username=username, password='ClaveSegura-2026', rol=rol, **extra)
+
+        self.autor = usuario(
+            'patologo_adenda', Usuario.Rol.PATOLOGO, nombre_completo='Dra. Ficticia Firma',
+            especialidad='Patología Quirúrgica', registro_medico='RM-PRUEBA-0001',
+        )
+        self.otro = usuario('otro_adenda', Usuario.Rol.PATOLOGO, registro_medico='RM-PRUEBA-0002')
+        self.admin = usuario(
+            'admin_adenda', Usuario.Rol.ADMIN, nombre_completo='Admin Ficticio', registro_medico='RM-PRUEBA-9999',
+        )
+        self.admin_sin_registro = usuario('admin_sin_rm', Usuario.Rol.ADMIN)
+        self.auditor = usuario('auditor_adenda', Usuario.Rol.AUDITOR)
+        self.client.force_authenticate(self.autor)
+        self.patologia = Patologia.objects.create(nombre='Patología adendas')
+        self.paciente = paciente_ficticio()
+
+    def crear(self, finalizar=True):
+        self.client.force_authenticate(self.autor)
+        respuesta = self.client.post(self.URL, {
+            'patologia': self.patologia.id, 'paciente': self.paciente.id, 'datos_ingresados': {},
+            'descripcion_microscopica': 'Proliferación de células basaloides.',
+            'diagnosticos': [{'descripcion': 'Carcinoma basocelular nodular', 'codigo_cie10': 'C44.3'}],
+        }, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        informe_id = respuesta.data['id']
+        if finalizar:
+            respuesta = self.client.post(f'{self.URL}{informe_id}/finalizar/')
+            self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
+        return informe_id
+
+    def url(self, informe_id):
+        return f'{self.URL}{informe_id}/adendas/'
+
+    def agregar(self, informe_id, usuario=None, **extra):
+        if usuario is not None:
+            self.client.force_authenticate(usuario)
+        cuerpo = {'motivo': 'Corrección del diagnóstico', 'texto': 'Se aclara el diagnóstico.', **extra}
+        return self.client.post(self.url(informe_id), cuerpo, format='json')
+
+    def total_adendas(self):
+        from .models import Adenda
+        return Adenda.objects.count()
+
+    # --- Crear ---
+
+    def test_el_autor_agrega_una_adenda_firmada_a_un_informe_finalizado(self):
+        informe_id = self.crear()
+        momento = timezone.make_aware(datetime(2026, 10, 5, 9, 15))
+        with mock.patch('django.utils.timezone.now', return_value=momento):
+            respuesta = self.agregar(informe_id)
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        self.assertEqual(respuesta.data['numero'], 1)
+        self.assertEqual(respuesta.data['motivo'], 'Corrección del diagnóstico')
+        self.assertEqual(respuesta.data['texto'], 'Se aclara el diagnóstico.')
+        self.assertEqual(respuesta.data['autor'], self.autor.id)
+        self.assertEqual(datetime.fromisoformat(respuesta.data['fecha']), momento)
+        self.assertEqual(respuesta.data['firma'], {
+            'nombre': 'Dra. Ficticia Firma', 'especialidad': 'Patología Quirúrgica', 'registro_medico': 'RM-PRUEBA-0001',
+        })
+
+    def test_un_borrador_no_admite_adendas(self):
+        # Un borrador se corrige editándolo.
+        informe_id = self.crear(finalizar=False)
+        respuesta = self.agregar(informe_id)
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('borrador', respuesta.data['detail'])
+        self.assertEqual(self.total_adendas(), 0)
+
+    def test_se_numeran_dentro_de_cada_informe(self):
+        primero, segundo = self.crear(), self.crear()
+        self.assertEqual(self.agregar(primero).data['numero'], 1)
+        self.assertEqual(self.agregar(primero).data['numero'], 2)
+        self.assertEqual(self.agregar(segundo).data['numero'], 1)
+        self.assertEqual(self.agregar(primero).data['numero'], 3)
+
+    def test_no_se_puede_elegir_el_numero_ni_la_firma(self):
+        informe_id = self.crear()
+        respuesta = self.agregar(informe_id, numero=99, autor=self.otro.id, firma={'nombre': 'Firma falsa'})
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        self.assertEqual(respuesta.data['numero'], 1)
+        self.assertEqual(respuesta.data['autor'], self.autor.id)
+        self.assertEqual(respuesta.data['firma']['nombre'], 'Dra. Ficticia Firma')
+
+    def test_motivo_y_texto_son_obligatorios(self):
+        informe_id = self.crear()
+        respuesta = self.agregar(informe_id, motivo='  ', texto='')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('motivo', respuesta.data)
+        self.assertIn('texto', respuesta.data)
+        self.assertEqual(self.total_adendas(), 0)
+
+    def test_el_motivo_tiene_maximo_300_caracteres(self):
+        informe_id = self.crear()
+        respuesta = self.agregar(informe_id, motivo='x' * 301)
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('motivo', respuesta.data)
+
+    def test_agregar_una_adenda_no_modifica_el_informe(self):
+        # Decisión D-3: el contenido original y los datos congelados no cambian.
+        informe_id = self.crear()
+        antes = Informe.objects.get(id=informe_id)
+        self.assertEqual(self.agregar(informe_id).status_code, status.HTTP_201_CREATED)
+        despues = Informe.objects.get(id=informe_id)
+        self.assertEqual(despues.estado, Informe.Estado.FINALIZADO)
+        self.assertEqual(despues.fecha_actualizacion, antes.fecha_actualizacion)
+        self.assertEqual(despues.fecha_informe, antes.fecha_informe)
+        self.assertEqual(despues.datos_finalizacion, antes.datos_finalizacion)
+
+    # --- Permisos (D-2) y firma ---
+
+    def test_un_admin_agrega_una_adenda_con_su_propia_firma(self):
+        informe_id = self.crear()
+        respuesta = self.agregar(informe_id, usuario=self.admin)
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        self.assertEqual(respuesta.data['autor'], self.admin.id)
+        self.assertEqual(respuesta.data['firma']['nombre'], 'Admin Ficticio')
+        self.assertEqual(respuesta.data['firma']['registro_medico'], 'RM-PRUEBA-9999')
+
+    def test_otro_patologo_no_puede_agregar_adendas(self):
+        informe_id = self.crear()
+        self.assertEqual(self.agregar(informe_id, usuario=self.otro).status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.total_adendas(), 0)
+
+    def test_el_auditor_ve_las_adendas_pero_no_las_crea(self):
+        informe_id = self.crear()
+        self.agregar(informe_id)
+        self.assertEqual(self.agregar(informe_id, usuario=self.auditor).status_code, status.HTTP_403_FORBIDDEN)
+        respuesta = self.client.get(self.url(informe_id))
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual([a['numero'] for a in respuesta.data], [1])
+
+    def test_quien_no_tiene_registro_medico_no_puede_firmar_una_adenda(self):
+        informe_id = self.crear()
+        respuesta = self.agregar(informe_id, usuario=self.admin_sin_registro)
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('registro médico', respuesta.data['detail'])
+        self.assertEqual(self.total_adendas(), 0)
+
+    def test_la_firma_de_la_adenda_queda_congelada(self):
+        informe_id = self.crear()
+        self.agregar(informe_id)
+        Usuario.objects.filter(id=self.autor.id).update(nombre_completo='Nombre Cambiado', registro_medico='RM-OTRO')
+        firma = self.client.get(self.url(informe_id)).data[0]['firma']
+        self.assertEqual(firma['nombre'], 'Dra. Ficticia Firma')
+        self.assertEqual(firma['registro_medico'], 'RM-PRUEBA-0001')
+
+    # --- No se modifican ---
+
+    def test_las_adendas_no_se_editan_ni_se_borran_por_la_api(self):
+        informe_id = self.crear()
+        self.agregar(informe_id)
+        self.client.force_authenticate(self.admin)
+        for metodo in (self.client.put, self.client.patch, self.client.delete):
+            self.assertEqual(
+                metodo(self.url(informe_id), {'texto': 'Cambiado'}, format='json').status_code,
+                status.HTTP_405_METHOD_NOT_ALLOWED,
+            )
+        self.assertEqual(self.client.get(self.url(informe_id)).data[0]['texto'], 'Se aclara el diagnóstico.')
+
+    def test_el_numero_no_se_repite_en_la_base_de_datos(self):
+        # Respaldo del bloqueo con select_for_update (sección 3.8).
+        from .models import Adenda
+        informe = Informe.objects.get(id=self.crear())
+        datos = {'informe': informe, 'numero': 1, 'motivo': 'M', 'texto': 'T', 'autor': self.autor, 'firma': {}}
+        Adenda.objects.create(**datos)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Adenda.objects.create(**datos)
+
+    def test_un_informe_con_adendas_no_se_borra_desde_el_orm(self):
+        from django.db.models import ProtectedError
+        informe_id = self.crear()
+        self.agregar(informe_id)
+        with self.assertRaises(ProtectedError):
+            Informe.objects.get(id=informe_id).delete()
+
+    def test_en_admin_las_adendas_son_de_solo_lectura(self):
+        from django.contrib import admin as admin_django
+        from django.test import RequestFactory
+        from .models import Adenda
+        modelo_admin = admin_django.site._registry[Informe]
+        peticion = RequestFactory().get('/admin/')
+        peticion.user = Usuario.objects.create_superuser(
+            username='super_adenda', password='ClaveSegura-2026', rol=Usuario.Rol.ADMIN,
+        )
+        informe = Informe.objects.get(id=self.crear())
+        inlines = [i for i in modelo_admin.get_inline_instances(peticion, informe) if i.model is Adenda]
+        self.assertEqual(len(inlines), 1)
+        self.assertFalse(inlines[0].has_add_permission(peticion, informe))
+        self.assertFalse(inlines[0].has_change_permission(peticion, informe))
+        self.assertFalse(inlines[0].has_delete_permission(peticion, informe))
+
+    # --- Detalle y listado ---
+
+    def test_el_detalle_del_informe_trae_las_adendas_en_orden(self):
+        informe_id = self.crear()
+        self.agregar(informe_id, motivo='Primera')
+        self.agregar(informe_id, motivo='Segunda')
+        adendas = self.client.get(f'{self.URL}{informe_id}/').data['adendas']
+        self.assertEqual([(a['numero'], a['motivo']) for a in adendas], [(1, 'Primera'), (2, 'Segunda')])
+
+    def test_el_detalle_no_hace_una_consulta_por_adenda(self):
+        # Auditoría M-4: las consultas del detalle no crecen con las adendas.
+        from django.test.utils import CaptureQueriesContext
+        una, cinco = self.crear(), self.crear()
+        self.agregar(una)
+        for _ in range(5):
+            self.agregar(cinco)
+
+        def contar(informe_id):
+            with CaptureQueriesContext(connection) as consultas:
+                self.client.get(f'{self.URL}{informe_id}/')
+            return len(consultas)
+
+        self.assertEqual(contar(cinco), contar(una))
+
+    def test_el_listado_no_trae_las_adendas(self):
+        self.agregar(self.crear())
+        fila = self.client.get(self.URL).data['results'][0]
+        self.assertNotIn('adendas', fila)

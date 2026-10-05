@@ -94,6 +94,7 @@ AZUL = HexColor('#2b6cb0')
 GRIS_TEXTO = HexColor('#2d3748')
 GRIS_SUAVE = HexColor('#718096')
 GRIS_LINEA = HexColor('#cbd5e0')
+ROJO = HexColor('#c53030')
 
 
 class CanvasNumerado(canvas.Canvas):
@@ -149,6 +150,15 @@ def _estilos():
         'CuerpoTexto', parent=estilos['BodyText'], fontSize=10, alignment=TA_JUSTIFY, leading=14,
     ))
     estilos.add(ParagraphStyle('Firma', parent=estilos['Normal'], fontSize=10, leading=13, alignment=TA_CENTER))
+    estilos.add(ParagraphStyle(
+        'AvisoAdendas', parent=estilos['Normal'], fontName='Helvetica-Bold', fontSize=10,
+        textColor=ROJO, alignment=TA_CENTER, borderColor=ROJO, borderWidth=0.75, borderPadding=5,
+        spaceBefore=8, spaceAfter=6,
+    ))
+    estilos.add(ParagraphStyle(
+        'TituloAdenda', parent=estilos['Normal'], fontName='Helvetica-Bold', fontSize=10.5,
+        textColor=GRIS_TEXTO, spaceBefore=18, spaceAfter=4,
+    ))
     return estilos
 
 
@@ -234,8 +244,8 @@ def _seccion(titulo, parrafos, estilos):
     ]
 
 
-def _firma(firma, estilos):
-    """Línea de firma con los datos del autor (D-8). Un borrador no lleva firma."""
+def _lineas_firma(firma, estilos):
+    """Línea de firma con nombre, especialidad y registro médico (D-8, D-9)."""
     bloque = [
         Spacer(1, 32),
         HRFlowable(width=7 * cm, thickness=0.75, color=GRIS_TEXTO, spaceAfter=4),
@@ -245,8 +255,39 @@ def _firma(firma, estilos):
         bloque.append(Paragraph(texto_seguro(firma['especialidad']), estilos['Firma']))
     if firma['registro_medico']:
         bloque.append(Paragraph(f"Registro médico N.º {texto_seguro(firma['registro_medico'])}", estilos['Firma']))
+    return bloque
+
+
+def _firma(firma, estilos):
+    """Firma del autor del informe (D-8). Un borrador no lleva firma."""
     # La firma no se parte entre dos páginas.
-    return [KeepTogether(bloque)]
+    return [KeepTogether(_lineas_firma(firma, estilos))]
+
+
+def _aviso_adendas(total, estilos):
+    """Al principio del informe: que nadie lea el diagnóstico original sin saber que se corrigió (3.8)."""
+    adendas = 'adenda' if total == 1 else 'adendas'
+    return [Paragraph(f'Este informe tiene {total} {adendas}; ver al final.', estilos['AvisoAdendas'])]
+
+
+def _adendas(adendas, estilos):
+    """Sección ADENDAS (decisión D-9): cada una con número, fecha, motivo, texto y su firma congelada."""
+    # Sin el CondPageBreak de _seccion: el título va en el bloque de la primera adenda.
+    titulo = _seccion('ADENDAS', [], estilos)[1:]
+    elementos = []
+    for posicion, adenda in enumerate(adendas):
+        fecha = timezone.localtime(adenda.fecha).strftime('%d/%m/%Y %H:%M')
+        # La adenda va entera en una página si cabe, para que su firma no quede sola,
+        # y el título de la sección no queda separado de la primera.
+        elementos.append(KeepTogether([
+            *(titulo if posicion == 0 else []),
+            Paragraph(f'Adenda N.º {adenda.numero} — {fecha}', estilos['TituloAdenda']),
+            Paragraph(f'<b>Motivo:</b> {texto_seguro(adenda.motivo)}', estilos['CuerpoTexto']),
+            Spacer(1, 4),
+            Paragraph(texto_seguro(adenda.texto), estilos['CuerpoTexto']),
+            *_lineas_firma(adenda.firma, estilos),
+        ]))
+    return elementos
 
 
 def generar_pdf_informe(informe) -> io.BytesIO:
@@ -271,6 +312,11 @@ def generar_pdf_informe(informe) -> io.BytesIO:
         *_titulo(informe, estilos),
     ]
 
+    # Solo un informe finalizado tiene adendas (D-9).
+    adendas = list(informe.adendas.all())
+    if adendas:
+        elementos += _aviso_adendas(len(adendas), estilos)
+
     if informe.texto_generado:
         elementos += _seccion('DESCRIPCIÓN MACROSCÓPICA', [texto_seguro(informe.texto_generado)], estilos)
 
@@ -290,6 +336,9 @@ def generar_pdf_informe(informe) -> io.BytesIO:
 
     if informe.esta_finalizado:
         elementos += _firma(datos['firma'], estilos)
+
+    if adendas:
+        elementos += _adendas(adendas, estilos)
 
     # Pie de cada página, para identificar una hoja suelta. La hora es la de
     # settings.TIME_ZONE (America/Bogota), no la del servidor (auditoría M-10).

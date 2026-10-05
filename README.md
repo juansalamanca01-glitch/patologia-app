@@ -42,10 +42,12 @@
   - título "INFORME DE ANATOMÍA PATOLÓGICA", tipo de estudio, patología y tipo de muestra;
   - descripción macroscópica, descripción microscópica, diagnósticos numerados con su código CIE-10 y comentarios;
   - firma del autor (nombre, especialidad y registro médico);
+  - adendas al final, cada una con su firma, y un aviso bajo el título ("Este informe tiene 2 adendas; ver al final") para que nadie lea el diagnóstico original sin saber que se corrigió;
   - pie en cada página con el número de petición, "Página X de Y" y la hora de generación.
 
   Un informe finalizado imprime los datos congelados al finalizar. Un borrador no lleva firma y dice "BORRADOR — SIN VALIDEZ" en la fecha de informe y en el pie de cada página.
 - **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
+- **Adendas**: un informe finalizado se corrige con adendas, sin modificar lo que ya se entregó. Cada adenda lleva motivo, texto, número (1, 2, 3... dentro del informe), fecha y la firma de quien la crea, que debe tener registro médico. Las agrega el autor del informe o un administrador, y no se editan ni se borran.
 - **Firma y finalización**: el informe lo firma siempre su autor, con su nombre, especialidad y registro médico. El registro médico solo lo asigna un administrador. Para finalizar, el informe debe tener paciente y al menos un diagnóstico, el autor debe tener registro médico y, en histología, debe haber descripción microscópica; si falta algo, la aplicación dice qué. Al finalizar se fija la fecha de informe y se congelan los datos del paciente, la EPS, el servicio y la firma: corregirlos después no cambia un informe ya entregado.
 - **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables. Una patología se puede desactivar: deja de ofrecerse en los informes nuevos sin perder el historial.
 - **Pacientes**: registro de los pacientes con su documento, nombres, fecha de nacimiento, sexo y EPS. La edad se calcula a partir de la fecha de nacimiento: en años, o en meses o días si el paciente es menor de 1 año. Se buscan por documento, nombres o apellidos, y cada paciente muestra su historial de informes. Solo se guardan los datos que aparecen en el informe.
@@ -67,6 +69,7 @@
 | Crear informes | Sí | Sí | No |
 | Editar, borrar o finalizar un informe | Sí (cualquiera) | Solo los suyos | No |
 | Editar o borrar un informe **finalizado** | No | No | No |
+| Agregar adendas a un informe finalizado (con registro médico) | Sí (cualquiera) | Solo a los suyos | No |
 | Administrar patologías, plantillas, categorías y temas del foro | Sí | Sí | No |
 | Ver pacientes | Sí | Sí | Sí |
 | Crear y editar pacientes; administrar EPS y servicios | Sí | Sí | No |
@@ -176,7 +179,7 @@ patologia-app/
 │   │   ├── api/client.js      # Cliente Axios: dirección de la API (VITE_API_URL) y token JWT
 │   │   ├── context/AuthContext.jsx  # Sesión y rol del usuario
 │   │   ├── components/        # Navbar, Footer, FormularioPaciente, CeldaPaciente, EstadoBadge
-│   │   │   └── informe/       # Partes del informe: SelectorPaciente, DatosSolicitud y ListaDiagnosticos
+│   │   │   └── informe/       # Partes del informe: SelectorPaciente, DatosSolicitud, ListaDiagnosticos, SeccionFirma y SeccionAdendas
 │   │   ├── hooks/useOpciones.js  # Listas fijas de /api/opciones/ (se piden una vez)
 │   │   ├── utils/formularios.js  # hoyISO() y conOpcionActual() (catálogos desactivados)
 │   │   ├── pages/             # Login, Dashboard, Informe, Buscar, Pacientes, Patologías, Catálogos,
@@ -359,8 +362,8 @@ npm run test:watch                        # se repiten al guardar cambios
 npm test
 ```
 
-- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones, búsqueda e historial), los datos de la solicitud del informe (paciente obligatorio, fecha de ingreso, EPS del momento del estudio, búsqueda por paciente), el contenido del informe (microscópica, comentarios, diagnósticos y validación del CIE-10), la finalización (requisitos, fecha de informe, firma del autor y datos congelados), el registro médico, los catálogos de EPS y servicios (y su borrado cuando están en uso), las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
-- **Frontend:** cubre el formulario del informe (paciente, datos de la solicitud, diagnósticos, firma, requisitos para finalizar y orden de las tarjetas), la página de pacientes y su historial, la pantalla de catálogos, los listados, la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
+- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones, búsqueda e historial), los datos de la solicitud del informe (paciente obligatorio, fecha de ingreso, EPS del momento del estudio, búsqueda por paciente), el contenido del informe (microscópica, comentarios, diagnósticos y validación del CIE-10), la finalización (requisitos, fecha de informe, firma del autor y datos congelados), las adendas (solo en finalizados, permisos, numeración, firma congelada, sin edición y en el PDF), el registro médico, los catálogos de EPS y servicios (y su borrado cuando están en uso), las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
+- **Frontend:** cubre el formulario del informe (paciente, datos de la solicitud, diagnósticos, firma, requisitos para finalizar, adendas y orden de las tarjetas), la página de pacientes y su historial, la pantalla de catálogos, los listados, la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
 
 ---
 
@@ -445,6 +448,8 @@ Las EPS y los servicios se desactivan en lugar de borrarse (decisión D-4), para
 | PUT / PATCH | `/api/informes/{id}/` | Editar un borrador (si está finalizado → 400) | Autor / Admin |
 | DELETE | `/api/informes/{id}/` | Borrar un borrador (si está finalizado → 400) | Autor / Admin |
 | POST | `/api/informes/{id}/finalizar/` | Finalizar el informe (después ya no se puede editar). Si faltan requisitos → 400 con `detail` y la lista `requisitos` | Autor / Admin |
+| GET | `/api/informes/{id}/adendas/` | Adendas del informe, en orden | Todos |
+| POST | `/api/informes/{id}/adendas/` | Agregar una adenda `{motivo, texto}` a un informe finalizado. En un borrador, o si quien la crea no tiene registro médico → 400. No hay PUT, PATCH ni DELETE | Autor / Admin |
 | GET | `/api/informes/{id}/pdf/` | Descargar el informe en PDF | Todos |
 
 Datos de la solicitud del informe (etapa 4 del informe v2):
@@ -466,6 +471,11 @@ Firma y finalización (etapa 6 del informe v2):
 - `fecha_informe`: la fija `finalizar`; es `null` en un borrador. No se puede escribir por la API.
 - `firma`: `{nombre, especialidad, registro_medico}` del autor.
 - En un informe **finalizado**, `paciente_datos`, `eps_nombre`, `servicio_nombre` y `firma` salen de los datos congelados al finalizar, y no de los actuales. En un borrador son los actuales.
+
+Adendas (etapa 8 del informe v2):
+- Se envían `motivo` (máximo 300 caracteres) y `texto`, los dos obligatorios. El sistema pone `numero` (1, 2, 3... dentro del informe), `autor`, `fecha` y `firma` (`{nombre, especialidad, registro_medico}` de quien la crea, congelada en ese momento).
+- Agregar una adenda no modifica el informe: su contenido, `fecha_informe` y los datos congelados siguen iguales.
+- El detalle del informe (`GET /api/informes/{id}/`) trae la lista `adendas`; el listado no la trae. En `/admin/` las adendas se ven en solo lectura.
 
 ### Foro (`/api/foro/`)
 
@@ -502,6 +512,8 @@ graph TD
     J -->|No| G
     J -->|Sí| K[Finalizar informe: se firma, se fija la fecha de informe y queda bloqueado]
     K --> L[Descargar PDF]
+    K --> M[Si hay que corregirlo: agregar una adenda firmada]
+    M --> L
     D --> L
 ```
 

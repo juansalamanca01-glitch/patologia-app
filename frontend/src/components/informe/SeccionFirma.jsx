@@ -2,11 +2,23 @@
 // es siempre la del autor (decisión D-8) y el backend la congela al finalizar (D-10).
 // `firma` viene de la API: { nombre, especialidad, registro_medico }.
 
-const formatoFecha = new Intl.DateTimeFormat('es-CO', {
+// Fecha y hora de Bogotá; también la usan las adendas (SeccionAdendas).
+export const formatoFechaHora = new Intl.DateTimeFormat('es-CO', {
   day: '2-digit', month: '2-digit', year: 'numeric',
   hour: '2-digit', minute: '2-digit',
   timeZone: 'America/Bogota',
 });
+
+// Nombre, especialidad y registro médico: la firma del informe y la de cada adenda.
+export function LineasFirma({ firma }) {
+  return (
+    <div className="firma-informe">
+      <strong>{firma.nombre}</strong>
+      {firma.especialidad && <span>{firma.especialidad}</span>}
+      {firma.registro_medico && <span>Registro médico N.º {firma.registro_medico}</span>}
+    </div>
+  );
+}
 
 export default function SeccionFirma({ firma, estado, fechaInforme }) {
   if (!firma) return null;  // informe nuevo, todavía sin guardar
@@ -25,13 +37,9 @@ export default function SeccionFirma({ firma, estado, fechaInforme }) {
             </div>
           )
         )}
-        <div className="firma-informe">
-          <strong>{firma.nombre}</strong>
-          {firma.especialidad && <span>{firma.especialidad}</span>}
-          {firma.registro_medico && <span>Registro médico N.º {firma.registro_medico}</span>}
-        </div>
+        <LineasFirma firma={firma} />
         {finalizado && fechaInforme && (
-          <p className="text-muted">Fecha de informe: {formatoFecha.format(new Date(fechaInforme))}</p>
+          <p className="text-muted">Fecha de informe: {formatoFechaHora.format(new Date(fechaInforme))}</p>
         )}
       </div>
     </div>

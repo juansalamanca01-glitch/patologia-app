@@ -151,6 +151,15 @@ def siguiente_numero_peticion():
     return f'P-{anio}-{ultimo:05d}'
 
 
+def firma_de(usuario):
+    """Firma de un usuario con sus datos de hoy. Informes (D-10) y adendas (D-9) la guardan congelada."""
+    return {
+        'nombre': usuario.nombre_visible,
+        'especialidad': usuario.especialidad,
+        'registro_medico': usuario.registro_medico,
+    }
+
+
 class Informe(models.Model):
     """Informe de anatomía patológica."""
 
@@ -289,11 +298,7 @@ class Informe(models.Model):
 
     def firma_actual(self):
         """Firma con los datos de hoy del autor; al finalizar se congela (D-10)."""
-        return {
-            'nombre': self.autor.nombre_visible,
-            'especialidad': self.autor.especialidad,
-            'registro_medico': self.autor.registro_medico,
-        }
+        return firma_de(self.autor)
 
     def datos_para_congelar(self):
         """
@@ -361,3 +366,42 @@ class Diagnostico(models.Model):
     def __str__(self):
         codigo = f' ({self.codigo_cie10})' if self.codigo_cie10 else ''
         return f'{self.orden}. {self.descripcion}{codigo}'
+
+
+class Adenda(models.Model):
+    """
+    Corrección de un informe finalizado (informe v2, etapa 8; decisión D-9). No modifica
+    el informe (D-3): es un texto nuevo, numerado, fechado y firmado por quien la crea.
+    No se edita ni se borra desde la aplicación.
+    """
+
+    informe = models.ForeignKey(
+        Informe,
+        on_delete=models.PROTECT,
+        related_name='adendas',
+        verbose_name='Informe',
+    )
+    # 1, 2, 3... dentro de cada informe; lo asigna la acción `adendas` de InformeViewSet.
+    numero = models.PositiveSmallIntegerField(verbose_name='Número')
+    motivo = models.CharField(max_length=300, verbose_name='Motivo')
+    texto = models.TextField(verbose_name='Texto')
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='adendas',
+        verbose_name='Autor',
+    )
+    fecha = models.DateTimeField(auto_now_add=True, verbose_name='Fecha')
+    # Nombre, especialidad y registro médico de quien la crea, tal como estaban (como D-10).
+    firma = models.JSONField(verbose_name='Firma')
+
+    class Meta:
+        verbose_name = 'Adenda'
+        verbose_name_plural = 'Adendas'
+        ordering = ['informe', 'numero']
+        constraints = [
+            models.UniqueConstraint(fields=['informe', 'numero'], name='adenda_numero_unico'),
+        ]
+
+    def __str__(self):
+        return f'Adenda N.º {self.numero} de {self.informe.numero_peticion}'

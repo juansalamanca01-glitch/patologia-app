@@ -5,7 +5,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from config.catalogos import NombreCatalogoMixin
-from .models import Categoria, Diagnostico, Patologia, Plantilla, Informe, Servicio
+from .models import Adenda, Categoria, Diagnostico, Patologia, Plantilla, Informe, Servicio
 
 MAX_DIAGNOSTICOS = 20
 # Letra, dos cifras y, opcionalmente, un punto con uno o dos caracteres: C44, C44.3, M80.90.
@@ -120,6 +120,18 @@ class DiagnosticoSerializer(serializers.ModelSerializer):
         return codigo
 
 
+class AdendaSerializer(serializers.ModelSerializer):
+    """
+    Adenda de un informe finalizado (decisión D-9). Solo se escriben el motivo y el
+    texto: el número, el autor y la firma los pone la acción `adendas` de InformeViewSet.
+    """
+
+    class Meta:
+        model = Adenda
+        fields = ['id', 'numero', 'motivo', 'texto', 'autor', 'fecha', 'firma']
+        read_only_fields = ['id', 'numero', 'autor', 'fecha', 'firma']
+
+
 class InformeSerializer(serializers.ModelSerializer):
     patologia_nombre = serializers.CharField(source='patologia.nombre', read_only=True)
     autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
@@ -131,6 +143,8 @@ class InformeSerializer(serializers.ModelSerializer):
     firma = serializers.SerializerMethodField()
     # Si se envía, reemplaza la lista anterior; si no se envía (p. ej. un PATCH), no cambia.
     diagnosticos = DiagnosticoSerializer(many=True, required=False)
+    # Se agregan con POST /api/informes/{id}/adendas/; aquí solo se leen (D-9).
+    adendas = AdendaSerializer(many=True, read_only=True)
 
     class Meta:
         model = Informe
@@ -141,7 +155,7 @@ class InformeSerializer(serializers.ModelSerializer):
             'patologia', 'patologia_nombre',
             'autor', 'autor_nombre', 'fecha', 'tipo_muestra',
             'datos_ingresados', 'texto_generado', 'descripcion_microscopica', 'diagnosticos', 'comentarios',
-            'estado', 'fecha_informe', 'firma', 'fecha_creacion', 'fecha_actualizacion',
+            'estado', 'fecha_informe', 'firma', 'adendas', 'fecha_creacion', 'fecha_actualizacion',
         ]
         # numero_peticion lo asigna el sistema y no se puede cambiar (decisión D-7).
         read_only_fields = [

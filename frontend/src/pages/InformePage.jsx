@@ -7,6 +7,7 @@ import SelectorPaciente from '../components/informe/SelectorPaciente';
 import DatosSolicitud from '../components/informe/DatosSolicitud';
 import ListaDiagnosticos, { conClaves, sinClaves } from '../components/informe/ListaDiagnosticos';
 import SeccionFirma from '../components/informe/SeccionFirma';
+import SeccionAdendas from '../components/informe/SeccionAdendas';
 import useOpciones from '../hooks/useOpciones';
 import { conOpcionActual, hoyISO } from '../utils/formularios';
 
@@ -547,6 +548,17 @@ export default function InformePage() {
           </div>
         )}
       </form>
+
+      {/* Fuera del <form>: una adenda se guarda con su propia petición (decisión D-9). */}
+      {informe && (
+        <SeccionAdendas
+          informeId={informe.id}
+          estado={informe.estado}
+          adendas={informe.adendas}
+          puedeAgregar={puedeEditar}
+          onAgregada={(adenda) => setInforme((prev) => ({ ...prev, adendas: [...(prev.adendas || []), adenda] }))}
+        />
+      )}
     </div>
   );
 }
