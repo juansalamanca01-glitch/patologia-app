@@ -5,6 +5,20 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-05
 
+### PDF de un borrador: vista previa solo para su autor o un admin (decisión D-12)
+
+**Qué se cambió**
+- **API** (`backend/informes/views.py`): `GET /api/informes/{id}/pdf/` de un borrador responde 403 si quien lo pide no es su autor ni un admin. El archivo de un borrador se llama `informe_P-AAAA-NNNNN_borrador.pdf`. El PDF de un informe finalizado no cambia: lo descargan todos los roles.
+- **PDF** (`backend/informes/utils.py`): `CanvasNumerado` recibe `marca_agua` y, en un borrador, dibuja "BORRADOR" grande, en diagonal y casi transparente en cada página.
+- **Frontend** (`InformePage.jsx`): en un borrador el botón dice "Vista previa (borrador)" y solo lo ven el autor y el admin. El archivo descargado lleva el sufijo `_borrador`. En un informe finalizado sigue diciendo "Exportar PDF".
+- **Pruebas:**
+  - Backend, de 235 a 242: `PdfBorradorTests` (7: autor, admin, otro patólogo, auditor, finalizado para todos y marca de agua en cada página o en ninguna).
+  - Se ajustan `DescargaPdfTests` (el auditor descarga un informe finalizado; el nombre del borrador lleva `_borrador`) y `NumeroPeticionTests`.
+  - Frontend, de 100 a 102: el botón de vista previa, el de un finalizado y que el borrador ajeno no ofrezca el PDF.
+- **Documentación:** `docs/decisiones.md` (D-12), `docs/propuesta-informe-v2.md` (5.2), `README.md`, `CLAUDE.md` y la descripción de "Descargar PDF" en Postman.
+
+**Por qué:** en la prueba manual el usuario notó que cualquier usuario podía descargar el PDF de un borrador. Aunque decía "sin validez", una hoja suelta podía imprimirse y circular. Se conserva la vista previa para el autor, que puede revisar el PDF antes de finalizar, y la marca de agua hace imposible confundirla con un informe definitivo. Decisión del usuario del 2026-10-05.
+
 ### Informe v2, etapa 8: adendas
 
 **Qué se cambió**

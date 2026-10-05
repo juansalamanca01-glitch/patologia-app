@@ -55,6 +55,9 @@ export default function InformePage() {
     ? canWrite && Boolean(informe) && (isAdmin || informe.autor === user?.id)
     : canWrite;
   const soloLectura = informe?.estado === 'finalizado' || !puedeEditar;
+  // El PDF de un borrador es una vista previa solo para su autor o un admin (decisión D-12).
+  const borrador = informe?.estado !== 'finalizado';
+  const puedeVerPdf = Boolean(informe) && (!borrador || puedeEditar);
 
   // Carga la lista de patologías
   useEffect(() => {
@@ -247,7 +250,8 @@ export default function InformePage() {
   // Descarga el PDF con Axios, que envía el token en la cabecera Authorization.
   // Antes el token iba en la URL (?token=...) y quedaba en el historial (auditoría I-5).
   const downloadPDF = async () => {
-    const safeName = (informe?.numero_peticion || id).toString().replace(/[^a-zA-Z0-9\-]/g, '_');
+    const numero = (informe?.numero_peticion || id).toString().replace(/[^a-zA-Z0-9\-]/g, '_');
+    const safeName = borrador ? `${numero}_borrador` : numero;
     try {
       const { data } = await client.get(`/informes/${id}/pdf/`, { responseType: 'blob' });
       // Enlace temporal "blob:" para que el navegador guarde el archivo con su nombre.
@@ -353,14 +357,16 @@ export default function InformePage() {
         <div className="header-actions">
           {isEditing && (
             <>
-              <button className="btn btn-outline" onClick={downloadPDF}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                  <polyline points="7,10 12,15 17,10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Exportar PDF
-              </button>
+              {puedeVerPdf && (
+                <button className="btn btn-outline" onClick={downloadPDF}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                    <polyline points="7,10 12,15 17,10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  {borrador ? 'Vista previa (borrador)' : 'Exportar PDF'}
+                </button>
+              )}
               {puedeEditar && informe?.estado === 'borrador' && (
                 confirmFinalizar ? (
                   <>

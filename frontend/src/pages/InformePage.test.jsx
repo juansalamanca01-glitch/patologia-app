@@ -106,7 +106,8 @@ describe('InformePage: exportar PDF', () => {
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     renderInforme();
 
-    (await screen.findByRole('button', { name: /Exportar PDF/i })).click();
+    // INFORME es un borrador del usuario: el botón es la vista previa (decisión D-12).
+    (await screen.findByRole('button', { name: /Vista previa \(borrador\)/i })).click();
 
     await vi.waitFor(() => {
       expect(client.get).toHaveBeenCalledWith('/informes/5/pdf/', { responseType: 'blob' });
@@ -117,7 +118,33 @@ describe('InformePage: exportar PDF', () => {
     expect(clickSpy).toHaveBeenCalled();
     const enlace = clickSpy.mock.contexts[0];
     expect(enlace.href).toBe('blob:pdf');
-    expect(enlace.download).toBe('informe_P-2026-00001.pdf');
+    expect(enlace.download).toBe('informe_P-2026-00001_borrador.pdf');
+  });
+
+  // Decisión D-12: el PDF de un borrador es una vista previa solo para su autor o un admin.
+  function conInforme(informe) {
+    const simulado = client.get.getMockImplementation();
+    client.get.mockImplementation((url, ...resto) => (
+      url === '/informes/5/' ? Promise.resolve({ data: informe }) : simulado(url, ...resto)
+    ));
+  }
+
+  it('un informe finalizado se exporta con su nombre, sin "borrador"', async () => {
+    conInforme({ ...INFORME, estado: 'finalizado', fecha_informe: '2026-10-04T20:30:00Z' });
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    renderInforme();
+    (await screen.findByRole('button', { name: /Exportar PDF/i })).click();
+    await vi.waitFor(() => expect(clickSpy).toHaveBeenCalled());
+    expect(clickSpy.mock.contexts.at(-1).download).toBe('informe_P-2026-00001.pdf');
+    expect(screen.queryByRole('button', { name: /Vista previa/i })).toBeNull();
+  });
+
+  it('el borrador de otro patólogo no ofrece el PDF', async () => {
+    conInforme({ ...INFORME, autor: 2 });
+    renderInforme();
+    await screen.findByText('Dra. Ficticia Firma');
+    expect(screen.queryByRole('button', { name: /Vista previa/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Exportar PDF/i })).toBeNull();
   });
 });
 

@@ -97,3 +97,14 @@ Los códigos como "I-7" o "C-2" remiten a `docs/auditoria-inicial.md`.
   - **EPS y servicios:** los administran patólogos y administradores, igual que el catálogo de patologías (D-1). Se desactivan en lugar de borrarse (D-4).
   - **Auditor:** solo lee.
 - **Motivo:** el patólogo es quien registra a los pacientes y conoce las EPS y los servicios con los que trabaja. Borrar un paciente es más delicado porque se pierde su identificación, por eso queda solo para el administrador.
+
+## D-12. El PDF de un borrador es una vista previa solo para su autor o un administrador
+
+- **Fecha:** 2026-10-05
+- **Relacionado con:** D-2, D-3; `docs/propuesta-informe-v2.md` (sección 5.2)
+- **Decisión:**
+  - **Quién lo descarga:** el PDF de un informe en **borrador** solo lo descargan su **autor** o un **administrador**, como vista previa antes de finalizar. Los demás patólogos y el auditor reciben 403, y en la pantalla no ven el botón.
+  - **Cómo se marca:** el borrador lleva en cada página una marca de agua grande en diagonal, "BORRADOR", además de lo que ya tenía desde la etapa 7: sin firma y con "BORRADOR — SIN VALIDEZ" en la fecha de informe y en el pie. El archivo se llama `informe_P-AAAA-NNNNN_borrador.pdf`, y el botón dice "Vista previa (borrador)".
+  - **Informes finalizados:** su PDF lo siguen descargando todos los roles, sin marca de agua ni sufijo.
+- **Motivo:** el usuario notó en la prueba manual que cualquiera podía descargar un borrador, y un PDF suelto puede imprimirse y circular aunque diga "sin validez" en letra pequeña. La vista previa se conserva porque al patólogo le sirve revisar el PDF antes de finalizar: después solo podría corregirlo con una adenda (D-9).
+

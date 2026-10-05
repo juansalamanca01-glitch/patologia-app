@@ -2,6 +2,7 @@ import re
 
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http import HttpResponse
@@ -260,13 +261,23 @@ class InformeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='pdf')
     def exportar_pdf(self, request, pk=None):
-        """Descarga el informe en PDF."""
+        """
+        Descarga el informe en PDF. El de un borrador es una vista previa solo para su
+        autor o un admin (decisión D-12): lleva la marca de agua "BORRADOR" y el sufijo
+        _borrador en el nombre del archivo.
+        """
         informe = self.get_object()
+        if not informe.esta_finalizado and not (request.user.es_admin or informe.autor_id == request.user.id):
+            raise PermissionDenied(
+                'El PDF de un borrador es una vista previa solo para su autor o un administrador.'
+            )
         buffer = generar_pdf_informe(informe)
         # El número de petición lo genera el sistema (D-7), pero se sigue limpiando:
         # unas comillas o un punto y coma romperían la cabecera Content-Disposition (I-5).
         # El nombre del archivo nunca lleva datos del paciente.
         safe_name = re.sub(r'[^A-Za-z0-9\-]', '_', informe.numero_peticion)
+        if not informe.esta_finalizado:
+            safe_name += '_borrador'
         response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="informe_{safe_name}.pdf"'
         return response

@@ -323,11 +323,15 @@ class DescargaPdfTests(APITestCase):
         respuesta = self.client.get(self.url)
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         self.assertEqual(respuesta['Content-Type'], 'application/pdf')
+        # Es un borrador: el nombre del archivo lo dice (decisión D-12).
         self.assertEqual(
-            respuesta['Content-Disposition'], f'attachment; filename="informe_{self.informe.numero_peticion}.pdf"',
+            respuesta['Content-Disposition'],
+            f'attachment; filename="informe_{self.informe.numero_peticion}_borrador.pdf"',
         )
 
-    def test_auditor_puede_descargar(self):
+    def test_auditor_puede_descargar_un_informe_finalizado(self):
+        # Un borrador es solo vista previa de su autor o de un admin (decisión D-12).
+        Informe.objects.filter(id=self.informe.id).update(estado=Informe.Estado.FINALIZADO)
         auditor = Usuario.objects.create_user(
             username='auditor_descarga', password='ClaveSegura-2026', rol=Usuario.Rol.AUDITOR,
         )
@@ -350,7 +354,7 @@ class DescargaPdfTests(APITestCase):
         self.informe.save()
         self.client.force_authenticate(self.patologo)
         respuesta = self.client.get(self.url)
-        self.assertEqual(respuesta['Content-Disposition'], 'attachment; filename="informe_PAT_1_x__y.pdf"')
+        self.assertEqual(respuesta['Content-Disposition'], 'attachment; filename="informe_PAT_1_x__y_borrador.pdf"')
 
 
 class CamposObligatoriosTests(APITestCase):
@@ -690,8 +694,9 @@ class NumeroPeticionTests(APITestCase):
         id_informe = self.crear().data['id']
         with mock.patch('informes.utils.Table', wraps=Table) as espia:
             respuesta = self.client.get(f'/api/informes/{id_informe}/pdf/')
+        # Es un borrador: el nombre lleva el sufijo _borrador (decisión D-12).
         self.assertEqual(
-            respuesta['Content-Disposition'], f'attachment; filename="informe_{self.numero(1)}.pdf"',
+            respuesta['Content-Disposition'], f'attachment; filename="informe_{self.numero(1)}_borrador.pdf"',
         )
         celdas = str([llamada.args[0] for llamada in espia.call_args_list])
         self.assertIn(self.numero(1), celdas)
@@ -2104,3 +2109,91 @@ class AdendaTests(APITestCase):
         self.agregar(self.crear())
         fila = self.client.get(self.URL).data['results'][0]
         self.assertNotIn('adendas', fila)
+
+
+class PdfBorradorTests(APITestCase):
+    """
+    Decisión D-12: el PDF de un borrador es una vista previa solo para su autor o un
+    admin; los demás (otros patólogos y el auditor) reciben 403. Lleva la marca de agua
+    "BORRADOR" en cada página y el archivo se llama informe_P-AAAA-NNNNN_borrador.pdf.
+    El PDF de un informe finalizado lo descargan todos, sin marca de agua.
+    Solo datos ficticios.
+    """
+
+    def setUp(self):
+        def usuario(username, rol):
+            return Usuario.objects.create_user(username=username, password='ClaveSegura-2026', rol=rol)
+
+        self.autor = usuario('autor_borrador', Usuario.Rol.PATOLOGO)
+        self.otro = usuario('otro_borrador', Usuario.Rol.PATOLOGO)
+        self.admin = usuario('admin_borrador', Usuario.Rol.ADMIN)
+        self.auditor = usuario('auditor_borrador', Usuario.Rol.AUDITOR)
+        self.informe = Informe.objects.create(
+            patologia=Patologia.objects.create(nombre='Patología borrador'), autor=self.autor,
+            paciente=paciente_ficticio(), descripcion_microscopica='Párrafo largo de prueba. ' * 1500,
+        )
+        self.url = f'/api/informes/{self.informe.id}/pdf/'
+
+    def descargar(self, usuario):
+        self.client.force_authenticate(usuario)
+        return self.client.get(self.url)
+
+    def finalizar(self):
+        Informe.objects.filter(id=self.informe.id).update(estado=Informe.Estado.FINALIZADO)
+
+    def marcas_y_paginas(self):
+        """Descarga como el autor y devuelve cuántas marcas "BORRADOR" se dibujan y cuántas páginas hay."""
+        import re
+        from reportlab.pdfgen.canvas import Canvas
+        with mock.patch.object(Canvas, 'drawCentredString', autospec=True,
+                               side_effect=Canvas.drawCentredString) as centrados:
+            respuesta = self.descargar(self.autor)
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        marcas = [llamada for llamada in centrados.call_args_list if llamada.args[3] == 'BORRADOR']
+        return len(marcas), len(re.findall(rb'/Type /Page\b(?!s)', respuesta.content))
+
+    # --- Quién descarga un borrador ---
+
+    def test_el_autor_descarga_la_vista_previa_de_su_borrador(self):
+        respuesta = self.descargar(self.autor)
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            respuesta['Content-Disposition'],
+            f'attachment; filename="informe_{self.informe.numero_peticion}_borrador.pdf"',
+        )
+
+    def test_un_admin_descarga_el_borrador_de_otro(self):
+        self.assertEqual(self.descargar(self.admin).status_code, status.HTTP_200_OK)
+
+    def test_otro_patologo_no_descarga_un_borrador_ajeno(self):
+        respuesta = self.descargar(self.otro)
+        self.assertEqual(respuesta.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn('borrador', respuesta.data['detail'])
+
+    def test_el_auditor_no_descarga_un_borrador(self):
+        self.assertEqual(self.descargar(self.auditor).status_code, status.HTTP_403_FORBIDDEN)
+
+    # --- Informe finalizado ---
+
+    def test_un_informe_finalizado_lo_descargan_todos_sin_borrador_en_el_nombre(self):
+        self.finalizar()
+        for usuario in (self.autor, self.otro, self.admin, self.auditor):
+            respuesta = self.descargar(usuario)
+            self.assertEqual(respuesta.status_code, status.HTTP_200_OK, usuario.username)
+            self.assertEqual(
+                respuesta['Content-Disposition'],
+                f'attachment; filename="informe_{self.informe.numero_peticion}.pdf"',
+            )
+
+    # --- Marca de agua ---
+
+    def test_el_borrador_lleva_la_marca_de_agua_en_cada_pagina(self):
+        marcas, paginas = self.marcas_y_paginas()
+        self.assertGreaterEqual(paginas, 2)
+        self.assertEqual(marcas, paginas)
+
+    def test_un_informe_finalizado_no_lleva_marca_de_agua(self):
+        self.finalizar()
+        marcas, paginas = self.marcas_y_paginas()
+        self.assertGreaterEqual(paginas, 2)
+        self.assertEqual(marcas, 0)

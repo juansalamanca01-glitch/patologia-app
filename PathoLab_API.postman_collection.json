@@ -658,7 +658,7 @@
 								""
 							]
 						},
-						"description": "Genera el PDF del informe. En Postman usa \"Send and Download\" para guardarlo como archivo."
+						"description": "Genera el PDF del informe. En Postman usa \"Send and Download\" para guardarlo como archivo. El PDF de un borrador es una vista previa solo para su autor o un admin (decisión D-12): lleva la marca de agua \"BORRADOR\" y se llama informe_P-AAAA-NNNNN_borrador.pdf; los demás usuarios reciben 403. El de un informe finalizado lo descargan todos."
 					},
 					"response": []
 				}

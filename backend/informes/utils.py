@@ -101,12 +101,14 @@ class CanvasNumerado(canvas.Canvas):
     """
     Lienzo que dibuja el pie de cada página al final, cuando ya se sabe el total:
     "N.º de petición … · Página X de Y · Generado el …". `pie` es el texto que va
-    antes y después de "Página X de Y".
+    antes y después de "Página X de Y". Si se da `marca_agua` (un borrador, D-12),
+    la dibuja grande, en diagonal y casi transparente sobre cada página.
     """
 
-    def __init__(self, *args, pie=('', ''), **kwargs):
+    def __init__(self, *args, pie=('', ''), marca_agua=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._pie = pie
+        self._marca_agua = marca_agua
         self._paginas = []
 
     def showPage(self):
@@ -118,12 +120,24 @@ class CanvasNumerado(canvas.Canvas):
         total = len(self._paginas)
         for numero, estado in enumerate(self._paginas, start=1):
             self.__dict__.update(estado)
+            if self._marca_agua:
+                self._dibujar_marca_agua()
             antes, despues = self._pie
             self.setFont('Helvetica', 8)
             self.setFillColor(GRIS_SUAVE)
             self.drawCentredString(letter[0] / 2, 1 * cm, f'{antes}Página {numero} de {total}{despues}')
             super().showPage()
         super().save()
+
+    def _dibujar_marca_agua(self):
+        self.saveState()
+        self.setFont('Helvetica-Bold', 100)
+        self.setFillColor(ROJO)
+        self.setFillAlpha(0.08)
+        self.translate(letter[0] / 2, letter[1] / 2)
+        self.rotate(45)
+        self.drawCentredString(0, -35, self._marca_agua)
+        self.restoreState()
 
 
 def _estilos():
@@ -346,6 +360,10 @@ def generar_pdf_informe(informe) -> io.BytesIO:
     antes = f'N.º de petición {informe.numero_peticion} · '
     if not informe.esta_finalizado:
         antes = f'{AVISO_BORRADOR} · {antes}'
-    doc.build(elementos, canvasmaker=partial(CanvasNumerado, pie=(antes, f' · Generado el {generado}')))
+    # Un borrador es solo una vista previa (D-12): marca de agua en cada página.
+    marca_agua = None if informe.esta_finalizado else 'BORRADOR'
+    doc.build(elementos, canvasmaker=partial(
+        CanvasNumerado, pie=(antes, f' · Generado el {generado}'), marca_agua=marca_agua,
+    ))
     buffer.seek(0)
     return buffer

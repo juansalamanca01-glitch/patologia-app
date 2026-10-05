@@ -45,7 +45,7 @@
   - adendas al final, cada una con su firma, y un aviso bajo el título ("Este informe tiene 2 adendas; ver al final") para que nadie lea el diagnóstico original sin saber que se corrigió;
   - pie en cada página con el número de petición, "Página X de Y" y la hora de generación.
 
-  Un informe finalizado imprime los datos congelados al finalizar. Un borrador no lleva firma y dice "BORRADOR — SIN VALIDEZ" en la fecha de informe y en el pie de cada página.
+  Un informe finalizado imprime los datos congelados al finalizar. El PDF de un borrador es solo una **vista previa** para su autor o un administrador: no lleva firma, tiene una marca de agua "BORRADOR" en cada página, dice "BORRADOR — SIN VALIDEZ" en la fecha de informe y en el pie, y el archivo termina en `_borrador.pdf`.
 - **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
 - **Adendas**: un informe finalizado se corrige con adendas, sin modificar lo que ya se entregó. Cada adenda lleva motivo, texto, número (1, 2, 3... dentro del informe), fecha y la firma de quien la crea, que debe tener registro médico. Las agrega el autor del informe o un administrador, y no se editan ni se borran.
 - **Firma y finalización**: el informe lo firma siempre su autor, con su nombre, especialidad y registro médico. El registro médico solo lo asigna un administrador. Para finalizar, el informe debe tener paciente y al menos un diagnóstico, el autor debe tener registro médico y, en histología, debe haber descripción microscópica; si falta algo, la aplicación dice qué. Al finalizar se fija la fecha de informe y se congelan los datos del paciente, la EPS, el servicio y la firma: corregirlos después no cambia un informe ya entregado.
@@ -65,7 +65,8 @@
 
 | Acción | Administrador | Patólogo | Auditor |
 |---|:---:|:---:|:---:|
-| Ver informes, buscar y descargar PDF | Sí | Sí | Sí |
+| Ver informes, buscar y descargar el PDF de un informe finalizado | Sí | Sí | Sí |
+| Descargar la vista previa en PDF de un borrador | Sí (cualquiera) | Solo los suyos | No |
 | Crear informes | Sí | Sí | No |
 | Editar, borrar o finalizar un informe | Sí (cualquiera) | Solo los suyos | No |
 | Editar o borrar un informe **finalizado** | No | No | No |
@@ -450,7 +451,7 @@ Las EPS y los servicios se desactivan en lugar de borrarse (decisión D-4), para
 | POST | `/api/informes/{id}/finalizar/` | Finalizar el informe (después ya no se puede editar). Si faltan requisitos → 400 con `detail` y la lista `requisitos` | Autor / Admin |
 | GET | `/api/informes/{id}/adendas/` | Adendas del informe, en orden | Todos |
 | POST | `/api/informes/{id}/adendas/` | Agregar una adenda `{motivo, texto}` a un informe finalizado. En un borrador, o si quien la crea no tiene registro médico → 400. No hay PUT, PATCH ni DELETE | Autor / Admin |
-| GET | `/api/informes/{id}/pdf/` | Descargar el informe en PDF | Todos |
+| GET | `/api/informes/{id}/pdf/` | Descargar el informe en PDF. El de un borrador es una vista previa (marca de agua "BORRADOR", archivo `…_borrador.pdf`) solo para su autor o un admin; los demás reciben 403 | Todos (finalizado) / Autor y Admin (borrador) |
 
 Datos de la solicitud del informe (etapa 4 del informe v2):
 - `paciente` (id): obligatorio al crear y no se puede quitar después. Los informes de antes de esta etapa no tienen paciente y se muestran como "No registrado"; se les puede asignar uno al editarlos.
