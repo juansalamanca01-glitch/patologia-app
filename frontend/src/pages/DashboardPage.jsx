@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import client, { resultados } from '../api/client';
 import EstadoBadge from '../components/EstadoBadge';
+import CeldaPaciente from '../components/CeldaPaciente';
 import { ROL_LABELS } from '../constants';
 
 export default function DashboardPage() {
@@ -129,6 +130,7 @@ export default function DashboardPage() {
                 <thead>
                   <tr>
                     <th>N.º de petición</th>
+                    <th>Paciente</th>
                     <th>Patología</th>
                     <th>Fecha</th>
                     <th>Estado</th>
@@ -139,6 +141,7 @@ export default function DashboardPage() {
                   {recientes.map((inf) => (
                     <tr key={inf.id}>
                       <td><strong>{inf.numero_peticion}</strong></td>
+                      <td><CeldaPaciente informe={inf} /></td>
                       <td>{inf.patologia_nombre}</td>
                       <td>{inf.fecha}</td>
                       <td>

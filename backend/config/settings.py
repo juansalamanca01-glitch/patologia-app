@@ -144,6 +144,9 @@ REST_FRAMEWORK = {
     },
 }
 
+# Las pruebas no acumulan los límites de peticiones entre sí (ver config/test_runner.py).
+TEST_RUNNER = 'config.test_runner.PathoLabTestRunner'
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=8),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),

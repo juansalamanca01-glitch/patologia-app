@@ -31,9 +31,15 @@ class ServicioAdmin(admin.ModelAdmin):
 
 @admin.register(Informe)
 class InformeAdmin(admin.ModelAdmin):
-    list_display = ['numero_peticion', 'numero_orden_externa', 'patologia', 'autor', 'fecha', 'estado']
-    list_filter = ['estado', 'patologia', 'fecha']
-    search_fields = ['numero_peticion', 'numero_orden_externa', 'tipo_muestra']
+    list_display = ['numero_peticion', 'paciente', 'tipo_estudio', 'patologia', 'autor', 'fecha', 'estado']
+    list_filter = ['estado', 'tipo_estudio', 'patologia', 'fecha']
+    search_fields = [
+        'numero_peticion', 'numero_orden_externa', 'tipo_muestra',
+        'paciente__numero_documento', 'paciente__nombres', 'paciente__apellidos',
+    ]
+    list_select_related = ['paciente', 'patologia', 'autor']
+    # Listas con búsqueda en lugar de un menú con todos los pacientes.
+    autocomplete_fields = ['paciente']
     # numero_peticion no es editable (D-7): se muestra pero no se puede cambiar.
     readonly_fields = ['numero_peticion', 'texto_generado', 'fecha_creacion', 'fecha_actualizacion']
 

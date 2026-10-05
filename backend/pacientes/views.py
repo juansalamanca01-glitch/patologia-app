@@ -1,5 +1,6 @@
 from django.db.models import ProtectedError, Q
 from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from accounts.permissions import EsPatologoOAdmin, EsPatologoOAdminYSoloAdminBorra
@@ -26,10 +27,11 @@ class EPSViewSet(viewsets.ModelViewSet):
         try:
             return super().destroy(request, *args, **kwargs)
         except ProtectedError:
-            total = eps.pacientes.count()
+            # Puede estar en uso por pacientes (su EPS actual) o por informes (la del estudio).
+            pacientes, informes = eps.pacientes.count(), eps.informes.count()
             return Response(
-                {'detail': f'No se puede eliminar: esta EPS tiene {total} paciente(s) asociado(s). '
-                           'Desactívela en su lugar.'},
+                {'detail': f'No se puede eliminar: esta EPS tiene {pacientes} paciente(s) y '
+                           f'{informes} informe(s) asociado(s). Desactívela en su lugar.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -37,7 +39,7 @@ class EPSViewSet(viewsets.ModelViewSet):
 class PacienteViewSet(viewsets.ModelViewSet):
     """
     Pacientes (docs/propuesta-informe-v2.md, 3.1 y 4). Todos leen; patólogo y admin
-    crean y editan; solo el admin borra (decisión D-11).
+    crean y editan; solo el admin borra, y solo si no tiene informes (decisión D-11).
     ?q= busca por documento, nombres y apellidos: cada palabra debe aparecer en
     alguno de los tres, así que "ficticio uno" encuentra a "Paciente Ficticio Uno".
     """
@@ -58,3 +60,27 @@ class PacienteViewSet(viewsets.ModelViewSet):
                 | Q(apellidos__icontains=palabra)
             )
         return qs
+
+    def destroy(self, request, *args, **kwargs):
+        # Informe.paciente usa PROTECT: se responde 400 en lugar de un error 500 (como I-1).
+        paciente = self.get_object()
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            total = paciente.informes.count()
+            return Response(
+                {'detail': f'No se puede eliminar: este paciente tiene {total} informe(s) asociado(s).'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=True, methods=['get'])
+    def informes(self, request, pk=None):
+        """GET /api/pacientes/{id}/informes/: historial de informes del paciente, paginado."""
+        # Import local: la app informes ya importa de pacientes.
+        from informes.models import Informe
+        from informes.serializers import InformeListSerializer
+
+        paciente = self.get_object()
+        qs = Informe.objects.filter(paciente=paciente).select_related('patologia', 'autor', 'paciente')
+        pagina = self.paginate_queryset(qs)
+        return self.get_paginated_response(InformeListSerializer(pagina, many=True).data)

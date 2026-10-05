@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import client from '../api/client';
 import { reiniciarOpciones } from '../hooks/useOpciones';
@@ -26,7 +27,7 @@ const PACIENTE = {
 const OPCIONES = {
   sexos: [{ valor: 'femenino', etiqueta: 'Femenino' }, { valor: 'masculino', etiqueta: 'Masculino' }],
   tipos_documento: [{ valor: 'CC', etiqueta: 'Cédula de ciudadanía' }, { valor: 'TI', etiqueta: 'Tarjeta de identidad' }],
-  tipos_estudio: [],
+  tipos_estudio: [{ valor: 'histologia', etiqueta: 'Histología' }],
 };
 
 const pagina = (lista) => ({ data: { count: lista.length, next: null, previous: null, results: lista } });
@@ -129,5 +130,48 @@ describe('PacientesPage', () => {
     fireEvent.click(within(modal).getByRole('button', { name: 'Eliminar' }));
     expect(await screen.findByText('No se puede eliminar este paciente.')).toBeInTheDocument();
     expect(client.delete).toHaveBeenCalledWith('/pacientes/1/');
+  });
+});
+
+// Informe v2, etapa 4: historial de informes de cada paciente
+// (GET /api/pacientes/{id}/informes/).
+describe('PacientesPage: historial de informes', () => {
+  const INFORME = {
+    id: 5, numero_peticion: 'P-2026-00001', tipo_estudio: 'histologia', patologia_nombre: 'Piel',
+    fecha: '2026-10-04', estado: 'finalizado',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    reiniciarOpciones();
+    auth = AUDITOR;
+    client.get.mockImplementation((url) => {
+      if (url === '/opciones/') return Promise.resolve({ data: OPCIONES });
+      if (url === '/pacientes/1/informes/') return Promise.resolve(pagina([INFORME]));
+      return Promise.resolve(pagina([PACIENTE]));
+    });
+  });
+
+  it('cualquier usuario ve los informes de un paciente, con enlace a cada uno', async () => {
+    render(<MemoryRouter><PacientesPage /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: 'Informes' }));
+    const enlace = await screen.findByRole('link', { name: 'P-2026-00001' });
+    expect(enlace).toHaveAttribute('href', '/informes/5');
+    const fila = enlace.closest('tr');
+    expect(await within(fila).findByText('Histología')).toBeInTheDocument();
+    expect(within(fila).getByText('Piel')).toBeInTheDocument();
+    expect(within(fila).getByText('Finalizado')).toBeInTheDocument();
+    expect(client.get).toHaveBeenCalledWith('/pacientes/1/informes/', { params: { page_size: 1000 } });
+  });
+
+  it('avisa si el paciente no tiene informes', async () => {
+    client.get.mockImplementation((url) => {
+      if (url === '/opciones/') return Promise.resolve({ data: OPCIONES });
+      if (url === '/pacientes/1/informes/') return Promise.resolve(pagina([]));
+      return Promise.resolve(pagina([PACIENTE]));
+    });
+    render(<MemoryRouter><PacientesPage /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: 'Informes' }));
+    expect(await screen.findByText(/no tiene informes/)).toBeInTheDocument();
   });
 });

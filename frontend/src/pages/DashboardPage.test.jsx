@@ -13,7 +13,10 @@ vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({ user: { id: 1, rol: 'patologo', username: 'patologo1' }, canWrite: true, isAdmin: false }),
 }));
 
-const BORRADOR = { id: 5, numero_peticion: 'P-2026-00001', patologia_nombre: 'Piel', fecha: '2026-10-04', estado: 'borrador', autor: 1 };
+const BORRADOR = {
+  id: 5, numero_peticion: 'P-2026-00001', patologia_nombre: 'Piel', fecha: '2026-10-04', estado: 'borrador', autor: 1,
+  paciente: 1, paciente_nombre: 'Paciente Ficticio Uno', paciente_documento: 'CC PRUEBA0001',
+};
 
 function simularApi() {
   client.get.mockImplementation((url) => Promise.resolve({
@@ -55,5 +58,19 @@ describe('DashboardPage: número de petición', () => {
     render(<MemoryRouter><DashboardPage /></MemoryRouter>);
     expect(await screen.findByText('P-2026-00001')).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /petición/i })).toBeInTheDocument();
+  });
+});
+
+// Informe v2, etapa 4: los informes recientes muestran el paciente.
+describe('DashboardPage: paciente', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('la tabla de informes recientes muestra el paciente', async () => {
+    simularApi();
+    render(<MemoryRouter><DashboardPage /></MemoryRouter>);
+    expect(await screen.findByText('Paciente Ficticio Uno')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Paciente' })).toBeInTheDocument();
   });
 });

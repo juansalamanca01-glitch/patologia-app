@@ -104,6 +104,19 @@ class ServicioViewSet(viewsets.ModelViewSet):
         # ?activo=true: los formularios ofrecen solo los servicios activos (D-4).
         return filtrar_por_activo(super().get_queryset(), self.request, 'activo')
 
+    def destroy(self, request, *args, **kwargs):
+        # Informe.servicio usa PROTECT: un servicio en uso se desactiva, no se borra (D-4, como I-1).
+        servicio = self.get_object()
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            total = servicio.informes.count()
+            return Response(
+                {'detail': f'No se puede eliminar: este servicio tiene {total} informe(s) asociado(s). '
+                           'Desactívelo en su lugar.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
 
 def _opciones(choices):
     return [{'valor': valor, 'etiqueta': etiqueta} for valor, etiqueta in choices.choices]
@@ -135,7 +148,7 @@ class InformeViewSet(viewsets.ModelViewSet):
     - solo el autor o un admin puede editar, borrar o finalizar un informe;
     - un informe finalizado no se puede editar ni borrar, ni siquiera un admin.
     """
-    queryset = Informe.objects.select_related('patologia', 'autor').all()
+    queryset = Informe.objects.select_related('patologia', 'autor', 'paciente', 'eps', 'servicio').all()
     permission_classes = [EsAutorOAdminOSoloLectura]
 
     def _rechazar_si_finalizado(self, informe):
@@ -165,13 +178,18 @@ class InformeViewSet(viewsets.ModelViewSet):
         params = self.request.query_params
 
         # Filtros de búsqueda
-        q = params.get('q')
-        if q:
+        # Cada palabra de ?q= debe aparecer en alguno de los campos: así "ficticio uno"
+        # encuentra a "Paciente Ficticio Uno" aunque esté repartido en nombres y apellidos.
+        for palabra in params.get('q', '').split():
             qs = qs.filter(
-                Q(numero_peticion__icontains=q) |
-                Q(numero_orden_externa__icontains=q) |
-                Q(patologia__nombre__icontains=q) |
-                Q(tipo_muestra__icontains=q)
+                Q(numero_peticion__icontains=palabra) |
+                Q(numero_orden_externa__icontains=palabra) |
+                Q(patologia__nombre__icontains=palabra) |
+                Q(tipo_muestra__icontains=palabra) |
+                # El documento se guarda sin puntos: "1.234" también encuentra "1234".
+                Q(paciente__numero_documento__icontains=palabra.replace('.', '')) |
+                Q(paciente__nombres__icontains=palabra) |
+                Q(paciente__apellidos__icontains=palabra)
             )
 
         fecha_desde = params.get('fecha_desde')
@@ -189,6 +207,10 @@ class InformeViewSet(viewsets.ModelViewSet):
         patologia_id = params.get('patologia')
         if patologia_id:
             qs = qs.filter(patologia_id=patologia_id)
+
+        paciente_id = params.get('paciente')
+        if paciente_id:
+            qs = qs.filter(paciente_id=paciente_id)
 
         return qs
 

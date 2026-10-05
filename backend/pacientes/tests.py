@@ -282,3 +282,62 @@ class BorrarEPSConPacientesTests(APITestCase):
     def test_borrar_eps_sin_uso_sigue_funcionando(self):
         eps = EPS.objects.create(nombre='Sin uso')
         self.assertEqual(self.client.delete(f'/api/pacientes/eps/{eps.id}/').status_code, status.HTTP_204_NO_CONTENT)
+
+
+class HistorialYBorradoConInformesTests(APITestCase):
+    """
+    Etapa 4 (sección 4 y decisión D-11): historial de informes de un paciente en
+    GET /api/pacientes/{id}/informes/, y un paciente con informes no se borra
+    (Informe.paciente es PROTECT): se responde 400, como en I-1.
+    """
+
+    def setUp(self):
+        from informes.models import Informe, Patologia
+        self.Informe = Informe
+        self.admin = Usuario.objects.create_user(username='hist_admin', password='x', rol=Usuario.Rol.ADMIN)
+        self.auditor = Usuario.objects.create_user(username='hist_aud', password='x', rol=Usuario.Rol.AUDITOR)
+        self.patologia = Patologia.objects.create(nombre='Patología historial')
+        self.paciente = self.nuevo_paciente('PRUEBA0001')
+        self.otro = self.nuevo_paciente('PRUEBA0002')
+
+    def nuevo_paciente(self, numero):
+        return Paciente.objects.create(
+            tipo_documento='CC', numero_documento=numero, nombres='Paciente Ficticio',
+            apellidos='Uno', fecha_nacimiento=date(1980, 10, 5), sexo='femenino',
+        )
+
+    def informe_de(self, paciente):
+        return self.Informe.objects.create(patologia=self.patologia, autor=self.admin, paciente=paciente)
+
+    def test_historial_devuelve_solo_los_informes_del_paciente(self):
+        primero = self.informe_de(self.paciente)
+        segundo = self.informe_de(self.paciente)
+        self.informe_de(self.otro)
+        self.client.force_authenticate(self.auditor)
+        respuesta = self.client.get(f'/api/pacientes/{self.paciente.id}/informes/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data['count'], 2)
+        self.assertCountEqual(
+            [i['numero_peticion'] for i in respuesta.data['results']],
+            [primero.numero_peticion, segundo.numero_peticion],
+        )
+
+    def test_historial_de_paciente_sin_informes_esta_vacio(self):
+        self.client.force_authenticate(self.auditor)
+        self.assertEqual(self.client.get(f'/api/pacientes/{self.paciente.id}/informes/').data['count'], 0)
+
+    def test_historial_de_paciente_inexistente_responde_404(self):
+        self.client.force_authenticate(self.auditor)
+        self.assertEqual(self.client.get('/api/pacientes/999999/informes/').status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_historial_requiere_sesion(self):
+        respuesta = self.client.get(f'/api/pacientes/{self.paciente.id}/informes/')
+        self.assertEqual(respuesta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_borrar_paciente_con_informes_responde_400(self):
+        self.informe_de(self.paciente)
+        self.client.force_authenticate(self.admin)
+        respuesta = self.client.delete(f'/api/pacientes/{self.paciente.id}/')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('1 informe', respuesta.data['detail'])
+        self.assertTrue(Paciente.objects.filter(pk=self.paciente.id).exists())

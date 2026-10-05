@@ -39,8 +39,10 @@
 - **Exportación a PDF**: genera con **ReportLab** un informe con título, número de petición (y orden externa, si existe), metadatos (fecha, patología, tipo de muestra, patólogo y estado), datos clínicos, descripción macroscópica y notas.
 - **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
 - **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables. Una patología se puede desactivar: deja de ofrecerse en los informes nuevos sin perder el historial.
-- **Pacientes**: registro de los pacientes con su documento, nombres, fecha de nacimiento, sexo y EPS. La edad se calcula a partir de la fecha de nacimiento: en años, o en meses o días si el paciente es menor de 1 año. Se buscan por documento, nombres o apellidos. Solo se guardan los datos que aparecen en el informe.
-- **Búsqueda y filtros**: por número de petición, número de orden externa, patología o tipo de muestra, rango de fechas y estado. Resultados paginados de 20 en 20.
+- **Pacientes**: registro de los pacientes con su documento, nombres, fecha de nacimiento, sexo y EPS. La edad se calcula a partir de la fecha de nacimiento: en años, o en meses o días si el paciente es menor de 1 año. Se buscan por documento, nombres o apellidos, y cada paciente muestra su historial de informes. Solo se guardan los datos que aparecen en el informe.
+- **Datos de la solicitud**: cada informe tiene su paciente (se busca o se crea desde el mismo formulario), médico tratante, fecha de ingreso, EPS, servicio, estudios solicitados y tipo de estudio (histología, citología, inmunohistoquímica, etc.). La EPS se guarda en el informe, porque el paciente puede cambiar de EPS. La edad del paciente se calcula a la fecha de ingreso, así que no cambia si el informe se reimprime años después.
+- **Catálogos de EPS y servicios**: se administran en la pantalla Catálogos. Lo que ya no se usa se desactiva en lugar de borrarse.
+- **Búsqueda y filtros**: por número de petición, nombre o documento del paciente, número de orden externa, patología o tipo de muestra, rango de fechas y estado. Resultados paginados de 20 en 20.
 - **Panel de inicio**: totales de informes (todos, borradores y finalizados) y los 10 más recientes.
 - **Foro de patólogos**: publicaciones por temas (los patólogos y administradores pueden crear temas nuevos), con hasta 6 imágenes (máximo 10 MB cada una) y comentarios. Un administrador puede fijar publicaciones importantes.
 - **Perfil de usuario**: edición de datos personales y cambio de contraseña.
@@ -58,7 +60,7 @@
 | Administrar patologías, plantillas, categorías y temas del foro | Sí | Sí | No |
 | Ver pacientes | Sí | Sí | Sí |
 | Crear y editar pacientes; administrar EPS y servicios | Sí | Sí | No |
-| Borrar pacientes | Sí | No | No |
+| Borrar pacientes (solo si no tienen informes) | Sí | No | No |
 | Publicar y comentar en el foro | Sí | Sí | No (solo lectura) |
 | Editar o borrar publicaciones y comentarios | Sí (moderación) | Solo los suyos | No |
 | Fijar publicaciones del foro | Sí | No | No |
@@ -137,6 +139,7 @@ patologia-app/
 │   │   ├── urls.py            # Rutas principales
 │   │   ├── paginacion.py      # Paginación (20 por página, ?page_size= hasta 1000)
 │   │   ├── catalogos.py       # Piezas comunes de los catálogos de EPS y servicios
+│   │   ├── test_runner.py     # Ejecutor de pruebas (sin límites de peticiones acumulados)
 │   │   └── tests.py           # Pruebas de la configuración (SECRET_KEY y DEBUG)
 │   ├── informes/
 │   │   ├── management/commands/seed_data.py  # Datos iniciales: usuarios, 14 patologías, temas, servicios, EPS y 2 pacientes ficticios
@@ -148,7 +151,7 @@ patologia-app/
 │   ├── pacientes/
 │   │   ├── models.py          # Paciente (con la edad calculada), EPS y listas fijas de sexo y tipo de documento
 │   │   ├── serializers.py
-│   │   ├── views.py / urls.py # Endpoints /api/pacientes/
+│   │   ├── views.py / urls.py # Endpoints /api/pacientes/ (con el historial de informes)
 │   │   └── tests.py
 │   ├── foro/
 │   │   ├── models.py          # TemaForo, Publicacion, ImagenPublicacion, Comentario
@@ -162,10 +165,12 @@ patologia-app/
 │   ├── src/
 │   │   ├── api/client.js      # Cliente Axios: dirección de la API (VITE_API_URL) y token JWT
 │   │   ├── context/AuthContext.jsx  # Sesión y rol del usuario
-│   │   ├── components/        # Navbar y Footer
+│   │   ├── components/        # Navbar, Footer, FormularioPaciente, CeldaPaciente, EstadoBadge
+│   │   │   └── informe/       # Partes del informe: SelectorPaciente y DatosSolicitud
 │   │   ├── hooks/useOpciones.js  # Listas fijas de /api/opciones/ (se piden una vez)
-│   │   ├── pages/             # Login, Dashboard, Informe, Buscar, Pacientes, Patologías, Foro,
-│   │   │                      # Detalle de publicación, Perfil y páginas legales
+│   │   ├── utils/formularios.js  # hoyISO() y conOpcionActual() (catálogos desactivados)
+│   │   ├── pages/             # Login, Dashboard, Informe, Buscar, Pacientes, Patologías, Catálogos,
+│   │   │                      # Foro, Detalle de publicación, Perfil y páginas legales
 │   │   ├── test/setup.js      # Configuración de las pruebas
 │   │   ├── App.jsx            # Rutas (protegidas, públicas y legales)
 │   │   └── index.css          # Estilos globales
@@ -344,8 +349,8 @@ npm run test:watch                        # se repiten al guardar cambios
 npm test
 ```
 
-- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones y búsqueda), los catálogos de EPS y servicios, las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
-- **Frontend:** cubre la página de pacientes, la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
+- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones, búsqueda e historial), los datos de la solicitud del informe (paciente obligatorio, fecha de ingreso, EPS del momento del estudio, búsqueda por paciente), los catálogos de EPS y servicios (y su borrado cuando están en uso), las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
+- **Frontend:** cubre el formulario del informe (paciente, datos de la solicitud y orden de las tarjetas), la página de pacientes y su historial, la pantalla de catálogos, los listados, la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
 
 ---
 
@@ -405,10 +410,11 @@ Todas las rutas exigen la cabecera `Authorization: Bearer <token>`, excepto el l
 | Método | Endpoint | Descripción | Acceso |
 |---|---|---|---|
 | GET / POST | `/api/pacientes/eps/` | Listar o crear EPS (`?search=`, `?activa=true`/`false`). El nombre no se puede repetir, sin importar mayúsculas ni espacios | Leer: todos · Escribir: patólogo/admin |
-| GET / PUT / PATCH / DELETE | `/api/pacientes/eps/{id}/` | Ver, editar, desactivar (`activa: false`) o borrar una EPS. Una EPS que tiene pacientes no se borra (400): hay que desactivarla | Igual |
+| GET / PUT / PATCH / DELETE | `/api/pacientes/eps/{id}/` | Ver, editar, desactivar (`activa: false`) o borrar una EPS. Una EPS que usa algún paciente o informe no se borra (400): hay que desactivarla | Igual |
 | GET / POST | `/api/pacientes/` | Listar (paginado, por apellidos) o crear pacientes. `?q=` busca por documento, nombres y apellidos; cada palabra debe aparecer en alguno de ellos | Leer: todos · Crear: patólogo/admin |
 | GET / PUT / PATCH | `/api/pacientes/{id}/` | Ver o editar un paciente | Leer: todos · Editar: patólogo/admin |
-| DELETE | `/api/pacientes/{id}/` | Borrar un paciente | Solo admin |
+| DELETE | `/api/pacientes/{id}/` | Borrar un paciente. Si tiene informes → 400 | Solo admin |
+| GET | `/api/pacientes/{id}/informes/` | Historial de informes del paciente (paginado, con los campos del listado de informes) | Todos |
 
 Cada paciente se devuelve con `edad` (calculada a la fecha de hoy; no se guarda) y `eps_nombre`. Reglas:
 - El tipo y el número de documento no se pueden repetir. El número se guarda sin espacios ni puntos y en mayúsculas.
@@ -422,14 +428,22 @@ Las EPS y los servicios se desactivan en lugar de borrarse (decisión D-4), para
 
 | Método | Endpoint | Descripción | Acceso |
 |---|---|---|---|
-| GET | `/api/informes/` | Listar informes. Filtros: `q` (número de petición, orden externa, patología o tipo de muestra), `fecha_desde`, `fecha_hasta`, `estado`, `patologia` | Todos |
-| POST | `/api/informes/` | Crear un informe y generar su descripción macroscópica. El backend asigna `numero_peticion` (no se envía ni se puede cambiar); `numero_orden_externa` es opcional. Si falta un campo obligatorio de la plantilla → 400 | Patólogo / Admin |
+| GET | `/api/informes/` | Listar informes, con `paciente_nombre`, `paciente_documento` y `tipo_estudio`. Filtros: `q` (número de petición, orden externa, patología, tipo de muestra, nombre o documento del paciente; cada palabra debe aparecer en alguno), `fecha_desde`, `fecha_hasta`, `estado`, `patologia`, `paciente` | Todos |
+| POST | `/api/informes/` | Crear un informe y generar su descripción macroscópica. `paciente` (id) es obligatorio. El backend asigna `numero_peticion` (no se envía ni se puede cambiar). Si falta un campo obligatorio de la plantilla → 400 | Patólogo / Admin |
 | GET | `/api/informes/estadisticas/` | Totales `{total, borradores, finalizados}`. Acepta los mismos filtros que el listado | Todos |
 | GET | `/api/informes/{id}/` | Ver un informe completo | Todos |
 | PUT / PATCH | `/api/informes/{id}/` | Editar un borrador (si está finalizado → 400) | Autor / Admin |
 | DELETE | `/api/informes/{id}/` | Borrar un borrador (si está finalizado → 400) | Autor / Admin |
 | POST | `/api/informes/{id}/finalizar/` | Finalizar el informe (después ya no se puede editar) | Autor / Admin |
 | GET | `/api/informes/{id}/pdf/` | Descargar el informe en PDF | Todos |
+
+Datos de la solicitud del informe (etapa 4 del informe v2):
+- `paciente` (id): obligatorio al crear y no se puede quitar después. Los informes de antes de esta etapa no tienen paciente y se muestran como "No registrado"; se les puede asignar uno al editarlos.
+- `fecha_ingreso`: si no se envía, es hoy. No puede estar en el futuro ni ser anterior al nacimiento del paciente.
+- `eps` y `servicio` (ids, opcionales). Si un informe nuevo no envía `eps`, toma la EPS actual del paciente, si sigue activa. No se puede asignar una EPS ni un servicio desactivados, pero el informe que ya los tenía los conserva.
+- `medico_tratante`, `estudios_solicitados` y `numero_orden_externa`: texto, opcionales.
+- `tipo_estudio`: uno de los valores de `tipos_estudio` en `/api/opciones/`. Por defecto, `histologia`.
+- Al leer un informe llegan además `paciente_datos` (nombre, documento, fecha de nacimiento, sexo y edad **a la fecha de ingreso**), `eps_nombre` y `servicio_nombre`.
 
 ### Foro (`/api/foro/`)
 
@@ -455,7 +469,9 @@ graph TD
     A[Inicio de sesión] --> B{Rol del usuario}
     B -->|Patólogo / Admin| C[Crear nuevo informe]
     B -->|Auditor| D[Buscador / Panel de inicio]
-    C --> E[Seleccionar patología]
+    C --> P[Buscar o crear el paciente]
+    P --> S[Datos de la solicitud y tipo de estudio]
+    S --> E[Seleccionar patología]
     E --> F[Se carga el formulario de la plantilla]
     F --> G[Llenar los datos macroscópicos]
     G --> H[Guardar como borrador: se asigna el número de petición]

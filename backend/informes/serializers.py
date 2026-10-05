@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from config.catalogos import NombreCatalogoMixin
@@ -76,14 +77,32 @@ class ServicioSerializer(NombreCatalogoMixin, serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+def _rechazar_si_desactivado(valor, actual_id, mensaje):
+    """
+    Un elemento de catálogo desactivado (D-4) no se asigna, pero el informe que ya
+    lo tenía lo conserva, para poder corregir sus otros datos.
+    """
+    activo = getattr(valor, 'activa', getattr(valor, 'activo', True))
+    if valor is not None and not activo and valor.pk != actual_id:
+        raise serializers.ValidationError(mensaje)
+    return valor
+
+
 class InformeSerializer(serializers.ModelSerializer):
     patologia_nombre = serializers.CharField(source='patologia.nombre', read_only=True)
     autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
+    # `paciente` es el id (para escribirlo); `paciente_datos`, lo que muestra el informe.
+    paciente_datos = serializers.SerializerMethodField()
+    eps_nombre = serializers.CharField(source='eps.nombre', read_only=True, default=None)
+    servicio_nombre = serializers.CharField(source='servicio.nombre', read_only=True, default=None)
 
     class Meta:
         model = Informe
         fields = [
-            'id', 'numero_peticion', 'numero_orden_externa', 'patologia', 'patologia_nombre',
+            'id', 'numero_peticion', 'numero_orden_externa',
+            'paciente', 'paciente_datos', 'medico_tratante', 'fecha_ingreso',
+            'eps', 'eps_nombre', 'servicio', 'servicio_nombre', 'estudios_solicitados', 'tipo_estudio',
+            'patologia', 'patologia_nombre',
             'autor', 'autor_nombre', 'fecha', 'tipo_muestra',
             'datos_ingresados', 'texto_generado', 'estado', 'notas',
             'fecha_creacion', 'fecha_actualizacion',
@@ -94,7 +113,62 @@ class InformeSerializer(serializers.ModelSerializer):
             'fecha_creacion', 'fecha_actualizacion',
         ]
 
+    def get_paciente_datos(self, informe):
+        paciente = informe.paciente
+        if paciente is None:  # informe de antes de la etapa 4
+            return None
+        # La edad es la de la fecha de ingreso, no la de hoy: no cambia al reimprimir el informe.
+        fecha = informe.fecha_ingreso or timezone.localdate(informe.fecha_creacion)
+        return {
+            'id': paciente.id,
+            'nombre_completo': paciente.nombre_completo,
+            'tipo_documento': paciente.tipo_documento,
+            'numero_documento': paciente.numero_documento,
+            'fecha_nacimiento': paciente.fecha_nacimiento.isoformat(),
+            'sexo': paciente.sexo,
+            'edad': paciente.edad_en(fecha),
+        }
+
+    def validate_fecha_ingreso(self, valor):
+        if valor is not None and valor > timezone.localdate():
+            raise serializers.ValidationError('La fecha de ingreso no puede estar en el futuro.')
+        return valor
+
+    def validate_eps(self, valor):
+        return _rechazar_si_desactivado(valor, getattr(self.instance, 'eps_id', None), 'Esta EPS está desactivada.')
+
+    def validate_servicio(self, valor):
+        return _rechazar_si_desactivado(
+            valor, getattr(self.instance, 'servicio_id', None), 'Este servicio está desactivado.',
+        )
+
     def validate(self, data):
+        self._validar_paciente_y_fecha_ingreso(data)
+        self._validar_campos_obligatorios(data)
+        return data
+
+    def _validar_paciente_y_fecha_ingreso(self, data):
+        creando = self.instance is None
+        paciente = data['paciente'] if 'paciente' in data else getattr(self.instance, 'paciente', None)
+        # Obligatorio al crear. Un informe antiguo sin paciente se puede seguir editando,
+        # pero a un informe que ya tiene paciente no se le puede quitar.
+        if paciente is None and (creando or 'paciente' in data):
+            raise serializers.ValidationError({'paciente': 'Seleccione un paciente.'})
+
+        if creando:
+            if not data.get('fecha_ingreso'):
+                data['fecha_ingreso'] = timezone.localdate()
+            # Si no se envía la EPS, se usa la actual del paciente, siempre que siga activa.
+            if 'eps' not in self.initial_data and paciente.eps is not None and paciente.eps.activa:
+                data['eps'] = paciente.eps
+
+        fecha = data['fecha_ingreso'] if 'fecha_ingreso' in data else getattr(self.instance, 'fecha_ingreso', None)
+        if paciente is not None and fecha is not None and fecha < paciente.fecha_nacimiento:
+            raise serializers.ValidationError(
+                {'fecha_ingreso': 'La fecha de ingreso no puede ser anterior a la fecha de nacimiento del paciente.'}
+            )
+
+    def _validar_campos_obligatorios(self, data):
         """Comprueba que estén llenos los campos obligatorios de la plantilla de la patología."""
         patologia = data.get('patologia') or (self.instance and self.instance.patologia)
         # Si la petición no trae datos_ingresados (p. ej. un PATCH que solo cambia las
@@ -116,17 +190,19 @@ class InformeSerializer(serializers.ModelSerializer):
                     'datos_ingresados': f'Faltan campos obligatorios: {", ".join(faltantes)}'
                 })
 
-        return data
-
 
 class InformeListSerializer(serializers.ModelSerializer):
     """Versión resumida para el listado de informes."""
     patologia_nombre = serializers.CharField(source='patologia.nombre', read_only=True)
     autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
+    # None en los informes de antes de la etapa 4, que no tienen paciente.
+    paciente_nombre = serializers.CharField(source='paciente.nombre_completo', read_only=True, default=None)
+    paciente_documento = serializers.CharField(source='paciente.documento', read_only=True, default=None)
 
     class Meta:
         model = Informe
         fields = [
-            'id', 'numero_peticion', 'numero_orden_externa', 'patologia_nombre', 'autor', 'autor_nombre',
+            'id', 'numero_peticion', 'numero_orden_externa', 'paciente', 'paciente_nombre', 'paciente_documento',
+            'tipo_estudio', 'patologia_nombre', 'autor', 'autor_nombre',
             'fecha', 'tipo_muestra', 'estado', 'fecha_creacion',
         ]

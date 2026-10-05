@@ -154,8 +154,7 @@ class Informe(models.Model):
         BORRADOR = 'borrador', 'Borrador'
         FINALIZADO = 'finalizado', 'Finalizado'
 
-    # Lista fija que se ofrece en GET /api/opciones/. El campo tipo_estudio se
-    # agrega en la etapa 4 del informe v2 (docs/propuesta-informe-v2.md, 3.3).
+    # Lista fija que también se ofrece en GET /api/opciones/ (docs/propuesta-informe-v2.md, 3.3).
     class TipoEstudio(models.TextChoices):
         HISTOLOGIA = 'histologia', 'Histología'
         CITOLOGIA_NO_GINECOLOGICA = 'citologia_no_ginecologica', 'Citología no ginecológica'
@@ -172,6 +171,39 @@ class Informe(models.Model):
         max_length=50, blank=True,
         verbose_name='Número de orden externa',
         help_text='Número de orden de la institución remitente (opcional).',
+    )
+    # Datos de la solicitud (informe v2, etapa 4). paciente admite null solo por los
+    # informes de antes de la etapa 4; la API lo exige al crear.
+    paciente = models.ForeignKey(
+        'pacientes.Paciente',
+        on_delete=models.PROTECT,
+        null=True, blank=True,
+        related_name='informes',
+        verbose_name='Paciente',
+    )
+    medico_tratante = models.CharField(max_length=200, blank=True, verbose_name='Médico tratante')
+    fecha_ingreso = models.DateField(null=True, blank=True, verbose_name='Fecha de ingreso')
+    # La EPS del momento del estudio, no la actual del paciente (que puede cambiar).
+    eps = models.ForeignKey(
+        'pacientes.EPS',
+        on_delete=models.PROTECT,
+        null=True, blank=True,
+        related_name='informes',
+        verbose_name='EPS',
+    )
+    servicio = models.ForeignKey(
+        Servicio,
+        on_delete=models.PROTECT,
+        null=True, blank=True,
+        related_name='informes',
+        verbose_name='Servicio',
+    )
+    estudios_solicitados = models.TextField(blank=True, verbose_name='Estudios solicitados')
+    tipo_estudio = models.CharField(
+        max_length=30,
+        choices=TipoEstudio.choices,
+        default=TipoEstudio.HISTOLOGIA,
+        verbose_name='Tipo de estudio',
     )
     patologia = models.ForeignKey(
         Patologia,

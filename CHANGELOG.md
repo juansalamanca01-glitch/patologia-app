@@ -5,6 +5,81 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Informe v2, etapa 4: datos de la solicitud
+
+**Qué se cambió**
+- **Campos nuevos en `Informe`** (`backend/informes/models.py`, migración `0008_datos_solicitud`):
+  - `paciente`: `PROTECT`, admite `null` solo por los informes de antes de esta etapa.
+  - `medico_tratante` y `estudios_solicitados`: texto libre.
+  - `fecha_ingreso`.
+  - `eps`, que es la del momento del estudio y no cambia si el paciente cambia de EPS, y `servicio`. Los dos son `PROTECT` y opcionales.
+  - `tipo_estudio`: por defecto, histología.
+  - Los informes antiguos quedan sin paciente y se muestran como "No registrado".
+- **`Paciente`** tiene ahora las propiedades `nombre_completo` y `documento` ("CC PRUEBA0001").
+- **`InformeSerializer`**:
+  - Al crear, el paciente es obligatorio ("Seleccione un paciente."). Un informe antiguo sin paciente se puede seguir editando, pero a un informe que ya tiene paciente no se le puede quitar.
+  - Si no se envía `fecha_ingreso`, se usa la fecha local de hoy. No puede estar en el futuro ni ser anterior al nacimiento del paciente. Esto también se comprueba al cambiar de paciente.
+  - Si un informe nuevo no envía `eps`, toma la EPS actual del paciente, siempre que siga activa (decisión del usuario en la etapa 4). Si se envía `eps: null`, el informe queda sin EPS.
+  - No se puede asignar una EPS ni un servicio desactivados, pero el informe que ya los tenía los conserva. Es la misma regla que se aplica a los pacientes.
+  - Devuelve `paciente_datos` (nombre, documento, fecha de nacimiento, sexo y **edad a la fecha de ingreso**), `eps_nombre` y `servicio_nombre`.
+  - El código de validación se dividió en dos métodos: `_validar_paciente_y_fecha_ingreso` y `_validar_campos_obligatorios`, que es el de I-2 sin cambios.
+- **`InformeListSerializer`** agrega `paciente`, `paciente_nombre`, `paciente_documento` y `tipo_estudio`.
+- **`InformeViewSet`**:
+  - Hace `select_related` de `paciente`, `eps` y `servicio`, para que el listado no haga una consulta por fila (M-4).
+  - `?q=` busca también por el nombre y el documento del paciente. Cada palabra debe aparecer en algún campo, así que "ficticio uno" encuentra a "Paciente Ficticio Uno".
+  - Filtro nuevo `?paciente=`.
+- **Endpoint nuevo `GET /api/pacientes/{id}/informes/`** (acción `informes` de `PacienteViewSet`): historial paginado del paciente, con los campos del listado de informes.
+- **Borrados que ahora responden 400** en lugar de un error 500 (como I-1):
+  - un paciente con informes;
+  - un servicio en uso por algún informe (`ServicioViewSet.destroy`, que pide desactivarlo);
+  - una EPS en uso. El mensaje de la EPS ahora cuenta pacientes e informes.
+- **`/admin/` de informes:** muestra paciente y tipo de estudio, busca por paciente y elige el paciente con búsqueda (`autocomplete_fields`).
+- **Ejecutor de pruebas** (`backend/config/test_runner.py`, `TEST_RUNNER` en `settings.py`):
+  - Durante las pruebas usa `DummyCache`, así que los límites de peticiones no se acumulan de una prueba a otra.
+  - Antes, como SQLite repite los ids de usuario, todas las peticiones de un minuto se sumaban al mismo usuario. Con las pruebas nuevas se pasaba de 120 por minuto y aparecían fallos 429 que no tenían que ver con lo probado.
+  - Ninguna prueba depende de esos límites.
+- **Frontend:**
+  - `InformePage.jsx` se reorganiza con el orden del informe real:
+    - **Paciente**: `components/informe/SelectorPaciente.jsx`, que busca por documento o nombre, permite crear el paciente ("Nuevo paciente") y muestra su nombre, identificación, edad y sexo.
+    - **Datos de la solicitud**: `components/informe/DatosSolicitud.jsx`, con médico tratante, fecha de ingreso (hoy por defecto), EPS, servicio, orden externa y estudios solicitados.
+    - **Estudio**: tipo de estudio (de `/api/opciones/`), patología y tipo de muestra.
+    - Al elegir el paciente se precarga su EPS si sigue activa. Una EPS o un servicio desactivados se ven como "(desactivada)" y se conservan.
+    - No deja guardar sin paciente. Al pulsar Enter en la búsqueda del paciente se busca y no se envía el informe.
+  - `components/FormularioPaciente.jsx` (nuevo): el formulario de paciente que estaba dentro de `PacientesPage`, ahora compartido con el selector. Se dibuja con un portal en `document.body`, porque el informe ya es un `<form>`.
+  - `utils/formularios.js` (nuevo): `hoyISO()` y `conOpcionActual()`, que antes estaba repetido en el código.
+  - `PacientesPage.jsx`: botón "Informes" en cada fila, para todos los roles, que abre el historial del paciente con enlaces a cada informe.
+  - `pages/CatalogosPage.jsx` (nuevo, ruta `/catalogos`, enlace "Catálogos" en el Navbar):
+    - administra las EPS y los servicios: agregar, renombrar, activar o desactivar y eliminar;
+    - si el backend no deja borrar porque el elemento está en uso, muestra el motivo;
+    - el auditor solo lee.
+  - `BuscarPage.jsx`:
+    - columnas N.º de petición, Paciente, Tipo de estudio, Patología, Autor, Fecha y Estado;
+    - el texto de ayuda menciona la búsqueda por paciente.
+  - `DashboardPage.jsx` agrega la columna Paciente.
+  - `components/CeldaPaciente.jsx` dibuja esa celda: nombre y documento, o "No registrado".
+  - `hooks/useOpciones.js`:
+    - un componente que se monta después de recibir las opciones las tiene desde el primer render;
+    - antes, el formulario de paciente abría con los menús vacíos durante un instante y el navegador bloqueaba el envío por los campos `required`.
+- **Pruebas:**
+  - 28 nuevas en el backend (de 134 a 162):
+    - `DatosSolicitudTests` (19);
+    - `BorrarCatalogosEnUsoPorInformesTests` (3);
+    - `ConsultasListadoInformesTests` (1);
+    - `HistorialYBorradoConInformesTests` (5).
+  - Las pruebas que crean informes por la API ahora envían un paciente ficticio.
+  - 24 nuevas en el frontend (de 46 a 70):
+    - `SelectorPaciente.test.jsx` (7);
+    - `CatalogosPage.test.jsx` (7);
+    - 5 en `InformePage.test.jsx`, 2 en `PacientesPage.test.jsx`, 2 en `BuscarPage.test.jsx` y 1 en `DashboardPage.test.jsx`.
+- **Documentación:** `README.md`, `CLAUDE.md`, `docs/propuesta-informe-v2.md`, `docs/progreso.md` y la colección de Postman ("Crear informe" con paciente y datos de la solicitud, "Historial de informes del paciente" y el filtro `paciente`).
+
+**Por qué:** es la etapa 4 de `docs/propuesta-informe-v2.md`, aprobada por el usuario el 2026-10-04 junto con tres detalles:
+- la pantalla de catálogos va en `/catalogos`;
+- la EPS del paciente se copia si el informe no la envía;
+- toda la etapa va en un solo commit.
+
+El informe real lleva en su encabezado al paciente y los datos de la solicitud. La EPS se guarda en el informe porque el paciente puede cambiar de EPS y el informe debe mostrar la que tenía en el momento del estudio. La edad se calcula a la fecha de ingreso para que no cambie al reimprimir el informe. Todos los datos de prueba son ficticios.
+
 ### Informe v2, etapa 3: pacientes
 
 **Qué se cambió**

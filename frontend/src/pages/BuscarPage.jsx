@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import client, { resultados } from '../api/client';
 import EstadoBadge from '../components/EstadoBadge';
+import CeldaPaciente from '../components/CeldaPaciente';
+import useOpciones, { etiquetaDe } from '../hooks/useOpciones';
 
 const TAMANO_PAGINA = 20; // Debe coincidir con PAGE_SIZE de backend/config/settings.py
 
 export default function BuscarPage() {
+  const { opciones } = useOpciones();
   const [query, setQuery] = useState('');
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
@@ -86,7 +89,7 @@ export default function BuscarPage() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Número de petición, orden externa, patología o tipo de muestra..."
+                  placeholder="Número de petición, paciente (nombre o documento), orden externa, patología o tipo de muestra..."
                 />
               </div>
               <div className="form-group">
@@ -144,8 +147,9 @@ export default function BuscarPage() {
                 <thead>
                   <tr>
                     <th>N.º de petición</th>
+                    <th>Paciente</th>
+                    <th>Tipo de estudio</th>
                     <th>Patología</th>
-                    <th>Tipo Muestra</th>
                     <th>Autor</th>
                     <th>Fecha</th>
                     <th>Estado</th>
@@ -156,8 +160,9 @@ export default function BuscarPage() {
                   {results.map((inf) => (
                     <tr key={inf.id}>
                       <td><strong>{inf.numero_peticion}</strong></td>
+                      <td><CeldaPaciente informe={inf} /></td>
+                      <td>{etiquetaDe(opciones.tipos_estudio, inf.tipo_estudio)}</td>
                       <td>{inf.patologia_nombre}</td>
-                      <td>{inf.tipo_muestra || '—'}</td>
                       <td>{inf.autor_nombre}</td>
                       <td>{inf.fecha}</td>
                       <td>

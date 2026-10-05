@@ -8,6 +8,7 @@ import InformePage from './pages/InformePage';
 import BuscarPage from './pages/BuscarPage';
 import PatologiasPage from './pages/PatologiasPage';
 import PacientesPage from './pages/PacientesPage';
+import CatalogosPage from './pages/CatalogosPage';
 import ForoPage from './pages/ForoPage';
 import PublicacionDetallePage from './pages/PublicacionDetallePage';
 import PerfilPage from './pages/PerfilPage';
@@ -58,6 +59,7 @@ function AppRoutes() {
       <Route path="/buscar" element={<ProtectedRoute><BuscarPage /></ProtectedRoute>} />
       <Route path="/patologias" element={<ProtectedRoute><PatologiasPage /></ProtectedRoute>} />
       <Route path="/pacientes" element={<ProtectedRoute><PacientesPage /></ProtectedRoute>} />
+      <Route path="/catalogos" element={<ProtectedRoute><CatalogosPage /></ProtectedRoute>} />
       <Route path="/foro" element={<ProtectedRoute><ForoPage /></ProtectedRoute>} />
       <Route path="/foro/:id" element={<ProtectedRoute><PublicacionDetallePage /></ProtectedRoute>} />
       <Route path="/perfil" element={<ProtectedRoute><PerfilPage /></ProtectedRoute>} />

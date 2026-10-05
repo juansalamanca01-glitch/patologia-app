@@ -1,5 +1,5 @@
 import threading
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from unittest import mock
 
 from django.db import IntegrityError, connection, transaction
@@ -10,7 +10,19 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from accounts.models import Usuario
-from .models import Categoria, Informe, Patologia, Plantilla
+from pacientes.models import EPS, Paciente
+from .models import Categoria, Informe, Patologia, Plantilla, Servicio
+
+
+def paciente_ficticio(numero='PRUEBA0001', **extra):
+    """Paciente con datos ficticios (docs/propuesta-informe-v2.md, sección 8)."""
+    datos = {
+        'tipo_documento': 'CC', 'numero_documento': numero,
+        'nombres': 'Paciente Ficticio', 'apellidos': 'Uno',
+        'fecha_nacimiento': date(1980, 10, 5), 'sexo': 'femenino',
+        **extra,
+    }
+    return Paciente.objects.create(**datos)
 
 
 class PermisosInformeTests(APITestCase):
@@ -357,9 +369,10 @@ class CamposObligatoriosTests(APITestCase):
         Plantilla.objects.create(patologia=self.patologia, campo_nombre='color',
                                  campo_label='Color', tipo_campo='texto', obligatorio=False)
         self.datos_completos = {'localizacion': 'Axila izquierda', 'num_ganglios': 3}
+        self.paciente = paciente_ficticio()
 
     def crear(self, **extra):
-        cuerpo = {'patologia': self.patologia.id, **extra}
+        cuerpo = {'patologia': self.patologia.id, 'paciente': self.paciente.id, **extra}
         return self.client.post('/api/informes/', cuerpo, format='json')
 
     def test_rechaza_datos_vacios(self):
@@ -587,13 +600,14 @@ class NumeroPeticionTests(APITestCase):
             username='patologo_np', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
         )
         self.patologia = Patologia.objects.create(nombre='Patología número de petición')
+        self.paciente = paciente_ficticio()
         self.client.force_authenticate(self.patologo)
         self.anio = timezone.localdate().year
 
     def crear(self, **extra):
         return self.client.post(
             '/api/informes/',
-            {'patologia': self.patologia.id, 'datos_ingresados': {}, **extra},
+            {'patologia': self.patologia.id, 'paciente': self.paciente.id, 'datos_ingresados': {}, **extra},
             format='json',
         )
 
@@ -694,6 +708,7 @@ class NumeroPeticionConcurrenciaTests(TransactionTestCase):
             username='patologo_concurrencia', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
         )
         patologia = Patologia.objects.create(nombre='Patología concurrencia')
+        paciente = paciente_ficticio()
         barrera = threading.Barrier(self.HILOS)
         numeros, errores = [], []
 
@@ -703,7 +718,9 @@ class NumeroPeticionConcurrenciaTests(TransactionTestCase):
                 cliente.force_authenticate(patologo)
                 barrera.wait()  # todos los hilos envían su petición al mismo tiempo
                 respuesta = cliente.post(
-                    '/api/informes/', {'patologia': patologia.id, 'datos_ingresados': {}}, format='json',
+                    '/api/informes/',
+                    {'patologia': patologia.id, 'paciente': paciente.id, 'datos_ingresados': {}},
+                    format='json',
                 )
                 if respuesta.status_code == status.HTTP_201_CREATED:
                     numeros.append(respuesta.data['numero_peticion'])
@@ -883,3 +900,254 @@ class CatalogoServiciosTests(APITestCase):
             'Consulta externa', 'Urgencias', 'Hospitalización', 'Cirugía',
             'Unidad de cuidados intensivos', 'Ginecología', 'Dermatología',
         ]))
+
+
+class DatosSolicitudTests(APITestCase):
+    """
+    Informe v2, etapa 4 (docs/propuesta-informe-v2.md, secciones 3.4 y 4): el
+    informe guarda el paciente y los datos de la solicitud (médico tratante,
+    fecha de ingreso, EPS, servicio, estudios solicitados y tipo de estudio).
+    Solo datos ficticios (sección 8).
+    """
+
+    URL = '/api/informes/'
+
+    def setUp(self):
+        self.patologo = Usuario.objects.create_user(
+            username='patologo_solicitud', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+        )
+        self.client.force_authenticate(self.patologo)
+        self.patologia = Patologia.objects.create(nombre='Patología solicitud')
+        self.eps = EPS.objects.create(nombre='EPS Ficticia')
+        self.servicio = Servicio.objects.create(nombre='Urgencias')
+        self.paciente = paciente_ficticio(eps=self.eps)
+
+    def crear(self, **extra):
+        cuerpo = {'patologia': self.patologia.id, 'paciente': self.paciente.id, 'datos_ingresados': {}, **extra}
+        return self.client.post(self.URL, cuerpo, format='json')
+
+    # --- Paciente ---
+
+    def test_paciente_es_obligatorio_al_crear(self):
+        respuesta = self.client.post(self.URL, {'patologia': self.patologia.id, 'datos_ingresados': {}}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('paciente', respuesta.data)
+        self.assertEqual(Informe.objects.count(), 0)
+
+    def test_no_se_puede_quitar_el_paciente(self):
+        informe_id = self.crear().data['id']
+        respuesta = self.client.patch(f'{self.URL}{informe_id}/', {'paciente': None}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('paciente', respuesta.data)
+
+    def test_informe_antiguo_sin_paciente_se_puede_editar_y_luego_asignarle_uno(self):
+        # Los informes de antes de la etapa 4 quedan sin paciente (migración 0008).
+        antiguo = Informe.objects.create(patologia=self.patologia, autor=self.patologo)
+        detalle = self.client.get(f'{self.URL}{antiguo.id}/').data
+        self.assertIsNone(detalle['paciente'])
+        self.assertIsNone(detalle['paciente_datos'])
+        respuesta = self.client.patch(f'{self.URL}{antiguo.id}/', {'tipo_muestra': 'Biopsia'}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
+        respuesta = self.client.patch(f'{self.URL}{antiguo.id}/', {'paciente': self.paciente.id}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
+        self.assertEqual(respuesta.data['paciente'], self.paciente.id)
+
+    def test_detalle_devuelve_datos_del_paciente_con_la_edad_a_la_fecha_de_ingreso(self):
+        # Nació el 5/10/1980: el 4/10/2026 tiene 45 años, aunque hoy sea 2030.
+        informe_id = self.crear(fecha_ingreso='2026-10-04').data['id']
+        with mock.patch('django.utils.timezone.localdate', return_value=date(2030, 1, 1)):
+            datos = self.client.get(f'{self.URL}{informe_id}/').data['paciente_datos']
+        self.assertEqual(datos, {
+            'id': self.paciente.id,
+            'nombre_completo': 'Paciente Ficticio Uno',
+            'tipo_documento': 'CC',
+            'numero_documento': 'PRUEBA0001',
+            'fecha_nacimiento': '1980-10-05',
+            'sexo': 'femenino',
+            'edad': '45 años',
+        })
+
+    # --- Datos de la solicitud ---
+
+    def test_guarda_los_datos_de_la_solicitud(self):
+        respuesta = self.crear(
+            medico_tratante='Médico Ficticio', fecha_ingreso='2026-10-01', eps=self.eps.id,
+            servicio=self.servicio.id, estudios_solicitados='Biopsia de piel',
+            tipo_estudio='citologia_no_ginecologica',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        datos = self.client.get(f"{self.URL}{respuesta.data['id']}/").data
+        self.assertEqual(datos['medico_tratante'], 'Médico Ficticio')
+        self.assertEqual(datos['fecha_ingreso'], '2026-10-01')
+        self.assertEqual((datos['eps'], datos['eps_nombre']), (self.eps.id, 'EPS Ficticia'))
+        self.assertEqual((datos['servicio'], datos['servicio_nombre']), (self.servicio.id, 'Urgencias'))
+        self.assertEqual(datos['estudios_solicitados'], 'Biopsia de piel')
+        self.assertEqual(datos['tipo_estudio'], 'citologia_no_ginecologica')
+
+    def test_valores_por_defecto(self):
+        with mock.patch('django.utils.timezone.localdate', return_value=date(2026, 10, 4)):
+            datos = self.crear().data
+        self.assertEqual(datos['fecha_ingreso'], '2026-10-04')
+        self.assertEqual(datos['tipo_estudio'], 'histologia')
+        self.assertIsNone(datos['servicio'])
+        self.assertEqual(datos['medico_tratante'], '')
+
+    def test_tipo_de_estudio_invalido(self):
+        respuesta = self.crear(tipo_estudio='astrologia')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('tipo_estudio', respuesta.data)
+
+    def test_fecha_de_ingreso_en_el_futuro(self):
+        manana = timezone.localdate() + timedelta(days=1)
+        respuesta = self.crear(fecha_ingreso=manana.isoformat())
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('fecha_ingreso', respuesta.data)
+
+    def test_fecha_de_ingreso_anterior_al_nacimiento(self):
+        respuesta = self.crear(fecha_ingreso='1980-10-04')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('fecha_ingreso', respuesta.data)
+
+    def test_fecha_de_ingreso_se_valida_al_cambiar_de_paciente(self):
+        informe_id = self.crear(fecha_ingreso='2000-01-01').data['id']
+        joven = paciente_ficticio('PRUEBA0002', fecha_nacimiento=date(2010, 1, 1))
+        respuesta = self.client.patch(f'{self.URL}{informe_id}/', {'paciente': joven.id}, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('fecha_ingreso', respuesta.data)
+
+    # --- EPS: la del momento del estudio ---
+
+    def test_si_no_se_envia_la_eps_se_copia_la_del_paciente(self):
+        datos = self.crear().data
+        self.assertEqual(datos['eps'], self.eps.id)
+
+    def test_eps_enviada_vacia_queda_vacia(self):
+        datos = self.crear(eps=None).data
+        self.assertIsNone(datos['eps'])
+
+    def test_no_se_copia_una_eps_desactivada_del_paciente(self):
+        EPS.objects.filter(pk=self.eps.pk).update(activa=False)
+        respuesta = self.crear()
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        self.assertIsNone(respuesta.data['eps'])
+
+    def test_cambiar_la_eps_del_paciente_no_cambia_la_del_informe(self):
+        informe_id = self.crear().data['id']
+        otra = EPS.objects.create(nombre='Otra')
+        Paciente.objects.filter(pk=self.paciente.pk).update(eps=otra)
+        self.assertEqual(self.client.get(f'{self.URL}{informe_id}/').data['eps_nombre'], 'EPS Ficticia')
+
+    def test_eps_o_servicio_desactivados_no_se_asignan(self):
+        eps_inactiva = EPS.objects.create(nombre='EPS Liquidada', activa=False)
+        servicio_inactivo = Servicio.objects.create(nombre='Cerrado', activo=False)
+        respuesta = self.crear(eps=eps_inactiva.id, servicio=servicio_inactivo.id)
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('eps', respuesta.data)
+        self.assertIn('servicio', respuesta.data)
+
+    def test_informe_conserva_eps_y_servicio_aunque_se_desactiven(self):
+        informe_id = self.crear(servicio=self.servicio.id).data['id']
+        EPS.objects.filter(pk=self.eps.pk).update(activa=False)
+        Servicio.objects.filter(pk=self.servicio.pk).update(activo=False)
+        cuerpo = {
+            'patologia': self.patologia.id, 'paciente': self.paciente.id, 'datos_ingresados': {},
+            'eps': self.eps.id, 'servicio': self.servicio.id, 'medico_tratante': 'Corregido',
+        }
+        respuesta = self.client.put(f'{self.URL}{informe_id}/', cuerpo, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
+
+    # --- Listado, búsqueda y filtro ---
+
+    def test_listado_incluye_paciente_y_tipo_de_estudio(self):
+        self.crear(tipo_estudio='inmunohistoquimica')
+        Informe.objects.create(patologia=self.patologia, autor=self.patologo)  # antiguo, sin paciente
+        filas = self.client.get(self.URL).data['results']
+        self.assertCountEqual(
+            [(f['paciente_nombre'], f['paciente_documento'], f['tipo_estudio']) for f in filas],
+            [(None, None, 'histologia'), ('Paciente Ficticio Uno', 'CC PRUEBA0001', 'inmunohistoquimica')],
+        )
+
+    def test_busqueda_por_nombre_y_documento_del_paciente(self):
+        self.crear()
+        otro = paciente_ficticio('PRUEBA0002', nombres='Prueba', apellidos='Apellido Dos')
+        self.crear(paciente=otro.id)
+
+        def documentos(q):
+            return [f['paciente_documento'] for f in self.client.get(self.URL, {'q': q}).data['results']]
+
+        self.assertEqual(documentos('PRUEBA0002'), ['CC PRUEBA0002'])
+        self.assertEqual(documentos('ficticio uno'), ['CC PRUEBA0001'])  # nombres + apellidos
+        self.assertEqual(documentos('apellido'), ['CC PRUEBA0002'])
+        self.assertEqual(len(documentos('prueba')), 2)
+
+    def test_filtro_por_paciente(self):
+        self.crear()
+        otro = paciente_ficticio('PRUEBA0002')
+        self.crear(paciente=otro.id)
+        filas = self.client.get(self.URL, {'paciente': otro.id}).data['results']
+        self.assertEqual([f['paciente_documento'] for f in filas], ['CC PRUEBA0002'])
+
+
+class BorrarCatalogosEnUsoPorInformesTests(APITestCase):
+    """Etapa 4: una EPS o un servicio que usa un informe no se borra (PROTECT); se responde 400 (D-4)."""
+
+    def setUp(self):
+        self.admin = Usuario.objects.create_user(username='cat_admin', password='x', rol=Usuario.Rol.ADMIN)
+        self.client.force_authenticate(self.admin)
+        self.eps = EPS.objects.create(nombre='EPS en informe')
+        self.servicio = Servicio.objects.create(nombre='Servicio en informe')
+        Informe.objects.create(
+            patologia=Patologia.objects.create(nombre='Patología catálogos'), autor=self.admin,
+            eps=self.eps, servicio=self.servicio,
+        )
+
+    def test_borrar_servicio_en_uso_responde_400(self):
+        respuesta = self.client.delete(f'/api/servicios/{self.servicio.id}/')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('1 informe', respuesta.data['detail'])
+        self.assertIn('Desactívelo', respuesta.data['detail'])
+        self.assertTrue(Servicio.objects.filter(pk=self.servicio.id).exists())
+
+    def test_borrar_eps_en_uso_por_un_informe_responde_400(self):
+        respuesta = self.client.delete(f'/api/pacientes/eps/{self.eps.id}/')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('1 informe', respuesta.data['detail'])
+        self.assertIn('Desactívela', respuesta.data['detail'])
+        self.assertTrue(EPS.objects.filter(pk=self.eps.id).exists())
+
+    def test_borrar_servicio_sin_uso_sigue_funcionando(self):
+        libre = Servicio.objects.create(nombre='Sin uso')
+        self.assertEqual(self.client.delete(f'/api/servicios/{libre.id}/').status_code, status.HTTP_204_NO_CONTENT)
+
+
+class ConsultasListadoInformesTests(APITestCase):
+    """Auditoría M-4 aplicada a la etapa 4: los listados de informes no hacen una consulta por fila."""
+
+    def setUp(self):
+        self.usuario = Usuario.objects.create_user(username='consultas_inf', password='x', rol=Usuario.Rol.ADMIN)
+        self.client.force_authenticate(self.usuario)
+        self.patologia = Patologia.objects.create(nombre='Patología consultas')
+        self.paciente = paciente_ficticio('PRUEBA9999')
+
+    def crear_informes(self, desde, hasta):
+        for i in range(desde, hasta):
+            eps = EPS.objects.create(nombre=f'EPS {i}')
+            servicio = Servicio.objects.create(nombre=f'Servicio {i}')
+            # Uno del paciente fijo (para su historial) y otro de un paciente nuevo.
+            for paciente in (self.paciente, paciente_ficticio(f'PRUEBA{i:04d}', eps=eps)):
+                Informe.objects.create(
+                    patologia=self.patologia, autor=self.usuario, eps=eps, servicio=servicio, paciente=paciente,
+                )
+
+    def contar(self, url):
+        from django.test.utils import CaptureQueriesContext
+        with CaptureQueriesContext(connection) as consultas:
+            self.assertEqual(self.client.get(url).status_code, status.HTTP_200_OK)
+        return len(consultas)
+
+    def test_las_consultas_no_crecen_con_los_informes(self):
+        urls = ['/api/informes/', f'/api/pacientes/{self.paciente.id}/informes/']
+        self.crear_informes(0, 3)
+        con_3 = [self.contar(url) for url in urls]
+        self.crear_informes(3, 10)
+        self.assertEqual([self.contar(url) for url in urls], con_3)

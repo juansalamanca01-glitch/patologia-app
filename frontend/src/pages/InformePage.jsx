@@ -3,18 +3,37 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import client, { LISTA_COMPLETA, resultados } from '../api/client';
 import EstadoBadge from '../components/EstadoBadge';
+import SelectorPaciente from '../components/informe/SelectorPaciente';
+import DatosSolicitud from '../components/informe/DatosSolicitud';
+import useOpciones from '../hooks/useOpciones';
+import { conOpcionActual, hoyISO } from '../utils/formularios';
+
+// Datos de la solicitud (informe v2, etapa 4) con los nombres de campo de la API.
+const solicitudVacia = () => ({
+  medico_tratante: '',
+  fecha_ingreso: hoyISO(),
+  eps: '',
+  servicio: '',
+  numero_orden_externa: '',
+  estudios_solicitados: '',
+});
 
 export default function InformePage() {
   const { id } = useParams();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
   const { user, canWrite, isAdmin } = useAuth();
+  const { opciones } = useOpciones();
 
   const [patologias, setPatologias] = useState([]);
   const [selectedPatologia, setSelectedPatologia] = useState(null);
   const [plantillas, setPlantillas] = useState([]);
   const [formData, setFormData] = useState({});
-  const [numeroOrdenExterna, setNumeroOrdenExterna] = useState('');
+  const [paciente, setPaciente] = useState(null); // con la forma de paciente_datos
+  const [solicitud, setSolicitud] = useState(solicitudVacia);
+  const [tipoEstudio, setTipoEstudio] = useState('histologia');
+  const [epsActivas, setEpsActivas] = useState([]);
+  const [serviciosActivos, setServiciosActivos] = useState([]);
   const [tipoMuestra, setTipoMuestra] = useState('');
   const [notas, setNotas] = useState('');
   const [informe, setInforme] = useState(null);
@@ -29,6 +48,7 @@ export default function InformePage() {
   const puedeEditar = isEditing
     ? canWrite && Boolean(informe) && (isAdmin || informe.autor === user?.id)
     : canWrite;
+  const soloLectura = informe?.estado === 'finalizado' || !puedeEditar;
 
   // Carga la lista de patologías
   useEffect(() => {
@@ -40,13 +60,34 @@ export default function InformePage() {
       .catch(() => setErrors((prev) => ({ ...prev, general: 'No se pudieron cargar las patologías. Recarga la página.' })));
   }, []);
 
+  // EPS y servicios activos (D-4). La EPS o el servicio de un informe guardado se
+  // agregan aparte si ya se desactivaron (conOpcionActual).
+  useEffect(() => {
+    Promise.all([
+      client.get('/pacientes/eps/', { params: { ...LISTA_COMPLETA, activa: 'true' } }),
+      client.get('/servicios/', { params: { ...LISTA_COMPLETA, activo: 'true' } }),
+    ]).then(([eps, servicios]) => {
+      setEpsActivas(resultados(eps.data));
+      setServiciosActivos(resultados(servicios.data));
+    }).catch(() => setErrors((prev) => ({ ...prev, general: 'No se pudieron cargar las EPS y los servicios. Recarga la página.' })));
+  }, []);
+
   // Carga el informe si se está editando uno existente
   useEffect(() => {
     if (isEditing) {
       setLoading(true);
       client.get(`/informes/${id}/`).then(({ data }) => {
         setInforme(data);
-        setNumeroOrdenExterna(data.numero_orden_externa || '');
+        setPaciente(data.paciente_datos);
+        setSolicitud({
+          medico_tratante: data.medico_tratante || '',
+          fecha_ingreso: data.fecha_ingreso || '',
+          eps: data.eps ?? '',
+          servicio: data.servicio ?? '',
+          numero_orden_externa: data.numero_orden_externa || '',
+          estudios_solicitados: data.estudios_solicitados || '',
+        });
+        setTipoEstudio(data.tipo_estudio || 'histologia');
         setTipoMuestra(data.tipo_muestra || '');
         setNotas(data.notas || '');
         setFormData(data.datos_ingresados || {});
@@ -81,8 +122,25 @@ export default function InformePage() {
     setErrors((prev) => ({ ...prev, [fieldName]: null }));
   };
 
+  const cambiarSolicitud = (campo, valor) => {
+    setSolicitud((prev) => ({ ...prev, [campo]: valor }));
+    setErrors((prev) => ({ ...prev, [campo]: null }));
+  };
+
+  // Al elegir el paciente se precarga su EPS actual, si sigue activa. La del
+  // informe se puede cambiar: es la del momento del estudio.
+  const seleccionarPaciente = (nuevo) => {
+    setPaciente(nuevo);
+    setSolicitud((prev) => ({
+      ...prev,
+      eps: epsActivas.some((e) => e.id === nuevo.eps) ? nuevo.eps : '',
+    }));
+    setErrors((prev) => ({ ...prev, paciente: null, eps: null }));
+  };
+
   const validate = () => {
     const newErrors = {};
+    if (!paciente) newErrors.paciente = 'Seleccione un paciente.';
     if (!selectedPatologia) newErrors.patologia = 'Seleccione una patología.';
 
     plantillas.filter(p => p.obligatorio).forEach((p) => {
@@ -105,7 +163,11 @@ export default function InformePage() {
 
     // El número de petición no se envía: lo asigna el backend al crear el informe (decisión D-7).
     const payload = {
-      numero_orden_externa: numeroOrdenExterna,
+      paciente: paciente.id,
+      ...solicitud,
+      eps: solicitud.eps ? Number(solicitud.eps) : null,
+      servicio: solicitud.servicio ? Number(solicitud.servicio) : null,
+      tipo_estudio: tipoEstudio,
       patologia: selectedPatologia,
       tipo_muestra: tipoMuestra,
       datos_ingresados: formData,
@@ -297,21 +359,40 @@ export default function InformePage() {
       {(errors.general || errors.detail) && <div className="alert alert-error">{errors.general || errors.detail}</div>}
 
       <form onSubmit={handleSubmit}>
+        {/* Orden del informe real (informe v2, etapa 4): Paciente, Datos de la solicitud y Estudio */}
+        <SelectorPaciente
+          paciente={paciente}
+          onSeleccionar={seleccionarPaciente}
+          disabled={soloLectura}
+          error={errors.paciente}
+        />
+
+        <DatosSolicitud
+          valores={solicitud}
+          onCambiar={cambiarSolicitud}
+          epsOpciones={conOpcionActual(epsActivas, solicitud.eps, informe?.eps_nombre)}
+          serviciosOpciones={conOpcionActual(serviciosActivos, solicitud.servicio, informe?.servicio_nombre, 'desactivado')}
+          disabled={soloLectura}
+          errores={errors}
+        />
+
         <div className="card">
-          <div className="card-header"><h2>Datos Generales</h2></div>
+          <div className="card-header"><h2>Estudio</h2></div>
           <div className="card-body">
             <div className="form-row">
-              <div className={`form-group ${errors.numero_orden_externa ? 'has-error' : ''}`}>
-                <label htmlFor="numeroOrdenExterna">N.º de orden externa (opcional)</label>
-                <input
-                  id="numeroOrdenExterna"
-                  type="text"
-                  value={numeroOrdenExterna}
-                  onChange={(e) => setNumeroOrdenExterna(e.target.value)}
-                  placeholder="Número de la institución remitente"
-                  disabled={informe?.estado === 'finalizado' || !puedeEditar}
-                />
-                {errors.numero_orden_externa && <span className="field-error">{errors.numero_orden_externa}</span>}
+              <div className={`form-group ${errors.tipo_estudio ? 'has-error' : ''}`}>
+                <label htmlFor="tipoEstudio">Tipo de estudio</label>
+                <select
+                  id="tipoEstudio"
+                  value={tipoEstudio}
+                  onChange={(e) => setTipoEstudio(e.target.value)}
+                  disabled={soloLectura}
+                >
+                  {opciones.tipos_estudio.map((o) => (
+                    <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
+                  ))}
+                </select>
+                {errors.tipo_estudio && <span className="field-error">{errors.tipo_estudio}</span>}
               </div>
 
               <div className={`form-group ${errors.patologia ? 'has-error' : ''}`}>
@@ -334,9 +415,7 @@ export default function InformePage() {
                 </select>
                 {errors.patologia && <span className="field-error">{errors.patologia}</span>}
               </div>
-            </div>
 
-            <div className="form-row">
               <div className="form-group">
                 <label htmlFor="tipoMuestra">Tipo de Muestra</label>
                 <input
@@ -345,7 +424,7 @@ export default function InformePage() {
                   value={tipoMuestra}
                   onChange={(e) => setTipoMuestra(e.target.value)}
                   placeholder="Ej: Biopsia escisional"
-                  disabled={informe?.estado === 'finalizado' || !puedeEditar}
+                  disabled={soloLectura}
                 />
               </div>
             </div>

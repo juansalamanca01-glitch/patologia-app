@@ -9,19 +9,23 @@ const SIN_OPCIONES = { sexos: [], tipos_documento: [], tipos_estudio: [] };
 // Se piden una sola vez por sesión del navegador; si la petición falla, se vuelve
 // a intentar la próxima vez que una pantalla las necesite.
 let peticion = null;
+// Las opciones ya recibidas: un componente que se monta después (p. ej. el
+// formulario de paciente) las tiene desde el primer render, sin listas vacías.
+let recibidas = null;
 
 export function reiniciarOpciones() {
   peticion = null;
+  recibidas = null;
 }
 
 export default function useOpciones() {
-  const [opciones, setOpciones] = useState(SIN_OPCIONES);
+  const [opciones, setOpciones] = useState(() => ({ ...SIN_OPCIONES, ...recibidas }));
   const [error, setError] = useState('');
 
   useEffect(() => {
     let montado = true;
     if (!peticion) {
-      peticion = client.get('/opciones/').then(({ data }) => data);
+      peticion = client.get('/opciones/').then(({ data }) => { recibidas = data; return data; });
       peticion.catch(() => { peticion = null; });
     }
     peticion

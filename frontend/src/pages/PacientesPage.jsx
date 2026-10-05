@@ -1,20 +1,17 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import client, { LISTA_COMPLETA, resultados } from '../api/client';
 import useOpciones, { etiquetaDe } from '../hooks/useOpciones';
+import EstadoBadge from '../components/EstadoBadge';
+import FormularioPaciente from '../components/FormularioPaciente';
 
 const TAMANO_PAGINA = 20; // Debe coincidir con PAGE_SIZE de backend/config/settings.py
 
-const PACIENTE_VACIO = {
-  tipo_documento: 'CC', numero_documento: '', nombres: '', apellidos: '',
-  fecha_nacimiento: '', sexo: '', eps: '',
-};
-
-// Fecha local de hoy en formato AAAA-MM-DD, para que el calendario no ofrezca fechas futuras.
-const hoyISO = () => new Date().toLocaleDateString('en-CA');
-
-// Pacientes (informe v2, etapa 3). Todos leen; patólogo y admin crean y editan;
-// solo el admin borra (decisión D-11). La autorización real la hace el backend.
+// Pacientes (informe v2, etapa 3). Todos leen y ven el historial de informes de
+// cada paciente (etapa 4); patólogo y admin crean y editan; solo el admin borra, y
+// solo si el paciente no tiene informes (decisión D-11). La autorización real la
+// hace el backend.
 export default function PacientesPage() {
   const { canWrite, isAdmin } = useAuth();
   const { opciones } = useOpciones();
@@ -31,10 +28,10 @@ export default function PacientesPage() {
   const [hayAnterior, setHayAnterior] = useState(false);
   const [haySiguiente, setHaySiguiente] = useState(false);
 
-  const [form, setForm] = useState(null); // null = cerrado, {...} = nuevo o editar
-  const [erroresForm, setErroresForm] = useState({});
-  const [epsActivas, setEpsActivas] = useState([]);
+  // undefined = cerrado, null = paciente nuevo, {...} = paciente a editar
+  const [editando, setEditando] = useState(undefined);
   const [confirmDelete, setConfirmDelete] = useState(null); // paciente a borrar
+  const [historial, setHistorial] = useState(null); // { paciente, informes, cargando, error }
 
   const buscar = async (q, numeroPagina) => {
     setLoading(true);
@@ -65,51 +62,20 @@ export default function PacientesPage() {
     buscar(query.trim(), 1);
   };
 
-  const abrirFormulario = async (paciente) => {
-    setErroresForm({});
-    setForm(paciente ? { ...paciente, eps: paciente.eps ?? '' } : { ...PACIENTE_VACIO });
-    try {
-      const { data } = await client.get('/pacientes/eps/', { params: { ...LISTA_COMPLETA, activa: true } });
-      setEpsActivas(resultados(data));
-    } catch {
-      setError('No se pudo cargar la lista de EPS.');
-    }
+  const guardado = () => {
+    // Un paciente nuevo se busca desde la primera página; uno editado, en la misma.
+    const paginaDestino = editando ? pagina : 1;
+    setEditando(undefined);
+    buscar(consulta, paginaDestino);
   };
 
-  const cambiar = (campo) => (e) => setForm({ ...form, [campo]: e.target.value });
-
-  // Las EPS activas, más la actual del paciente si ya no está activa: la conserva (D-4).
-  const opcionesEps = form?.eps && !epsActivas.some((e) => e.id === Number(form.eps))
-    ? [{ id: Number(form.eps), nombre: `${form.eps_nombre ?? 'EPS actual'} (desactivada)` }, ...epsActivas]
-    : epsActivas;
-
-  const guardar = async (e) => {
-    e.preventDefault();
-    setErroresForm({});
-    const payload = {
-      tipo_documento: form.tipo_documento,
-      numero_documento: form.numero_documento,
-      nombres: form.nombres,
-      apellidos: form.apellidos,
-      fecha_nacimiento: form.fecha_nacimiento,
-      sexo: form.sexo,
-      eps: form.eps ? Number(form.eps) : null,
-    };
+  const verHistorial = async (paciente) => {
+    setHistorial({ paciente, informes: [], cargando: true, error: '' });
     try {
-      if (form.id) {
-        await client.put(`/pacientes/${form.id}/`, payload);
-      } else {
-        await client.post('/pacientes/', payload);
-      }
-      setForm(null);
-      buscar(consulta, form.id ? pagina : 1);
-    } catch (err) {
-      const datos = err.response?.data;
-      if (datos && typeof datos === 'object' && !datos.detail) {
-        setErroresForm(datos);
-      } else {
-        setErroresForm({ detail: datos?.detail || 'Error al guardar el paciente.' });
-      }
+      const { data } = await client.get(`/pacientes/${paciente.id}/informes/`, { params: LISTA_COMPLETA });
+      setHistorial({ paciente, informes: resultados(data), cargando: false, error: '' });
+    } catch {
+      setHistorial({ paciente, informes: [], cargando: false, error: 'No se pudieron cargar los informes del paciente.' });
     }
   };
 
@@ -125,12 +91,6 @@ export default function PacientesPage() {
     }
   };
 
-  const errorDe = (campo) => {
-    const valor = erroresForm[campo];
-    if (!valor) return null;
-    return <span className="field-error">{Array.isArray(valor) ? valor[0] : valor}</span>;
-  };
-
   const desde = (pagina - 1) * TAMANO_PAGINA + 1;
   const hasta = desde + pacientes.length - 1;
 
@@ -143,7 +103,7 @@ export default function PacientesPage() {
         </div>
         {canWrite && (
           <div className="header-actions">
-            <button className="btn btn-primary" onClick={() => abrirFormulario(null)}>+ Paciente</button>
+            <button className="btn btn-primary" onClick={() => setEditando(null)}>+ Paciente</button>
           </div>
         )}
       </div>
@@ -184,8 +144,7 @@ export default function PacientesPage() {
               <table>
                 <thead>
                   <tr>
-                    <th>Documento</th><th>Paciente</th><th>Edad</th><th>Sexo</th><th>EPS</th>
-                    {canWrite && <th>Acciones</th>}
+                    <th>Documento</th><th>Paciente</th><th>Edad</th><th>Sexo</th><th>EPS</th><th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -196,18 +155,19 @@ export default function PacientesPage() {
                       <td>{p.edad}</td>
                       <td>{etiquetaDe(opciones.sexos, p.sexo)}</td>
                       <td>{p.eps_nombre || <span className="text-muted">Sin EPS</span>}</td>
-                      {canWrite && (
-                        <td>
-                          <div className="table-actions">
-                            <button className="btn btn-outline btn-xs" onClick={() => abrirFormulario(p)}>Editar</button>
-                            {isAdmin && (
-                              <button className="btn btn-danger-outline btn-xs" onClick={() => setConfirmDelete(p)}>
-                                Eliminar
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      )}
+                      <td>
+                        <div className="table-actions">
+                          <button className="btn btn-outline btn-xs" onClick={() => verHistorial(p)}>Informes</button>
+                          {canWrite && (
+                            <button className="btn btn-outline btn-xs" onClick={() => setEditando(p)}>Editar</button>
+                          )}
+                          {isAdmin && (
+                            <button className="btn btn-danger-outline btn-xs" onClick={() => setConfirmDelete(p)}>
+                              Eliminar
+                            </button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -230,73 +190,43 @@ export default function PacientesPage() {
       </div>
 
       {/* Crear o editar paciente */}
-      {form && (
-        <div className="modal-overlay" onClick={() => setForm(null)}>
+      {editando !== undefined && (
+        <FormularioPaciente paciente={editando} onGuardado={guardado} onCancelar={() => setEditando(undefined)} />
+      )}
+
+      {/* Historial de informes del paciente (etapa 4) */}
+      {historial && (
+        <div className="modal-overlay" onClick={() => setHistorial(null)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <h2>{form.id ? 'Editar paciente' : 'Nuevo paciente'}</h2>
-            {erroresForm.detail && <div className="alert alert-error">{erroresForm.detail}</div>}
-            {errorDe('non_field_errors')}
-            <form onSubmit={guardar}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="paciente-tipo-documento">Tipo de documento</label>
-                  <select id="paciente-tipo-documento" value={form.tipo_documento} onChange={cambiar('tipo_documento')} required>
-                    {opciones.tipos_documento.map((o) => (
-                      <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
+            <h2>Informes de {historial.paciente.nombres} {historial.paciente.apellidos}</h2>
+            {historial.error && <div className="alert alert-error">{historial.error}</div>}
+            {historial.cargando ? (
+              <div className="loading-center"><span className="spinner"></span></div>
+            ) : !historial.error && historial.informes.length === 0 ? (
+              <p className="text-muted">Este paciente no tiene informes.</p>
+            ) : historial.informes.length > 0 && (
+              <div className="table-responsive">
+                <table>
+                  <thead>
+                    <tr><th>N.º de petición</th><th>Tipo de estudio</th><th>Patología</th><th>Fecha</th><th>Estado</th></tr>
+                  </thead>
+                  <tbody>
+                    {historial.informes.map((inf) => (
+                      <tr key={inf.id}>
+                        <td><Link to={`/informes/${inf.id}`}>{inf.numero_peticion}</Link></td>
+                        <td>{etiquetaDe(opciones.tipos_estudio, inf.tipo_estudio)}</td>
+                        <td>{inf.patologia_nombre}</td>
+                        <td>{inf.fecha}</td>
+                        <td><EstadoBadge estado={inf.estado} /></td>
+                      </tr>
                     ))}
-                  </select>
-                  {errorDe('tipo_documento')}
-                </div>
-                <div className="form-group">
-                  <label htmlFor="paciente-numero-documento">Número de documento</label>
-                  <input id="paciente-numero-documento" value={form.numero_documento} onChange={cambiar('numero_documento')} maxLength={20} required />
-                  {errorDe('numero_documento')}
-                </div>
+                  </tbody>
+                </table>
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="paciente-nombres">Nombres</label>
-                  <input id="paciente-nombres" value={form.nombres} onChange={cambiar('nombres')} maxLength={150} required />
-                  {errorDe('nombres')}
-                </div>
-                <div className="form-group">
-                  <label htmlFor="paciente-apellidos">Apellidos</label>
-                  <input id="paciente-apellidos" value={form.apellidos} onChange={cambiar('apellidos')} maxLength={150} required />
-                  {errorDe('apellidos')}
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="paciente-fecha-nacimiento">Fecha de nacimiento</label>
-                  <input id="paciente-fecha-nacimiento" type="date" value={form.fecha_nacimiento} onChange={cambiar('fecha_nacimiento')} max={hoyISO()} required />
-                  {errorDe('fecha_nacimiento')}
-                </div>
-                <div className="form-group">
-                  <label htmlFor="paciente-sexo">Sexo</label>
-                  <select id="paciente-sexo" value={form.sexo} onChange={cambiar('sexo')} required>
-                    <option value="">Seleccione...</option>
-                    {opciones.sexos.map((o) => (
-                      <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
-                    ))}
-                  </select>
-                  {errorDe('sexo')}
-                </div>
-              </div>
-              <div className="form-group">
-                <label htmlFor="paciente-eps">EPS</label>
-                <select id="paciente-eps" value={form.eps} onChange={cambiar('eps')}>
-                  <option value="">Sin EPS</option>
-                  {opcionesEps.map((e) => (
-                    <option key={e.id} value={e.id}>{e.nombre}</option>
-                  ))}
-                </select>
-                {errorDe('eps')}
-              </div>
-              <div className="form-actions">
-                <button type="button" className="btn btn-outline" onClick={() => setForm(null)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary">Guardar</button>
-              </div>
-            </form>
+            )}
+            <div className="form-actions">
+              <button className="btn btn-outline" onClick={() => setHistorial(null)}>Cerrar</button>
+            </div>
           </div>
         </div>
       )}

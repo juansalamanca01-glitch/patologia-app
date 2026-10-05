@@ -1,7 +1,7 @@
 # Propuesta: informe de anatomía patológica v2
 
 **Fecha:** 2026-10-04
-**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); las etapas 1 (número de petición), 2 (catálogos y opciones) y 3 (pacientes) se terminaron el 2026-10-04.
+**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); las etapas 1 (número de petición), 2 (catálogos y opciones), 3 (pacientes) y 4 (datos de la solicitud) se terminaron el 2026-10-04.
 
 **Objetivo:** que el informe tenga los datos y el orden de un informe real de laboratorio:
 
@@ -105,6 +105,7 @@ class Paciente(models.Model):
 - **Edad:** el método `edad_en(fecha)` devuelve la edad en años cumplidos. Para menores de 1 año la da en meses y para menores de 1 mes en días, como en patología pediátrica y placentaria. El informe muestra la edad **a la fecha de ingreso**, no la de hoy: si se reimprime un informe de hace tres años, la edad no debe cambiar. Nada de esto se guarda en la base de datos.
 - **Validaciones:** la fecha de nacimiento no puede estar en el futuro ni ser de hace más de 130 años. `numero_documento` se guarda sin espacios ni puntos.
 - **Datos mínimos:** solo se guarda lo que aparece en el informe. No se piden dirección, teléfono ni correo del paciente, porque son datos de salud, que son datos sensibles (Ley 1581 de 2012).
+- **EPS del informe (confirmado en la etapa 4):** si un informe nuevo no envía `eps`, toma la EPS actual del paciente si sigue activa. La pantalla de EPS y servicios es `/catalogos`.
 - **EPS desactivada (confirmado en la etapa 3):** no se puede asignar a un paciente, pero el paciente que ya la tenía la conserva, para poder corregir sus otros datos.
 - **Un paciente puede tener varios informes:** `Informe.paciente` es una `ForeignKey` con `PROTECT`. Un paciente con informes no se puede borrar; la API responde 400, como en I-1.
 
@@ -449,7 +450,7 @@ Se actualiza en cada etapa, según las reglas 2, 3 y 6 de `CLAUDE.md`:
 | **1. Número de petición** (hecha, 2026-10-04) | `ConsecutivoPeticion`, `numero_peticion` automático, migración de datos, se elimina `numero_caso`, `numero_orden_externa`, prueba de concurrencia y base de pruebas en archivo. Nombre del PDF, listados, formulario y Postman. | backend, frontend, PDF (solo el número), pruebas |
 | **2. Catálogos y opciones** (hecha, 2026-10-04) | `EPS`, `Servicio`, `TipoEstudio`, `GET /api/opciones/` y `seed_data`. Solo backend, con sus pruebas. La app `pacientes` se crea aquí con solo la EPS. | backend |
 | **3. Pacientes** (hecha, 2026-10-04) | Modelo `Paciente` en la app `pacientes`, CRUD, búsqueda, edad calculada, permisos, `useOpciones`, `PacientesPage` y enlace en el Navbar. Borrar una EPS que usa un paciente responde 400 ("desactívela"). | backend, frontend |
-| **4. Datos de la solicitud** | Paciente y campos de 3.4 en el informe, historial `GET /api/pacientes/{id}/informes/` (y en `PacientesPage`), 400 al borrar un paciente con informes (se pasaron de la etapa 3 porque necesitan `Informe.paciente`), `SelectorPaciente`, tarjeta "Datos de la solicitud", búsqueda ampliada, columnas de los listados y pantalla para administrar EPS y servicios (6.3). Borrar un servicio o una EPS que usa un informe responde 400. | backend, frontend |
+| **4. Datos de la solicitud** (hecha, 2026-10-04) | Paciente y campos de 3.4 en el informe, historial `GET /api/pacientes/{id}/informes/` (y en `PacientesPage`), 400 al borrar un paciente con informes (se pasaron de la etapa 3 porque necesitan `Informe.paciente`), `SelectorPaciente`, tarjeta "Datos de la solicitud", búsqueda ampliada, columnas de los listados y pantalla para administrar EPS y servicios (6.3). Borrar un servicio o una EPS que usa un informe responde 400. | backend, frontend |
 | **5. Contenido del informe** | Descripción microscópica, `notas` → `comentarios` y diagnósticos con CIE-10 (`ListaDiagnosticos`). | backend, frontend |
 | **6. Firma y finalización** | `registro_medico`, reglas para finalizar, `fecha_informe`, `datos_finalizacion`, perfil y `SeccionFirma`. | backend, frontend |
 | **7. PDF nuevo** | Estructura de la sección 5, encabezado configurable, numeración de páginas y borrador. | PDF |

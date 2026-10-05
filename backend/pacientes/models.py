@@ -56,7 +56,7 @@ class Paciente(models.Model):
     apellidos = models.CharField(max_length=150)
     fecha_nacimiento = models.DateField(verbose_name='Fecha de nacimiento')
     sexo = models.CharField(max_length=13, choices=Sexo.choices)
-    # EPS actual del paciente. El informe guardará aparte la del momento del estudio (etapa 4).
+    # EPS actual del paciente. El informe guarda aparte la del momento del estudio (Informe.eps).
     eps = models.ForeignKey(EPS, on_delete=models.PROTECT, null=True, blank=True,
                             related_name='pacientes', verbose_name='EPS')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
@@ -72,6 +72,15 @@ class Paciente(models.Model):
 
     def __str__(self):
         return f'{self.nombres} {self.apellidos} ({self.tipo_documento} {self.numero_documento})'
+
+    @property
+    def nombre_completo(self):
+        return f'{self.nombres} {self.apellidos}'
+
+    @property
+    def documento(self):
+        """Tipo y número, p. ej. "CC PRUEBA0001"."""
+        return f'{self.tipo_documento} {self.numero_documento}'
 
     def edad_en(self, fecha):
         """

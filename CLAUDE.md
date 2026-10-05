@@ -55,7 +55,7 @@ Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234`, `auditor1/
 
 `backend/config/settings.py` lee todo con `python-decouple` desde `backend/.env` (ver `.env.example`):
 - `SECRET_KEY` es obligatoria: si falta, `settings.py` lanza `ImproperlyConfigured` y nada arranca (ni `runserver` ni las pruebas). `DEBUG` vale `False` si no se define. Las dos cosas las verifica `backend/config/tests.py`.
-- Si `DB_NAME` está definido usa PostgreSQL; si no, SQLite (`backend/db.sqlite3`, con `timeout` de 20 s para esperar en vez de fallar con "database is locked"). Con SQLite, las pruebas usan el archivo `backend/test_db.sqlite3` y no la base en memoria, porque la prueba de concurrencia del número de petición escribe desde varios hilos.
+- Si `DB_NAME` está definido usa PostgreSQL; si no, SQLite (`backend/db.sqlite3`, con `timeout` de 20 s para esperar en vez de fallar con "database is locked"). Con SQLite, las pruebas usan el archivo `backend/test_db.sqlite3` y no la base en memoria, porque la prueba de concurrencia del número de petición escribe desde varios hilos. Las pruebas corren con `config/test_runner.py`, que usa `DummyCache`: así los límites de peticiones (throttles) no se acumulan entre pruebas. Ninguna prueba debe depender de esos límites.
 - `DEBUG=True` activa `CORS_ALLOW_ALL_ORIGINS` y sirve `/media/`; con `DEBUG=False` se usan `CORS_ALLOWED_ORIGINS` y los ajustes HTTPS/HSTS.
 - `FORO_MAX_TAMANO_IMAGEN` (10 MB) es el límite por imagen del foro. Lo aplica `foro/views.py` (`subir_imagenes`, que además comprueba con Pillow que el archivo sea una imagen real), y `ForoPage.jsx` repite el valor en `MAX_TAMANO_IMAGEN_MB`: si cambia uno, hay que cambiar el otro.
 - Idioma `es`, zona horaria `America/Bogota`.
@@ -65,7 +65,7 @@ Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234`, `auditor1/
 **Apps Django** (rutas en `config/urls.py`):
 - `accounts` → `/api/auth/`: `AUTH_USER_MODEL = accounts.Usuario` con campo `rol` (`admin` | `patologo` | `auditor`). El login (`CustomTokenView`) devuelve `access`, `refresh` y `user`.
 - `informes` → `/api/`: `Categoria` → `Patologia` → `Plantilla` (campos del formulario dinámico), `Servicio` e `Informe`. También `GET /api/opciones/` (`OpcionesView`).
-- `pacientes` → `/api/pacientes/`: `Paciente` (en la raíz, `/api/pacientes/{id}/`), el catálogo `EPS` (`/api/pacientes/eps/`) y las listas fijas `TipoDocumento` y `Sexo`. En `urls.py`, `eps` se registra antes que los pacientes y `PacienteViewSet.lookup_value_regex` solo acepta números, para que las dos rutas no se confundan. Todavía no hay `Informe.paciente`: llega en la etapa 4 del informe v2 (`docs/propuesta-informe-v2.md`).
+- `pacientes` → `/api/pacientes/`: `Paciente` (en la raíz, `/api/pacientes/{id}/`, con el historial en `/api/pacientes/{id}/informes/`), el catálogo `EPS` (`/api/pacientes/eps/`) y las listas fijas `TipoDocumento` y `Sexo`. En `urls.py`, `eps` se registra antes que los pacientes y `PacienteViewSet.lookup_value_regex` solo acepta números, para que las dos rutas no se confundan.
 - `foro` → `/api/foro/`: `TemaForo`, `Publicacion` (con `ImagenPublicacion`, subidas a `media/foro/publicaciones/<id>/`) y `Comentario`.
 
 **Permisos por rol.** DRF exige autenticación por defecto. Las clases están en `accounts/permissions.py`, y comparan `request.user.rol` como string:
@@ -90,12 +90,19 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
 **Listas de opciones (informe v2).**
 - Las listas fijas son `TextChoices` en el código: `Sexo` y `TipoDocumento` en `pacientes/models.py`, `Informe.TipoEstudio` en `informes/models.py`. `GET /api/opciones/` las devuelve como `{sexos, tipos_documento, tipos_estudio}`, cada elemento con `valor` y `etiqueta`. El frontend debe pedirlas ahí y no copiarlas en `constants.js`. Si agregas una lista fija, agrégala también a `OpcionesView`.
 - EPS y servicios son catálogos editables (`EsPatologoOAdmin`, decisión D-11). Se desactivan en lugar de borrarse (D-4), con el filtro `?activa=` (EPS) o `?activo=` (servicios): cada filtro se llama como su campo. Comparten `config/catalogos.py`: `NombreCatalogoMixin` rechaza nombres repetidos sin importar mayúsculas ni espacios, y `filtrar_por_activo()` aplica el filtro. Úsalos en cualquier catálogo nuevo.
-- Una EPS en uso (`Paciente.eps` es `PROTECT`) no se borra: `EPSViewSet.destroy` responde 400 y pide desactivarla.
+- Una EPS o un servicio en uso (`Paciente.eps`, `Informe.eps` e `Informe.servicio` son `PROTECT`) no se borran: `EPSViewSet.destroy` y `ServicioViewSet.destroy` responden 400 y piden desactivarlos. Se administran en `CatalogosPage.jsx` (`/catalogos`).
 
 **Pacientes (informe v2, etapa 3).**
 - **Solo datos ficticios** en pruebas, `seed_data`, Postman y ejemplos: nombres como "Paciente Ficticio Uno" y documentos con el prefijo `PRUEBA`. Nunca datos de personas reales. No agregues campos que no salen en el informe (dirección, teléfono, correo): son datos sensibles (Ley 1581 de 2012).
-- **La edad no se guarda.** `Paciente.edad_en(fecha)` la devuelve como texto ("45 años", "8 meses", "28 días") y `Paciente.edad` la calcula a hoy (`timezone.localdate()`). El informe tendrá que usar `edad_en(fecha_ingreso)`, para que no cambie al reimprimirlo.
+- **La edad no se guarda.** `Paciente.edad_en(fecha)` la devuelve como texto ("45 años", "8 meses", "28 días") y `Paciente.edad` la calcula a hoy (`timezone.localdate()`). El informe usa `edad_en(fecha_ingreso)` (`paciente_datos` en `InformeSerializer`), para que no cambie al reimprimirlo. `Paciente.nombre_completo` y `Paciente.documento` ("CC PRUEBA0001") son las formas de mostrarlo.
 - `PacienteSerializer` normaliza el documento (sin espacios ni puntos, en mayúsculas) y comprueba en `validate()` que el tipo y el número no se repitan. Por eso tiene `validators = []`: el validador automático de DRF daría un mensaje en inglés. No se asigna una EPS desactivada, pero el paciente que ya la tenía la conserva.
+
+**Datos de la solicitud (informe v2, etapa 4).**
+- `Informe.paciente` es `PROTECT` y admite `null` solo por los informes antiguos. `InformeSerializer._validar_paciente_y_fecha_ingreso` lo exige al crear y no deja quitarlo; un paciente con informes no se borra (400).
+- `Informe.eps` es la EPS **del momento del estudio**, no la actual del paciente. Si un informe nuevo no envía `eps`, se copia la del paciente si sigue activa. Una EPS o un servicio desactivados no se asignan, pero el informe que ya los tenía los conserva (como en `PacienteSerializer`).
+- `fecha_ingreso` es hoy si no se envía, y no puede estar en el futuro ni ser anterior al nacimiento.
+- El listado lleva `paciente_nombre`, `paciente_documento` y `tipo_estudio`, con `select_related('paciente', 'eps', 'servicio')`. Lo vigila `ConsultasListadoInformesTests`: si agregas campos relacionados al listado, agrégalos al `select_related`.
+- En el frontend, `InformePage.jsx` usa `components/informe/SelectorPaciente.jsx` y `DatosSolicitud.jsx`. El formulario de paciente (`components/FormularioPaciente.jsx`) se comparte con `PacientesPage` y se dibuja con un portal en `document.body`, porque el informe ya es un `<form>`; su `onSubmit` llama a `stopPropagation()` para que los eventos de React no envíen también el informe. `utils/formularios.js` tiene `hoyISO()` y `conOpcionActual()`, que agrega a la lista de activos el elemento desactivado que el registro ya tenía.
 
 **Rate limiting.** En `settings.REST_FRAMEWORK` están los throttles globales (`anon`, `user`) y otros por scope (`login`, `registro`, `foro_publicacion`, `foro_comentario`). Los de scope se asignan en `accounts/throttles.py` y en `get_throttles()` de las vistas del foro. Si un endpoint nuevo usa un scope nuevo, hay que agregarlo a `DEFAULT_THROTTLE_RATES`.
 
