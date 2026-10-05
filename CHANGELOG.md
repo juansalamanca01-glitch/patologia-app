@@ -5,6 +5,19 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-05
 
+### Visor de imágenes del foro (Pendientes, punto 2)
+
+**Qué se cambió**
+- `frontend/src/components/VisorImagenes.jsx` (nuevo): miniaturas de las imágenes de una publicación y visor para verlas ampliadas.
+  - **Miniaturas:** cada una es un botón ("Ampliar imagen 2 de 3"), de 220 px de alto en lugar de 160.
+  - **Visor:** fondo oscuro, la imagen completa sin recortar (hasta el 90 % del ancho y el 80 % del alto de la pantalla), su descripción si la tiene y el contador "2 de 3".
+  - **Navegación:** "Imagen anterior" y "Imagen siguiente", también con las flechas del teclado. Con una sola imagen no aparecen.
+  - **Cerrar:** botón "Cerrar", la tecla Escape o un clic fuera de la imagen.
+- `frontend/src/pages/PublicacionDetallePage.jsx` usa el visor en lugar de las `<img>` sueltas. `index.css` tiene los estilos de las miniaturas y del visor.
+- **Pruebas:** 4 nuevas en `PublicacionDetallePage.test.jsx` (abrir una miniatura, anterior y siguiente con botones y teclado, las tres formas de cerrar, una sola imagen sin flechas). El frontend pasa de 106 a 110 pruebas.
+
+**Por qué:** en la prueba manual del 2026-10-05 el usuario vio que las imágenes del foro eran pequeñas (recortadas a 160 px) y no se podían abrir en grande. No se agrega ninguna librería.
+
 ### Datos del paciente separados de su etiqueta en el informe (Pendientes, punto 1)
 
 **Qué se cambió**

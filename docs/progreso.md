@@ -20,7 +20,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 245 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 106 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 245 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 110 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -74,7 +74,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | `/admin/` de usuarios con el `UserAdmin` de Django: la contraseña se cifra al crear un usuario y ya no se muestra el hash en un campo editable. Lo encontramos al preparar la prueba manual final | `ad97f70` |
 | — | Prueba manual final del flujo completo, hecha por el usuario el 2026-10-05 con `patologo1`, `patologo2`, `auditor1` y `admin`: todo salió bien. Reemplazó las pruebas de navegador que estaban pendientes (etapas 3, 4 y 6, Catálogos, C-2 e I-4) | `420b91f` |
 | — | Unión de `informe-v2` a `main` (fast-forward, con todas las pruebas en verde) | `64c6e22` |
-| — | Pendientes, punto 1: los datos del paciente en el informe ya no salen pegados a su etiqueta (`<dt>`/`<dd>` en `SelectorPaciente`) | commit "fix: datos del paciente separados de su etiqueta" |
+| — | Pendientes, punto 1: los datos del paciente en el informe ya no salen pegados a su etiqueta (`<dt>`/`<dd>` en `SelectorPaciente`) | `a31c5e1` |
+| — | Pendientes, punto 2: miniaturas del foro más grandes y visor para ampliarlas (anterior y siguiente, teclado, Escape, clic fuera) | commit "feat: visor de imágenes del foro" |
 
 ## Pendientes
 
@@ -82,7 +83,7 @@ Observaciones del usuario en la prueba manual del 2026-10-05.
 
 **Bloque A (funcional), en la rama `ajustes-prueba-manual`, en este orden:**
 1. ~~En la pantalla del informe, los datos del paciente aparecen pegados a su etiqueta (por ejemplo, "Nombreluis"). Pasa solo en pantalla; en el PDF se ve bien.~~ **Hecho**: lista de definiciones (`<dt>`/`<dd>`) en `SelectorPaciente`.
-2. En el foro, las imágenes se ven pequeñas y no se pueden abrir en grande. Al hacer clic deberían verse ampliadas.
+2. ~~En el foro, las imágenes se ven pequeñas y no se pueden abrir en grande. Al hacer clic deberían verse ampliadas.~~ **Hecho**: miniaturas más grandes y visor (`components/VisorImagenes.jsx`).
 3. Si el usuario sale del formulario del informe sin guardar, pierde todo lo que escribió. **Primero se proponen opciones, sin implementar.** Idea del usuario:
    - avisar antes de salir si hay cambios sin guardar;
    - en informes que ya existen como borrador, autoguardar en el servidor;

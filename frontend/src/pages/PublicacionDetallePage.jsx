@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
+import VisorImagenes from '../components/VisorImagenes';
 
 export default function PublicacionDetallePage() {
   const { id } = useParams();
@@ -75,13 +76,8 @@ export default function PublicacionDetallePage() {
           </p>
           <p className="publicacion-contenido">{publicacion.contenido}</p>
 
-          {publicacion.imagenes?.length > 0 && (
-            <div className="foro-imagenes-grid">
-              {publicacion.imagenes.map((img) => (
-                <img key={img.id} src={img.imagen} alt={img.descripcion || ''} />
-              ))}
-            </div>
-          )}
+          {/* Miniaturas que se amplían al hacer clic (Pendientes, punto 2). */}
+          <VisorImagenes imagenes={publicacion.imagenes || []} />
 
           {puedeModerar(publicacion.autor) && (
             <div className="form-actions">
