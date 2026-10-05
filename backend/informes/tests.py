@@ -1,5 +1,5 @@
 import threading
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone as dt_timezone
 from unittest import mock
 
 from django.db import IntegrityError, connection, transaction
@@ -209,7 +209,8 @@ class PdfConTextoDelUsuarioTests(APITestCase):
         self.informe = Informe.objects.create(
             patologia=Patologia.objects.create(nombre='Patología PDF'),
             autor=self.patologo,
-            datos_ingresados={'hallazgos': 'ver <i>H. pylori', 'campo<br>raro': 'tejido <br> pardo'},
+            # "DATOS CLÍNICOS" ya no está en el PDF (etapa 7): el marcado va en la microscópica.
+            descripcion_microscopica='ver <i>H. pylori',
             texto_generado='Lesión <b>grande',
             comentarios='<font size=40>ENORME</font> & margen < 2 mm',
         )
@@ -243,15 +244,8 @@ class PdfConTextoDelUsuarioTests(APITestCase):
         textos = [str(llamada.args[0]) for llamada in espia.call_args_list]
         self.assertIn('Primera línea<br/>Segunda línea<br/>Tercera &lt; línea', textos)
 
-    def test_la_hora_del_pie_usa_la_zona_horaria_de_bogota(self):
-        # Hallazgo M-10: el pie usaba la hora del servidor (datetime.now()), no TIME_ZONE.
-        from datetime import datetime, timezone as tz
-        from reportlab.platypus import Paragraph
-        ahora_utc = datetime(2026, 10, 4, 3, 30, tzinfo=tz.utc)  # en Bogotá: 3 de octubre, 22:30
-        with mock.patch('django.utils.timezone.now', return_value=ahora_utc),                 mock.patch('informes.utils.Paragraph', wraps=Paragraph) as espia:
-            self.descargar_pdf()
-        textos = ' '.join(str(llamada.args[0]) for llamada in espia.call_args_list)
-        self.assertIn('Generado el 03/10/2026 22:30', textos)
+    # La hora del pie en la zona de Bogotá (hallazgo M-10) la comprueba ahora
+    # PdfInformeTests, porque desde la etapa 7 el pie se dibuja en cada página.
 
 
 class EstadisticasYPaginacionTests(APITestCase):
@@ -1548,29 +1542,7 @@ class FinalizacionTests(APITestCase):
         self.assertEqual(detalle['eps_nombre'], 'EPS Renombrada')
         self.assertEqual(detalle['firma']['registro_medico'], 'RM-PRUEBA-0002')
 
-    def test_el_pdf_de_un_informe_finalizado_usa_la_firma_congelada(self):
-        from reportlab.platypus import Table
-        informe_id = self.crear()
-        momento = timezone.make_aware(datetime(2026, 10, 4, 15, 30))
-        with mock.patch('django.utils.timezone.now', return_value=momento):
-            self.assertEqual(self.finalizar(informe_id).status_code, status.HTTP_200_OK)
-        Usuario.objects.filter(id=self.autor.id).update(nombre_completo='Nombre Cambiado', registro_medico='RM-OTRO')
-        with mock.patch('informes.utils.Table', wraps=Table) as espia:
-            respuesta = self.client.get(f'{self.URL}{informe_id}/pdf/')
-        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
-        filas = dict((fila[0], fila[1]) for fila in espia.call_args.args[0])
-        self.assertEqual(filas['Patólogo:'], 'Dra. Ficticia Firma')
-        self.assertEqual(filas['Registro médico:'], 'RM-PRUEBA-0001')
-        self.assertEqual(filas['Fecha de informe:'], '04/10/2026 15:30')
-
-    def test_el_pdf_de_un_borrador_no_tiene_fecha_de_informe(self):
-        from reportlab.platypus import Table
-        informe_id = self.crear()
-        with mock.patch('informes.utils.Table', wraps=Table) as espia:
-            self.client.get(f'{self.URL}{informe_id}/pdf/')
-        filas = dict((fila[0], fila[1]) for fila in espia.call_args.args[0])
-        self.assertEqual(filas['Patólogo:'], 'Dra. Ficticia Firma')
-        self.assertNotIn('Fecha de informe:', filas)
+    # La firma y la fecha de informe en el PDF las comprueba PdfInformeTests (etapa 7).
 
     def test_no_se_puede_finalizar_dos_veces(self):
         informe_id = self.crear()
@@ -1628,3 +1600,209 @@ class MigracionFinalizacionTests(TransactionTestCase):
         self.assertIsNone(borrador.fecha_informe)
         self.assertIsNone(borrador.datos_finalizacion)
         self.assertIsNone(Informe.objects.get(id=sin_paciente.id).datos_finalizacion['paciente'])
+
+
+class PdfInformeTests(APITestCase):
+    """
+    Informe v2, etapa 7 (docs/propuesta-informe-v2.md, sección 5): el PDF tiene la
+    estructura del informe real. Encabezado del laboratorio desde la configuración,
+    tabla de datos en dos columnas, título, tipo de estudio, secciones en orden,
+    firma, "BORRADOR — SIN VALIDEZ" en los borradores y pie con "Página X de Y" en
+    cada página. Solo datos ficticios.
+    """
+
+    URL = '/api/informes/'
+
+    def setUp(self):
+        self.autor = Usuario.objects.create_user(
+            username='patologo_pdf_v2', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            nombre_completo='Dra. Ficticia Firma', especialidad='Patología Quirúrgica',
+            registro_medico='RM-PRUEBA-0001',
+        )
+        self.client.force_authenticate(self.autor)
+        self.patologia = Patologia.objects.create(nombre='Patología PDF v2')
+        self.eps = EPS.objects.create(nombre='EPS Ficticia')
+        self.servicio = Servicio.objects.create(nombre='Dermatología')
+        self.paciente = paciente_ficticio(eps=self.eps)
+
+    def crear(self, **extra):
+        cuerpo = {
+            'patologia': self.patologia.id, 'paciente': self.paciente.id,
+            'datos_ingresados': {'localizacion': 'dorso de la mano'},
+            'fecha_ingreso': '2026-10-01', 'servicio': self.servicio.id,
+            'medico_tratante': 'Médico Ficticio', 'estudios_solicitados': 'Biopsia de piel',
+            'tipo_muestra': 'Biopsia por raspado',
+            'descripcion_microscopica': 'Proliferación de células basaloides.',
+            'diagnosticos': [{'descripcion': 'Carcinoma basocelular nodular', 'codigo_cie10': 'C44.3'}],
+            'comentarios': 'Se sugiere control.',
+            **extra,
+        }
+        respuesta = self.client.post(self.URL, cuerpo, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
+        return respuesta.data['id']
+
+    def finalizar(self, informe_id):
+        momento = timezone.make_aware(datetime(2026, 10, 4, 15, 30))
+        with mock.patch('django.utils.timezone.now', return_value=momento):
+            respuesta = self.client.post(f'{self.URL}{informe_id}/finalizar/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
+
+    def generar(self, informe_id):
+        """
+        Descarga el PDF y devuelve, en orden, los textos de los Paragraph, las filas
+        de cada Table (el texto de cada celda) y lo que se dibuja centrado en el
+        lienzo (el pie de página).
+        """
+        from reportlab.pdfgen.canvas import Canvas
+        from reportlab.platypus import Paragraph, Table
+        with mock.patch('informes.utils.Paragraph', wraps=Paragraph) as parrafos, \
+                mock.patch('informes.utils.Table', wraps=Table) as tablas, \
+                mock.patch.object(Canvas, 'drawCentredString', autospec=True,
+                                  side_effect=Canvas.drawCentredString) as centrados:
+            respuesta = self.client.get(f'{self.URL}{informe_id}/pdf/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta['Content-Type'], 'application/pdf')
+        return {
+            'textos': [str(llamada.args[0]) for llamada in parrafos.call_args_list],
+            'tablas': [
+                [[getattr(celda, 'text', celda) for celda in fila] for fila in llamada.args[0]]
+                for llamada in tablas.call_args_list
+            ],
+            'pies': [llamada.args[3] for llamada in centrados.call_args_list if 'Página' in llamada.args[3]],
+            'pdf': respuesta.content,
+        }
+
+    def numero(self, informe_id):
+        return Informe.objects.get(id=informe_id).numero_peticion
+
+    # --- Tabla de datos ---
+
+    def test_tabla_de_datos_en_dos_columnas(self):
+        informe_id = self.crear(numero_orden_externa='OE-PRUEBA-1')
+        self.finalizar(informe_id)
+        self.assertEqual(self.generar(informe_id)['tablas'][0], [
+            ['<b>Paciente:</b> Paciente Ficticio Uno', '<b>Identificación:</b> CC PRUEBA0001'],
+            ['<b>Edad:</b> 45 años', '<b>Sexo:</b> Femenino'],
+            ['<b>Médico tratante:</b> Médico Ficticio', '<b>EPS:</b> EPS Ficticia'],
+            ['<b>Servicio:</b> Dermatología', f'<b>N.º de petición:</b> {self.numero(informe_id)}'],
+            ['<b>Fecha de ingreso:</b> 01/10/2026', '<b>Fecha de informe:</b> 04/10/2026 15:30'],
+            ['<b>Orden externa:</b> OE-PRUEBA-1', ''],
+            ['<b>Estudios solicitados:</b> Biopsia de piel', ''],
+        ])
+
+    def test_sin_orden_externa_no_hay_fila_de_orden_externa(self):
+        informe_id = self.crear()
+        filas = self.generar(informe_id)['tablas'][0]
+        self.assertFalse(any('Orden externa' in celda for fila in filas for celda in fila))
+
+    def test_un_informe_finalizado_imprime_los_datos_congelados(self):
+        # Decisión D-10: corregir después el paciente, la EPS o el autor no cambia el PDF.
+        informe_id = self.crear()
+        self.finalizar(informe_id)
+        Paciente.objects.filter(id=self.paciente.id).update(nombres='Otro', apellidos='Nombre', sexo='masculino')
+        EPS.objects.filter(id=self.eps.id).update(nombre='EPS Renombrada')
+        Usuario.objects.filter(id=self.autor.id).update(nombre_completo='Nombre Cambiado', registro_medico='RM-OTRO')
+        pdf = self.generar(informe_id)
+        filas = pdf['tablas'][0]
+        self.assertEqual(filas[0][0], '<b>Paciente:</b> Paciente Ficticio Uno')
+        self.assertEqual(filas[1][1], '<b>Sexo:</b> Femenino')
+        self.assertEqual(filas[2][1], '<b>EPS:</b> EPS Ficticia')
+        self.assertIn('Dra. Ficticia Firma', pdf['textos'])
+        self.assertIn('Registro médico N.º RM-PRUEBA-0001', pdf['textos'])
+        self.assertNotIn('Nombre Cambiado', ' '.join(pdf['textos']))
+
+    def test_el_texto_del_usuario_en_la_tabla_sale_escapado(self):
+        # Auditoría I-3 en los campos nuevos del PDF.
+        paciente = paciente_ficticio(numero='PRUEBA0002', apellidos='<b>Dos')
+        informe_id = self.crear(
+            paciente=paciente.id, medico_tratante='<font size=40>Ficticio', estudios_solicitados='A & B',
+        )
+        filas = self.generar(informe_id)['tablas'][0]
+        self.assertEqual(filas[0][0], '<b>Paciente:</b> Paciente Ficticio &lt;b&gt;Dos')
+        self.assertEqual(filas[2][0], '<b>Médico tratante:</b> &lt;font size=40&gt;Ficticio')
+        self.assertEqual(filas[-1][0], '<b>Estudios solicitados:</b> A &amp; B')
+
+    def test_un_informe_antiguo_sin_paciente_tambien_genera_el_pdf(self):
+        antiguo = Informe.objects.create(patologia=self.patologia, autor=self.autor)
+        filas = self.generar(antiguo.id)['tablas'][0]
+        self.assertEqual(filas[0][0], '<b>Paciente:</b> —')
+        self.assertEqual(filas[1], ['<b>Edad:</b> —', '<b>Sexo:</b> —'])
+
+    # --- Borrador ---
+
+    def test_un_borrador_dice_sin_validez_y_no_lleva_firma(self):
+        informe_id = self.crear()
+        pdf = self.generar(informe_id)
+        self.assertEqual(pdf['tablas'][0][4][1], '<b>Fecha de informe:</b> BORRADOR — SIN VALIDEZ')
+        self.assertFalse(any('Registro médico' in texto for texto in pdf['textos']))
+        self.assertNotIn('Dra. Ficticia Firma', pdf['textos'])
+
+    # --- Orden y contenido ---
+
+    def test_las_partes_salen_en_el_orden_del_informe_real(self):
+        informe_id = self.crear()
+        self.finalizar(informe_id)
+        textos = self.generar(informe_id)['textos']
+        orden = [
+            'PathoLab — Laboratorio de Patología (demostración)',
+            '<b>Paciente:</b> Paciente Ficticio Uno',
+            'INFORME DE ANATOMÍA PATOLÓGICA',
+            '<b>Tipo de estudio:</b> Histología',
+            'Patología: Patología PDF v2 · Tipo de muestra: Biopsia por raspado',
+            'DESCRIPCIÓN MACROSCÓPICA',
+            'DESCRIPCIÓN MICROSCÓPICA',
+            'DIAGNÓSTICOS',
+            '1. Carcinoma basocelular nodular (CIE-10: C44.3)',
+            'COMENTARIOS',
+            'Dra. Ficticia Firma',
+            'Patología Quirúrgica',
+            'Registro médico N.º RM-PRUEBA-0001',
+        ]
+        posiciones = [textos.index(texto) for texto in orden]
+        self.assertEqual(posiciones, sorted(posiciones))
+
+    def test_ya_no_imprime_la_seccion_datos_clinicos(self):
+        # Sección 5.2: los datos del formulario ya están redactados en la macroscópica.
+        textos = self.generar(self.crear())['textos']
+        self.assertNotIn('DATOS CLÍNICOS', textos)
+        self.assertNotIn('INFORME DE PATOLOGÍA CLÍNICA', textos)
+
+    # --- Encabezado ---
+
+    def test_el_encabezado_es_el_de_demostracion_sin_telefono(self):
+        # Respuesta P-9: sin datos de un laboratorio real. Por ahora es fijo; hacerlo
+        # configurable queda como propuesta futura (decisión del usuario en la etapa 7).
+        textos = self.generar(self.crear())['textos']
+        self.assertEqual(textos[:2], ['PathoLab — Laboratorio de Patología (demostración)', 'Santiago de Cali, Colombia'])
+        self.assertFalse(any('Teléfono' in texto for texto in textos))
+
+    # --- Pie de página ---
+
+    def paginas_y_pies(self, informe_id):
+        """Genera el PDF a una hora fija y devuelve el número de páginas y los pies."""
+        import re
+        ahora_utc = datetime(2026, 10, 4, 3, 30, tzinfo=dt_timezone.utc)  # en Bogotá: 3 de octubre, 22:30 (M-10)
+        with mock.patch('django.utils.timezone.now', return_value=ahora_utc):
+            pdf = self.generar(informe_id)
+        return len(re.findall(rb'/Type /Page\b(?!s)', pdf['pdf'])), pdf['pies']
+
+    def test_cada_pagina_lleva_numero_de_peticion_pagina_x_de_y_y_hora_de_bogota(self):
+        informe_id = self.crear(descripcion_microscopica='Párrafo largo de prueba. ' * 1500)
+        self.finalizar(informe_id)
+        paginas, pies = self.paginas_y_pies(informe_id)
+        self.assertGreaterEqual(paginas, 2)
+        self.assertEqual(pies, [
+            f'N.º de petición {self.numero(informe_id)} · Página {n} de {paginas} · Generado el 03/10/2026 22:30'
+            for n in range(1, paginas + 1)
+        ])
+
+    def test_en_un_borrador_el_pie_de_cada_pagina_dice_sin_validez(self):
+        # Así una hoja suelta de un borrador no parece definitiva.
+        informe_id = self.crear(descripcion_microscopica='Párrafo largo de prueba. ' * 1500)
+        paginas, pies = self.paginas_y_pies(informe_id)
+        self.assertGreaterEqual(paginas, 2)
+        self.assertEqual(pies, [
+            f'BORRADOR — SIN VALIDEZ · N.º de petición {self.numero(informe_id)} · Página {n} de {paginas}'
+            ' · Generado el 03/10/2026 22:30'
+            for n in range(1, paginas + 1)
+        ])

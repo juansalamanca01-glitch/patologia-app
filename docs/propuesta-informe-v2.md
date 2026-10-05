@@ -1,7 +1,7 @@
 # Propuesta: informe de anatomía patológica v2
 
 **Fecha:** 2026-10-04
-**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); las etapas 1 (número de petición), 2 (catálogos y opciones), 3 (pacientes), 4 (datos de la solicitud), 5 (contenido del informe) y 6 (firma y finalización) se terminaron el 2026-10-04.
+**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); las etapas 1 (número de petición), 2 (catálogos y opciones), 3 (pacientes), 4 (datos de la solicitud), 5 (contenido del informe), 6 (firma y finalización) y 7 (PDF nuevo) se terminaron el 2026-10-04.
 
 **Objetivo:** que el informe tenga los datos y el orden de un informe real de laboratorio:
 
@@ -301,6 +301,8 @@ Para **guardar un borrador** solo se exigen la patología, el paciente (en infor
 ### 5.1 Orden
 
 1. **Encabezado del laboratorio:** sale de `settings` y `.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION` y `LABORATORIO_TELEFONO`, opcional). Valores por defecto (P-9): "PathoLab — Laboratorio de Patología (demostración)", "Santiago de Cali, Colombia" y sin teléfono. Si el teléfono está vacío, no se imprime.
+
+   **Hecho en la etapa 7 (decisión del usuario del 2026-10-04):** por ahora el encabezado es **fijo**, con los valores de P-9 y sin teléfono (`ENCABEZADO_LABORATORIO` y `ENCABEZADO_CIUDAD` en `informes/utils.py`). Leerlo de `settings` y `.env` queda como **propuesta futura** (hoja de ruta del README).
 2. **Tabla de datos en dos columnas**, como el formato real:
 
    | | |
@@ -329,6 +331,7 @@ Para **guardar un borrador** solo se exigen la patología, el paciente (en infor
 - **Se elimina la sección "DATOS CLÍNICOS"**, que imprimía `datos_ingresados` en bruto. Esos datos ya están redactados en la descripción macroscópica, y el formato real no tiene esa sección.
 - **Borrador:** donde iría la fecha de informe se imprime "BORRADOR — SIN VALIDEZ" y no hay firma. Así no circula un borrador que parezca definitivo.
 - **Seguridad:** todo texto nuevo del usuario pasa por `texto_seguro()` (I-3): nombre del paciente, médico tratante, estudios solicitados, microscópica, diagnósticos, comentarios y adendas.
+- **Hecho en la etapa 7:** el borrador dice además "BORRADOR — SIN VALIDEZ" al principio del pie de **cada página** (aprobado por el usuario), para que una hoja suelta no parezca definitiva. La fecha de informe se imprime con la hora (dd/mm/aaaa hh:mm), como en la etapa 6. Un dato vacío se imprime "—". El título de una sección no queda solo al final de una página (`CondPageBreak` de 4 cm) y la firma no se parte. La edad la calcula `Informe.edad_paciente()`, que comparten el PDF y la API.
 - **Organización del código:** `generar_pdf_informe` se divide en funciones pequeñas (`_encabezado`, `_tabla_datos`, `_seccion`, `_firma`, `_adendas`), porque el PDF pasa de 6 a unas 12 partes.
 
 ---
@@ -456,7 +459,7 @@ Se actualiza en cada etapa, según las reglas 2, 3 y 6 de `CLAUDE.md`:
 | **4. Datos de la solicitud** (hecha, 2026-10-04) | Paciente y campos de 3.4 en el informe, historial `GET /api/pacientes/{id}/informes/` (y en `PacientesPage`), 400 al borrar un paciente con informes (se pasaron de la etapa 3 porque necesitan `Informe.paciente`), `SelectorPaciente`, tarjeta "Datos de la solicitud", búsqueda ampliada, columnas de los listados y pantalla para administrar EPS y servicios (6.3). Borrar un servicio o una EPS que usa un informe responde 400. | backend, frontend |
 | **5. Contenido del informe** (hecha, 2026-10-04) | Descripción microscópica, `notas` → `comentarios` y diagnósticos con CIE-10 (`ListaDiagnosticos`, que se reordena con botones de subir y bajar). El PDF actual ya imprime las tres secciones (decisión del usuario en la etapa 5); su estructura completa sigue en la etapa 7. | backend, frontend, PDF (secciones nuevas) |
 | **6. Firma y finalización** (hecha, 2026-10-04) | `registro_medico`, reglas para finalizar, `fecha_informe`, `datos_finalizacion`, perfil y `SeccionFirma`. El PDF actual ya usa la firma congelada y muestra el registro médico y la fecha de informe (decisión del usuario en la etapa 6). | backend, frontend, PDF (firma y fecha de informe) |
-| **7. PDF nuevo** | Estructura de la sección 5, encabezado configurable, numeración de páginas y borrador. | PDF |
+| **7. PDF nuevo** (hecha, 2026-10-04) | Estructura de la sección 5, numeración de páginas y borrador. El encabezado quedó fijo; hacerlo configurable es una propuesta futura (decisión del usuario). Las adendas (aviso y sección) llegan en la etapa 8. | PDF |
 | **8. Adendas** | Modelo, endpoints, sección en el frontend y en el PDF. | backend, frontend, PDF |
 | **9. Cierre** | Política de privacidad, revisión completa del README y de Postman, comprobar que el código cumple D-7 a D-11 y prueba manual de todo el flujo en el navegador. | documentación |
 | *(Opcional)* **10. Imagen de la firma** | `firma_imagen` en el usuario y en el PDF. | backend, PDF |

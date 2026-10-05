@@ -1,7 +1,11 @@
+from datetime import date
+
 from django.db import IntegrityError, models, transaction
 from django.db.models import F
 from django.conf import settings
 from django.utils import timezone
+
+from pacientes.models import edad_en_texto
 
 
 class Categoria(models.Model):
@@ -317,6 +321,17 @@ class Informe(models.Model):
         if self.esta_finalizado and self.datos_finalizacion:
             return self.datos_finalizacion
         return self.datos_para_congelar()
+
+    def edad_paciente(self, paciente):
+        """
+        Edad del paciente impreso (el diccionario de datos_impresos()) a la fecha de
+        ingreso, no a hoy: así no cambia al reimprimir el informe. Los informes
+        antiguos sin fecha de ingreso usan la de creación. None si no hay paciente.
+        """
+        if paciente is None:
+            return None
+        fecha = self.fecha_ingreso or timezone.localdate(self.fecha_creacion)
+        return edad_en_texto(date.fromisoformat(paciente['fecha_nacimiento']), fecha)
 
 
 class Diagnostico(models.Model):

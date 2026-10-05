@@ -1,12 +1,10 @@
 import re
-from datetime import date
 
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
 from config.catalogos import NombreCatalogoMixin
-from pacientes.models import edad_en_texto
 from .models import Categoria, Diagnostico, Patologia, Plantilla, Informe, Servicio
 
 MAX_DIAGNOSTICOS = 20
@@ -155,10 +153,7 @@ class InformeSerializer(serializers.ModelSerializer):
         paciente = informe.datos_impresos()['paciente']
         if paciente is None:  # informe de antes de la etapa 4
             return None
-        # La edad es la de la fecha de ingreso, no la de hoy: no cambia al reimprimir el informe.
-        fecha = informe.fecha_ingreso or timezone.localdate(informe.fecha_creacion)
-        nacimiento = date.fromisoformat(paciente['fecha_nacimiento'])
-        return {**paciente, 'edad': edad_en_texto(nacimiento, fecha)}
+        return {**paciente, 'edad': informe.edad_paciente(paciente)}
 
     def get_eps_nombre(self, informe):
         return informe.datos_impresos()['eps_nombre']

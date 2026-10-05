@@ -36,7 +36,15 @@
 - **Formularios dinámicos**: los campos (texto, número, lista desplegable, área de texto, sí/no) se generan según la patología elegida. Los campos obligatorios se validan en el frontend y en el backend (0 y "No" cuentan como respuestas válidas).
 - **Descripción macroscópica automática**: al guardar un informe, el backend convierte los datos del formulario en un párrafo redactado en lenguaje natural.
 - **Número de petición automático**: al crear un informe, el sistema le asigna un número `P-AÑO-NNNNN` (por ejemplo `P-2026-00045`). El consecutivo vuelve a 1 cada año, no se repite aunque varios usuarios guarden a la vez y no se reutiliza si se borra un borrador. Se puede anotar, de forma opcional, el número de orden de la institución remitente.
-- **Exportación a PDF**: genera con **ReportLab** un informe con título, número de petición (y orden externa, si existe), metadatos (fecha, patología, tipo de muestra, patólogo con su registro médico, estado y, si está finalizado, fecha de informe), datos clínicos, descripción macroscópica, descripción microscópica, diagnósticos numerados con su código CIE-10 y comentarios.
+- **Exportación a PDF**: genera con **ReportLab** un informe con la estructura de un informe real de anatomía patológica:
+  - encabezado de demostración ("PathoLab — Laboratorio de Patología (demostración)", "Santiago de Cali, Colombia");
+  - tabla de datos en dos columnas: paciente, identificación, edad (a la fecha de ingreso), sexo, médico tratante, EPS, servicio, número de petición, fechas de ingreso y de informe, orden externa (si existe) y estudios solicitados;
+  - título "INFORME DE ANATOMÍA PATOLÓGICA", tipo de estudio, patología y tipo de muestra;
+  - descripción macroscópica, descripción microscópica, diagnósticos numerados con su código CIE-10 y comentarios;
+  - firma del autor (nombre, especialidad y registro médico);
+  - pie en cada página con el número de petición, "Página X de Y" y la hora de generación.
+
+  Un informe finalizado imprime los datos congelados al finalizar. Un borrador no lleva firma y dice "BORRADOR — SIN VALIDEZ" en la fecha de informe y en el pie de cada página.
 - **Informes finalizados bloqueados**: un informe finalizado ya no se puede editar ni borrar desde la aplicación.
 - **Firma y finalización**: el informe lo firma siempre su autor, con su nombre, especialidad y registro médico. El registro médico solo lo asigna un administrador. Para finalizar, el informe debe tener paciente y al menos un diagnóstico, el autor debe tener registro médico y, en histología, debe haber descripción microscópica; si falta algo, la aplicación dice qué. Al finalizar se fija la fecha de informe y se congelan los datos del paciente, la EPS, el servicio y la firma: corregirlos después no cambia un informe ya entregado.
 - **Catálogo administrable**: patologías agrupadas por categorías, y plantillas de campos editables. Una patología se puede desactivar: deja de ofrecerse en los informes nuevos sin perder el historial.
@@ -545,6 +553,7 @@ Para publicar la app en un servidor:
 - [ ] **Plantillas microscópicas e IHQ**: textos predefinidos para la descripción microscópica y la inmunohistoquímica (la descripción microscópica libre ya existe).
 - [ ] **Catálogo CIE-10 y CIE-O**: autocompletado de los códigos de diagnóstico y de morfología tumoral.
 - [ ] **Imágenes en los informes**: adjuntar microfotografías al informe y al PDF (hoy solo el foro admite imágenes).
+- [ ] **Encabezado del PDF configurable**: leer el nombre, la dirección y el teléfono del laboratorio desde `backend/.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION`, `LABORATORIO_TELEFONO`). Hoy el encabezado es fijo, de demostración.
 - [ ] **Firma digital**: firma electrónica del patólogo con certificado o trazo digital. Hoy el informe lleva el nombre, la especialidad y el registro médico del autor, pero no es una firma criptográfica.
 - [ ] **Integración HL7 / FHIR**: interoperabilidad con sistemas de información hospitalaria (HIS/LIS).
 - [ ] **Contenedores Docker**: `Dockerfile` y `docker-compose.yml` para desplegar en un solo paso.

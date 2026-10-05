@@ -5,6 +5,28 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-04
 
+### Informe v2, etapa 7: PDF nuevo
+
+**Qué se cambió**
+- **PDF** (`backend/informes/utils.py`): `generar_pdf_informe` se reescribe con la estructura de la sección 5 de `docs/propuesta-informe-v2.md` y se divide en funciones pequeñas (`_estilos`, `_encabezado`, `_tabla_datos`, `_titulo`, `_seccion` y `_firma`). En orden, el PDF tiene:
+  - **Encabezado fijo de demostración:** "PathoLab — Laboratorio de Patología (demostración)" y "Santiago de Cali, Colombia", sin teléfono (respuesta P-9), en las constantes `ENCABEZADO_LABORATORIO` y `ENCABEZADO_CIUDAD`. No se lee de la configuración (ver "Por qué").
+  - **Tabla de datos en dos columnas:** paciente e identificación, edad y sexo, médico tratante y EPS, servicio y número de petición, fecha de ingreso y fecha de informe. Después, a todo el ancho, la orden externa (solo si existe) y los estudios solicitados. Los datos salen de `datos_impresos()`, así que un informe finalizado imprime los datos congelados (D-10). Un dato vacío se imprime "—", y un informe antiguo sin paciente también genera el PDF.
+  - Título **"INFORME DE ANATOMÍA PATOLÓGICA"**, el tipo de estudio y, debajo y en letra más pequeña, la patología y el tipo de muestra.
+  - Descripción macroscópica, descripción microscópica, diagnósticos y comentarios. El título de una sección no queda solo al final de una página (`CondPageBreak` de 4 cm).
+  - **Firma**, solo en los informes finalizados: línea, nombre, especialidad y "Registro médico N.º …". No se parte entre dos páginas.
+  - **Pie en cada página:** "N.º de petición P-AAAA-NNNNN · Página X de Y · Generado el dd/mm/aaaa hh:mm", con la hora de Bogotá (M-10). Lo dibuja `CanvasNumerado`, el `canvasmaker`, al final, cuando ya se sabe el total de páginas.
+  - **Borrador:** no lleva firma y dice "BORRADOR — SIN VALIDEZ" en la celda de fecha de informe y al principio del pie de cada página.
+  - **Se quitan** la sección "DATOS CLÍNICOS", que imprimía `datos_ingresados` en bruto (esos datos ya están redactados en la macroscópica), el título "INFORME DE PATOLOGÍA CLÍNICA" y la tabla de metadatos anterior.
+  - Todo el texto del usuario sigue pasando por `texto_seguro()` (I-3), incluidos el nombre del paciente, el médico tratante y los estudios solicitados.
+- **`Informe.edad_paciente(paciente)`** (`backend/informes/models.py`): calcula la edad a la fecha de ingreso (o a la de creación, en informes antiguos). Antes ese cálculo estaba en `InformeSerializer.get_paciente_datos`, que ahora la usa. Así la API y el PDF no repiten el cálculo, y la API devuelve lo mismo que antes.
+- **Pruebas** (de 204 a 212 en el backend):
+  - Nueva `PdfInformeTests` (11): tabla en dos columnas, fila de orden externa, datos congelados, texto escapado en la tabla, informe sin paciente, borrador sin firma y sin validez, orden de las partes, sin "DATOS CLÍNICOS", encabezado de demostración, pie en cada página y pie del borrador.
+  - `PdfConTextoDelUsuarioTests`: el marcado que estaba en `datos_ingresados` pasa a la descripción microscópica. Se elimina la prueba de la hora del pie, que ahora cubre `PdfInformeTests`.
+  - `FinalizacionTests`: se eliminan las dos pruebas que leían la tabla anterior del PDF ("Patólogo:"). Las reemplazan las de `PdfInformeTests`.
+- **Documentación:** `README.md` (descripción del PDF y hoja de ruta), `CLAUDE.md`, `docs/propuesta-informe-v2.md` y `docs/progreso.md`. El frontend no cambia.
+
+**Por qué:** es la etapa 7 de `docs/propuesta-informe-v2.md`: el PDF tiene el orden y los datos de un informe real de anatomía patológica, y una hoja suelta se puede identificar por su pie. El 2026-10-04 el usuario decidió dejar el encabezado fijo y no agregar por ahora `LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION` ni `LABORATORIO_TELEFONO`; hacerlo configurable queda como propuesta futura. También aprobó poner "BORRADOR — SIN VALIDEZ" en el pie de cada página de un borrador, para que no circule una hoja que parezca definitiva.
+
 ### Informe v2, etapa 6: firma y finalización
 
 **Qué se cambió**
