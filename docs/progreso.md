@@ -77,7 +77,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Pendientes, punto 1: los datos del paciente en el informe ya no salen pegados a su etiqueta (`<dt>`/`<dd>` en `SelectorPaciente`) | `a31c5e1` |
 | — | Pendientes, punto 2: miniaturas del foro más grandes y visor para ampliarlas (anterior y siguiente, teclado, Escape, clic fuera) | `ee28886` |
 | D-13 | Pendientes, punto 3: aviso al salir con cambios sin guardar (Seguir editando, Salir sin guardar, Guardar y salir) y autoguardado a los 5 s de los borradores existentes, con indicador de estado; `App.jsx` pasa a `createBrowserRouter` para usar `useBlocker`; se muestran los errores de `datos_ingresados` del backend | `0c05b68` |
-| D-13 | Ampliación: finalizar y la vista previa del PDF guardan primero los cambios pendientes (si no son válidos, no siguen y muestran qué falta); "Salir" pasa por `/salir`, así que cerrar sesión con cambios sin guardar también avisa. Encontrado al hacer el punto 3 y aprobado por el usuario | commit "fix: finalizar, vista previa y cerrar sesión con cambios sin guardar (D-13)" |
+| D-13 | Ampliación: finalizar y la vista previa del PDF guardan primero los cambios pendientes (si no son válidos, no siguen y muestran qué falta); "Salir" pasa por `/salir`, así que cerrar sesión con cambios sin guardar también avisa. Encontrado al hacer el punto 3 y aprobado por el usuario | `a9b648d` |
+| — | Acomodo del aviso "Tienes cambios sin guardar": los tres botones caben dentro del recuadro (pasan a otra línea o se apilan en pantallas angostas) y no sobra espacio debajo. Solo CSS; los bordes y la tipografía quedan para el Bloque B | commit "fix: botones del aviso de cambios sin guardar" |
 
 ## Pendientes
 
@@ -101,7 +102,20 @@ Observaciones del usuario en la prueba manual del 2026-10-05.
 
 ## Siguiente paso
 
-1. **Bloque A de "Pendientes" hecho** en la rama `ajustes-prueba-manual` (puntos 1, 2 y 3, con la ampliación de D-13). Falta la prueba manual del usuario. Si sale bien, se une la rama a `main` (el usuario pidió hacer la prueba antes). Después, el Bloque B. El informe v2 está terminado y en `main` desde el 2026-10-05; la etapa 10 (imagen de la firma) es opcional y no se ha pedido.
+1. **Próxima sesión: prueba manual del Bloque A** en la rama `ajustes-prueba-manual`, como `patologo1`, con `npm run dev` y la página recargada. **No unir a `main` hasta que el usuario haga esta prueba** (lo pidió el 2026-10-05). Después se decide si se une a `main` y se sigue con el Bloque B.
+   - **Tarjeta Paciente** de cualquier informe: cada etiqueta (Paciente, Identificación, Edad, Sexo) se ve en gris, encima de su dato.
+   - **Foro**, en una publicación con 2 o más imágenes: miniaturas más grandes; al hacer clic se ve la imagen ampliada con "1 de 2"; flechas ‹ › y las del teclado; se cierra con "Cerrar", con Escape y con un clic en el fondo.
+   - **Borrador existente:**
+     - Escribir en Comentarios. Junto al título aparece "Cambios sin guardar" y, unos 5 s después, "Guardado automáticamente a las hh:mm".
+     - Escribir otra vez y, antes de 5 s, hacer clic en otra opción del menú. Aparece el aviso con sus tres botones, completos dentro del recuadro (revisarlo también con la ventana angosta). Probar "Seguir editando" y luego "Guardar y salir".
+     - Escribir y hacer clic en "Salir" (cerrar sesión). Aparece el mismo aviso. Elegir "Guardar y salir", volver a entrar y comprobar que lo escrito quedó guardado.
+     - **Cambiar algo y finalizar de inmediato:** el informe finalizado debe tener el cambio.
+     - **Cambiar algo y abrir de inmediato la vista previa del PDF:** debe mostrar el cambio.
+     - Borrar el texto de un diagnóstico y finalizar ("Si, Confirmar"). No finaliza y marca el diagnóstico vacío.
+   - **Informe nuevo:**
+     - Escribir algo y esperar más de 5 s. No se guarda solo, y el indicador dice "Cambios sin guardar".
+     - Salir por el menú y elegir "Guardar y salir" sin paciente. No sale y muestra "Seleccione un paciente.".
+     - Recargar la página con cambios. El navegador muestra su propio aviso. El informe v2 está terminado y en `main` desde el 2026-10-05; la etapa 10 (imagen de la firma) es opcional y no se ha pedido.
 2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
 4. **Ideas de la Hoja de Ruta del README:** plantillas microscópicas e IHQ, catálogo CIE-10 y CIE-O, imágenes en los informes, encabezado del PDF configurable, firma digital, integración HL7/FHIR, registro de accesos y contenedores Docker.

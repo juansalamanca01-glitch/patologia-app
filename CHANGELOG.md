@@ -5,6 +5,18 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-05
 
+### Botones del aviso "Tienes cambios sin guardar"
+
+**Qué se cambió**
+- `frontend/src/pages/InformePage.jsx` y `frontend/src/index.css`: el aviso de D-13 usa clases propias (`.aviso-salir` y `.aviso-salir-acciones`) en lugar de `.modal-card-sm` y `.form-actions`.
+  - El recuadro mide hasta 520 px y los tres botones caben en una fila.
+  - Si no caben, pasan a otra línea. En pantallas de 480 px o menos se apilan a todo el ancho, con "Guardar y salir" arriba.
+  - Sin el margen inferior de 2rem de `.form-actions`, ya no sobra espacio debajo de los botones.
+- `.form-actions`, que usan los demás formularios, no cambia. Los bordes y la tipografía se cambiarán en el rediseño del Bloque B.
+- **Pruebas:** no hay prueba automática nueva. Es un cambio solo de CSS, y jsdom (el entorno de las pruebas) no calcula tamaños ni posiciones. Se comprueba en la prueba manual anotada en `docs/progreso.md`. Las 134 pruebas del frontend siguen pasando.
+
+**Por qué:** el usuario vio en el navegador que los tres botones no cabían en el recuadro de 380 px. La fila no permitía pasar a otra línea y estaba alineada a la derecha, así que "Seguir editando" quedaba cortado por la izquierda, y sobraba espacio debajo.
+
 ### Finalizar, vista previa y cerrar sesión con cambios sin guardar (ampliación de D-13)
 
 **Qué se cambió**

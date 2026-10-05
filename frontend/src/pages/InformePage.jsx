@@ -711,10 +711,10 @@ export default function InformePage() {
 
       {blocker.state === 'blocked' && (
         <div className="modal-overlay">
-          <div className="modal-card modal-card-sm" role="dialog" aria-modal="true" aria-labelledby="aviso-salir-titulo">
+          <div className="modal-card aviso-salir" role="dialog" aria-modal="true" aria-labelledby="aviso-salir-titulo">
             <h2 id="aviso-salir-titulo">Tienes cambios sin guardar</h2>
             <p>Si sales ahora, se perderá lo que no se ha guardado.</p>
-            <div className="form-actions">
+            <div className="aviso-salir-acciones">
               <button type="button" className="btn btn-outline" onClick={() => blocker.reset()} disabled={saving}>
                 Seguir editando
               </button>

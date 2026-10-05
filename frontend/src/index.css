@@ -719,6 +719,22 @@ textarea { resize: vertical; min-height: 80px; }
   animation: fadeSlideIn var(--transition);
 }
 .modal-card-sm { max-width: 380px; }
+
+/* Aviso de cambios sin guardar (D-13): los tres botones caben en una fila y, si la
+   pantalla es angosta, pasan a otra línea o se apilan; no se cortan ni sobra espacio. */
+.aviso-salir p { margin: 0; }
+.aviso-salir-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+.aviso-salir-acciones .btn { flex: 1 1 auto; }
+@media (max-width: 480px) {
+  .aviso-salir-acciones { flex-direction: column-reverse; }
+  .aviso-salir-acciones .btn { width: 100%; }
+}
 .modal-card h2 { margin-bottom: 1rem; }
 
 /* ── Chips de categoría/tema ── */
