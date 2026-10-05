@@ -79,7 +79,7 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 
 ## Pendiente de respuesta del usuario
 
-- Nada por ahora. (Etapa 5: el usuario aprobó el 2026-10-04 las secciones nuevas en el PDF actual, los botones para reordenar diagnósticos y dejar la búsqueda sin diagnósticos.)
+- Nada por ahora. (Etapa 5: el usuario aprobó el 2026-10-04 las secciones nuevas en el PDF actual, los botones para reordenar diagnósticos y dejar la búsqueda sin diagnósticos. El mismo día probó la etapa 5 a mano en el navegador y confirmó que se ven las tarjetas nuevas.)
 
 ## Pendiente de hacer (anotado para no olvidarlo)
 
@@ -88,7 +88,6 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 - **Producción:** agregar un **registro de accesos**: quién consulta qué informe o paciente y cuándo, incluidas las descargas del PDF. Los datos de salud son datos sensibles (Ley 1581 de 2012), y la historia clínica exige saber quién accedió a ella.
 - **Producción:** la búsqueda de pacientes (`GET /api/pacientes/?q=`) lleva el nombre o el documento en la dirección. Hay que configurar los registros del servidor web para que no guarden esos parámetros, o protegerlos como datos sensibles. Lo aprobó así el usuario en la etapa 3.
 - **Navegador:** probar a mano la pantalla Pacientes (`/pacientes`, con el historial de informes) con los tres usuarios de prueba.
-- **Navegador:** probar a mano el contenido del informe de la etapa 5 (microscópica, agregar, reordenar y quitar diagnósticos, CIE-10 normalizado al guardar, comentarios) y revisar el PDF con esas secciones.
 - **Navegador:** probar a mano el informe nuevo de la etapa 4 (buscar y crear paciente desde el informe, datos de la solicitud, EPS precargada) y la pantalla Catálogos (`/catalogos`) con los tres usuarios de prueba. Las pruebas automáticas cubren estos flujos, pero todavía no se probaron en un navegador real.
 - **Navegador:** probar a mano el dashboard y la paginación del buscador (I-4) con más de 20 informes.
 - **Navegador:** probar a mano el cambio de C-2 en el frontend. Otro patólogo debe ver en solo lectura los informes ajenos. Para la prueba hay que crear un segundo patólogo desde `/admin/`.
