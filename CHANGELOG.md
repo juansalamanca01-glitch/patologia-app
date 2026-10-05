@@ -5,6 +5,16 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-05
 
+### Enlaces legales en el login y en las páginas legales sin sesión
+
+**Qué se cambió**
+- `frontend/src/pages/LoginPage.jsx`: la pantalla de login muestra el pie de página (`Footer`) con "Política de Privacidad" y "Términos y Condiciones", debajo del formulario y con colores claros sobre el fondo oscuro (`index.css`).
+- `frontend/src/App.jsx` (`LegalRoute`): sin sesión, las páginas legales muestran también el pie y un enlace "← Volver al inicio de sesión". Antes solo se llegaba a ellas escribiendo la dirección, y no había forma de volver al login.
+- **Pruebas:** nuevo `frontend/src/App.test.jsx` (3): el login muestra los dos enlaces, desde el login se abre la política, y una página legal sin sesión tiene el pie y el enlace de vuelta. El frontend pasa de 102 a 105 pruebas.
+- **Documentación:** `CLAUDE.md` (rutas) y `docs/progreso.md`. En `progreso.md` también se corrige el paso de preparación de la prueba manual (`patologo2` se crea con `create_user` y no en `/admin/`) y se anota el hallazgo de las contraseñas en `/admin/`.
+
+**Por qué:** en la prueba manual final el usuario no encontró los enlaces legales en el login. La política de privacidad debe poder leerse antes de iniciar sesión, sobre todo ahora que la aplicación guarda datos de salud de pacientes.
+
 ### Informe v2, etapa 9: cierre
 
 **Qué se cambió**

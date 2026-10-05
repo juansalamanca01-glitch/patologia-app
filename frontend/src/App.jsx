@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -36,10 +36,21 @@ function PublicRoute({ children }) {
 }
 
 // Las páginas legales son visibles tanto autenticado como sin autenticar.
+// Sin sesión no hay Navbar: se ofrece volver al login y el pie con los enlaces legales.
 function LegalRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (!user) return <main className="main-content">{children}</main>;
+  if (!user) {
+    return (
+      <>
+        <main className="main-content">
+          <p className="legal-volver"><Link to="/login">← Volver al inicio de sesión</Link></p>
+          {children}
+        </main>
+        <Footer />
+      </>
+    );
+  }
   return (
     <>
       <Navbar />

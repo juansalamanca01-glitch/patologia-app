@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Footer from '../components/Footer';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -78,6 +79,8 @@ export default function LoginPage() {
           <p>Acceso restringido a personal autorizado</p>
         </div>
       </div>
+      {/* La política de privacidad y los términos se pueden leer antes de iniciar sesión. */}
+      <Footer />
     </div>
   );
 }

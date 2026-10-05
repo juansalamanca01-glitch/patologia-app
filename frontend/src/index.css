@@ -811,6 +811,12 @@ textarea { resize: vertical; min-height: 80px; }
 }
 .app-footer a { color: var(--gray-500); margin: 0 0.5rem; }
 .app-footer a:hover { color: var(--primary-600); }
+/* En el login el pie va debajo del formulario, sobre el fondo oscuro. */
+.login-page { flex-direction: column; }
+.login-page .app-footer,
+.login-page .app-footer a { color: rgba(255, 255, 255, 0.8); }
+.login-page .app-footer a:hover { color: white; }
+.legal-volver { max-width: 820px; margin: 0 auto 1rem; }
 
 /* ── Responsive extra ── */
 @media (max-width: 768px) {

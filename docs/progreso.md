@@ -20,7 +20,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 242 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 102 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 242 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 105 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -69,7 +69,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Informe v2, etapa 7: PDF con la estructura del informe real (encabezado fijo de demostración, tabla de datos en dos columnas, título, tipo de estudio, secciones, firma), "Página X de Y" en cada página con `CanvasNumerado`, borrador sin firma y con "BORRADOR — SIN VALIDEZ" en la fecha y en el pie, sin "DATOS CLÍNICOS", `Informe.edad_paciente()` compartida con la API | `f6f7f8f` |
 | D-9 | Informe v2, etapa 8: modelo `Adenda` (migración 0011), `GET`/`POST /api/informes/{id}/adendas/` (solo en finalizados, autor o admin, quien la crea necesita registro médico, número por informe con bloqueo, sin PUT/PATCH/DELETE), firma congelada con `firma_de()`, `adendas` en el detalle, `AdendaInline` de solo lectura, aviso y sección "ADENDAS" en el PDF, `SeccionAdendas` con confirmación, Postman | `0f834ad` |
 | D-12 | El PDF de un borrador es una vista previa solo para su autor o un admin (403 para los demás), con marca de agua "BORRADOR" en cada página y archivo `…_borrador.pdf`; botón "Vista previa (borrador)". Lo notó el usuario en la prueba manual de las etapas 7 y 8, que ya hizo | `90d6958` |
-| — | Informe v2, etapa 9 (cierre): D-7 a D-11 revisadas (ya se cumplen); política de privacidad con los datos de pacientes, datos sensibles, integridad del informe y fecha fija (también en los términos); "Patología Clínica" → "Anatomía Patológica"; revisión completa del README; Postman con Renovar token, Cerrar sesión, Editar paciente y Editar informe; lista de comprobación para la prueba manual final | commit "docs: cierre del informe v2 (etapa 9)" |
+| — | Informe v2, etapa 9 (cierre): D-7 a D-11 revisadas (ya se cumplen); política de privacidad con los datos de pacientes, datos sensibles, integridad del informe y fecha fija (también en los términos); "Patología Clínica" → "Anatomía Patológica"; revisión completa del README; Postman con Renovar token, Cerrar sesión, Editar paciente y Editar informe; lista de comprobación para la prueba manual final | `4b9525a` |
+| — | Pie de página (Política de Privacidad, Términos) en el login y en las páginas legales sin sesión, con "← Volver al inicio de sesión". Lo notó el usuario en la prueba manual final | commit "fix: enlaces legales en el login" |
 
 ## Siguiente paso
 
@@ -87,6 +88,7 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 
 ## Pendiente de hacer (anotado para no olvidarlo)
 
+- **Hallazgo nuevo (2026-10-05, sin arreglar):** en `/admin/`, `accounts/admin.py` registra `Usuario` con un `ModelAdmin` común y no con el `UserAdmin` de Django. Al crear un usuario desde ahí, la contraseña probablemente se guarda sin cifrar y el login falla. Se propuso al usuario usar `UserAdmin` (con `rol`, `especialidad` y `registro_medico`) después de la prueba manual; falta su confirmación.
 - **Propuesta futura (decisión del usuario en la etapa 7):** que el encabezado del PDF se lea de `backend/.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION` y `LABORATORIO_TELEFONO`, opcional) en lugar de ser fijo. Está en la hoja de ruta del README.
 
 - **Producción:** al publicar la app, configurar en el servidor web un límite de tamaño de petición (por ejemplo, `client_max_body_size 60m;` en Nginx). Ver la nota de I-6 en `settings.py`.
@@ -94,7 +96,7 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 - **Producción:** agregar un **registro de accesos**: quién consulta qué informe o paciente y cuándo, incluidas las descargas del PDF. Los datos de salud son datos sensibles (Ley 1581 de 2012), y la historia clínica exige saber quién accedió a ella.
 - **Producción:** la búsqueda de pacientes (`GET /api/pacientes/?q=`) lleva el nombre o el documento en la dirección. Hay que configurar los registros del servidor web para que no guarden esos parámetros, o protegerlos como datos sensibles. Lo aprobó así el usuario en la etapa 3.
 - **Prueba manual final del flujo completo (etapa 9).** Reemplaza las pruebas de navegador que estaban sueltas (etapas 3, 4 y 6, Catálogos, C-2 e I-4). Hay que marcarla como hecha cuando el usuario lo confirme.
-  - **Preparación:** `npm run dev` (aplicar las migraciones si avisa) y `python manage.py seed_data`. En `/admin/`, crear un segundo patólogo (`patologo2`, sin registro médico) y darle a `admin` un registro ficticio (`RM-PRUEBA-0002`).
+  - **Preparación:** `npm run dev` (aplicar las migraciones si avisa) y `python manage.py seed_data`. Crear un segundo patólogo (`patologo2` / `PruebaManual-2026`, sin registro médico) con `Usuario.objects.create_user(...)` en `manage.py shell`, **no** en `/admin/` (ver el hallazgo de abajo), y darle a `admin` el registro ficticio `RM-PRUEBA-0002`. **Hecho el 2026-10-05 en la base local del usuario**: el comando que se le dio no llegó a ejecutarse en su PowerShell y se ejecutó desde aquí.
   - **Como `patologo1`:**
     - En Pacientes: crear, buscar por nombre y por documento, editar y ver el historial.
     - En Catálogos: crear una EPS y un servicio, desactivarlos e intentar borrar uno en uso (debe pedir desactivarlo).

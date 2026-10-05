@@ -141,7 +141,7 @@ En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `can
 - Las rutas están en `App.jsx` con tres wrappers:
   - `ProtectedRoute`: requiere sesión y añade Navbar y Footer.
   - `PublicRoute`: solo para `/login`.
-  - `LegalRoute`: páginas legales, visibles con o sin sesión.
+  - `LegalRoute`: páginas legales, visibles con o sin sesión. Sin sesión muestran el `Footer` y el enlace "← Volver al inicio de sesión". `LoginPage` también dibuja el `Footer`, para que la política de privacidad se pueda leer antes de entrar.
 - Los estilos globales están en `src/index.css`; no hay librería de UI.
 - `hooks/useOpciones.js` pide `/api/opciones/` una sola vez y la guarda para toda la sesión del navegador; `etiquetaDe(lista, valor)` da la etiqueta de un valor. En las pruebas, llama a `reiniciarOpciones()` en `beforeEach` para que cada prueba vuelva a pedir las opciones a su simulación.
 - Código compartido: las etiquetas de rol (`ROL_LABELS`) y de estado del informe están en `src/constants.js`; la etiqueta de estado se dibuja con `<EstadoBadge estado={...} />`, y `resultados(data)` de `api/client.js` saca la lista de un listado paginado. En el backend, el nombre para mostrar de un usuario es `Usuario.nombre_visible`. Úsalos en lugar de repetir esa lógica.
