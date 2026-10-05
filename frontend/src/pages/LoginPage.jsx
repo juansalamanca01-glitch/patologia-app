@@ -34,7 +34,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1>PathoLab</h1>
-          <p>Sistema de Informes de Patología Clínica</p>
+          <p>Sistema de Informes de Anatomía Patológica</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">

@@ -1,4 +1,4 @@
-# 🔬 PathoLab — Sistema de Gestión de Informes de Patología Clínica
+# 🔬 PathoLab — Sistema de Gestión de Informes de Anatomía Patológica
 
 [![Django](https://img.shields.io/badge/Django-4.2-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![Django REST Framework](https://img.shields.io/badge/DRF-3.14+-red?style=for-the-badge&logo=django&logoColor=white)](https://www.django-rest-framework.org/)
@@ -85,9 +85,12 @@ Estas reglas responden a decisiones del proyecto registradas en [`docs/decisione
 - **D-1:** los patólogos también administran el catálogo.
 - **D-2:** solo el autor o un administrador modifica un informe.
 - **D-3:** un informe finalizado no se modifica, ni siquiera por un administrador.
+- **D-8:** el registro médico solo lo asigna un administrador, y el informe lo firma siempre su autor.
+- **D-9:** un informe finalizado se corrige con adendas, que no se editan ni se borran.
 - **D-11:** patólogos y administradores crean y editan pacientes y administran EPS y servicios; solo un administrador borra pacientes.
+- **D-12:** el PDF de un borrador es una vista previa solo para su autor o un administrador.
 
-Si hace falta una corrección excepcional sobre un informe finalizado, el administrador puede hacerla desde el panel de Django (`/admin/`).
+La forma normal de corregir un informe finalizado es agregarle una adenda. Para una corrección excepcional, el administrador puede usar el panel de Django (`/admin/`), donde las adendas y los datos congelados son de solo lectura.
 
 ---
 
@@ -102,15 +105,17 @@ Si hace falta una corrección excepcional sobre un informe finalizado, el admini
                            │ Token JWT en la cabecera Authorization
 ┌──────────────────────────▼─────────────────────────────┐
 │                API REST (Django + DRF)                 │
-│  ┌──────────────┐  ┌────────────────┐  ┌────────────┐  │
-│  │  accounts    │  │   informes     │  │    foro    │  │
-│  │ - Login JWT  │  │ - Categorías   │  │ - Temas    │  │
-│  │ - Roles      │  │ - Patologías   │  │ - Publica- │  │
-│  │ - Perfil     │  │ - Plantillas   │  │   ciones   │  │
-│  │ - Usuarios   │  │ - Informes     │  │ - Imágenes │  │
-│  │              │  │ - PDF          │  │ - Comenta- │  │
-│  │              │  │   (ReportLab)  │  │   rios     │  │
-│  └──────────────┘  └────────────────┘  └────────────┘  │
+│ ┌───────────┐ ┌──────────────┐ ┌──────────┐ ┌────────┐ │
+│ │ accounts  │ │  informes    │ │pacientes │ │  foro  │ │
+│ │- Login JWT│ │- Patologías  │ │- Pacien- │ │- Temas │ │
+│ │- Roles    │ │- Plantillas  │ │  tes     │ │- Publi-│ │
+│ │- Perfil   │ │- Servicios   │ │- EPS     │ │  cacio-│ │
+│ │- Registro │ │- Informes    │ │- Histo-  │ │  nes   │ │
+│ │  médico   │ │- Diagnósticos│ │  rial    │ │- Imáge-│ │
+│ │- Usuarios │ │- Adendas     │ │          │ │  nes   │ │
+│ │           │ │- PDF         │ │          │ │- Comen-│ │
+│ │           │ │  (ReportLab) │ │          │ │  tarios│ │
+│ └───────────┘ └──────────────┘ └──────────┘ └────────┘ │
 └──────────────────────────┬─────────────────────────────┘
                            │ ORM
 ┌──────────────────────────▼─────────────────────────────┐
@@ -157,10 +162,11 @@ patologia-app/
 │   │   └── tests.py           # Pruebas de la configuración (SECRET_KEY y DEBUG)
 │   ├── informes/
 │   │   ├── management/commands/seed_data.py  # Datos iniciales: usuarios, 14 patologías, temas, servicios, EPS y 2 pacientes ficticios
-│   │   ├── models.py          # Categoria, Patologia, Plantilla, Servicio, Informe, Diagnostico
+│   │   ├── models.py          # Categoria, Patologia, Plantilla, Servicio, ConsecutivoPeticion, Informe, Diagnostico, Adenda
 │   │   ├── serializers.py
+│   │   ├── admin.py           # Panel /admin/ (número de petición, datos congelados y adendas en solo lectura)
 │   │   ├── utils.py           # Generador de la descripción macroscópica y del PDF
-│   │   ├── views.py / urls.py # Endpoints /api/ (catálogo, servicios, opciones, informes, PDF)
+│   │   ├── views.py / urls.py # Endpoints /api/ (catálogo, servicios, opciones, informes, finalizar, adendas, PDF)
 │   │   └── tests.py
 │   ├── pacientes/
 │   │   ├── models.py          # Paciente (con la edad calculada), EPS y listas fijas de sexo y tipo de documento
@@ -191,7 +197,7 @@ patologia-app/
 │   ├── package.json
 │   ├── vite.config.js         # Proxy /api → backend y configuración de Vitest
 │   └── .env.example           # Plantilla del .env (VITE_API_URL)
-├── docs/                      # Auditoría, decisiones y estado del trabajo
+├── docs/                      # Auditoría, decisiones, propuesta del informe v2 y estado del trabajo
 ├── CHANGELOG.md               # Registro de cambios
 ├── scripts/                   # "npm run dev": comprobaciones y arranque de backend + frontend
 ├── package.json               # Comandos de la raíz (npm run dev, npm test)
@@ -260,11 +266,11 @@ cd patologia-app
    python manage.py migrate
    ```
 
-6. **Carga los usuarios de prueba y las 14 patologías:**
+6. **Carga los datos iniciales:**
    ```bash
    python manage.py seed_data
    ```
-   También crea 4 temas para el foro (*Casos clínicos*, *Técnicas de laboratorio*, *Investigación* y *Dudas y consultas*). Se puede ejecutar varias veces sin duplicar datos. No crea categorías: esas se crean desde la pantalla Patologías.
+   Crea los usuarios de prueba, las 14 patologías con sus plantillas, 4 temas para el foro (*Casos clínicos*, *Técnicas de laboratorio*, *Investigación* y *Dudas y consultas*), 7 servicios, 12 EPS y 2 pacientes ficticios. Se puede ejecutar varias veces sin duplicar datos. No crea categorías ni informes: las categorías se crean desde la pantalla Patologías.
 
 7. **Inicia el servidor:**
    ```bash
@@ -363,8 +369,8 @@ npm run test:watch                        # se repiten al guardar cambios
 npm test
 ```
 
-- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones, búsqueda e historial), los datos de la solicitud del informe (paciente obligatorio, fecha de ingreso, EPS del momento del estudio, búsqueda por paciente), el contenido del informe (microscópica, comentarios, diagnósticos y validación del CIE-10), la finalización (requisitos, fecha de informe, firma del autor y datos congelados), las adendas (solo en finalizados, permisos, numeración, firma congelada, sin edición y en el PDF), el registro médico, los catálogos de EPS y servicios (y su borrado cuando están en uso), las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
-- **Frontend:** cubre el formulario del informe (paciente, datos de la solicitud, diagnósticos, firma, requisitos para finalizar, adendas y orden de las tarjetas), la página de pacientes y su historial, la pantalla de catálogos, los listados, la página de perfil, la exportación a PDF, las imágenes del foro y la dirección de la API.
+- **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones, búsqueda e historial), los datos de la solicitud del informe (paciente obligatorio, fecha de ingreso, EPS del momento del estudio, búsqueda por paciente), el contenido del informe (microscópica, comentarios, diagnósticos y validación del CIE-10), la finalización (requisitos, fecha de informe, firma del autor y datos congelados), las adendas (solo en finalizados, permisos, numeración, firma congelada, sin edición y en el PDF), quién puede descargar el PDF de un borrador y su marca de agua, el registro médico, los catálogos de EPS y servicios (y su borrado cuando están en uso), las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
+- **Frontend:** cubre el formulario del informe (paciente, datos de la solicitud, diagnósticos, firma, requisitos para finalizar, adendas y orden de las tarjetas), la página de pacientes y su historial, la pantalla de catálogos, los listados, la página de perfil, la exportación a PDF (y la vista previa de un borrador), las imágenes del foro y la dirección de la API.
 
 ---
 
@@ -509,7 +515,8 @@ graph TD
     F --> G[Llenar la macroscópica, la microscópica, los diagnósticos y los comentarios]
     G --> H[Guardar como borrador: se asigna el número de petición]
     H --> I[El backend genera la descripción macroscópica]
-    I --> J{¿Revisión satisfactoria?}
+    I --> V[Vista previa en PDF del borrador: solo el autor o un admin]
+    V --> J{¿Revisión satisfactoria?}
     J -->|No| G
     J -->|Sí| K[Finalizar informe: se firma, se fija la fecha de informe y queda bloqueado]
     K --> L[Descargar PDF]
@@ -538,9 +545,10 @@ graph TD
 
 - **Contraseñas** validadas con los validadores de Django: longitud mínima, que no sean comunes, que no sean solo números y que no se parezcan al usuario.
 - **Configuración segura por defecto**: sin `SECRET_KEY` la app no arranca, y `DEBUG` es `False` si no se define. Con `DEBUG=False` se activan HTTPS, cookies seguras y HSTS, y CORS solo acepta los orígenes de `CORS_ALLOWED_ORIGINS`.
-- **PDF**: el texto escrito por el usuario se escapa, así que no puede romper ni alterar el documento.
+- **PDF**: el texto escrito por el usuario se escapa, así que no puede romper ni alterar el documento. El nombre del archivo solo lleva el número de petición, nunca datos del paciente. El PDF de un borrador solo lo descargan su autor o un administrador, con marca de agua "BORRADOR".
+- **Integridad del informe**: un informe finalizado no se modifica (se corrige con adendas firmadas) y conserva los datos del paciente, la EPS, el servicio y la firma tal como estaban al finalizar.
 - **Imágenes del foro**: se comprueban el tamaño y que sean imágenes reales.
-- **Datos de pacientes**: son datos de salud, que la Ley 1581 de 2012 considera sensibles. Solo los ven usuarios con sesión y se guardan solo los que aparecen en el informe. Antes de un uso real haría falta una revisión legal.
+- **Datos de pacientes**: son datos de salud, que la Ley 1581 de 2012 considera sensibles. Solo los ven usuarios con sesión y se guardan solo los que aparecen en el informe. La [política de privacidad](frontend/src/pages/PoliticaPrivacidadPage.jsx) de la aplicación (`/politica-privacidad`) lo explica. Antes de un uso real haría falta una revisión legal.
 
 Para publicar la app en un servidor:
 - Define una `SECRET_KEY` propia, `DEBUG=False`, `ALLOWED_HOSTS` y `CORS_ALLOWED_ORIGINS`.
@@ -557,6 +565,7 @@ Para publicar la app en un servidor:
 | [`CHANGELOG.md`](CHANGELOG.md) | Registro de cada cambio: fecha, qué se cambió y por qué |
 | [`docs/auditoria-inicial.md`](docs/auditoria-inicial.md) | Auditoría del código, con el estado de cada hallazgo |
 | [`docs/decisiones.md`](docs/decisiones.md) | Decisiones de diseño y de reglas de negocio |
+| [`docs/propuesta-informe-v2.md`](docs/propuesta-informe-v2.md) | Diseño del informe de anatomía patológica v2 (pacientes, solicitud, diagnósticos, firma, PDF y adendas) |
 | [`docs/progreso.md`](docs/progreso.md) | Estado actual del trabajo y próximos pasos |
 
 ---
@@ -569,6 +578,7 @@ Para publicar la app en un servidor:
 - [ ] **Encabezado del PDF configurable**: leer el nombre, la dirección y el teléfono del laboratorio desde `backend/.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION`, `LABORATORIO_TELEFONO`). Hoy el encabezado es fijo, de demostración.
 - [ ] **Firma digital**: firma electrónica del patólogo con certificado o trazo digital. Hoy el informe lleva el nombre, la especialidad y el registro médico del autor, pero no es una firma criptográfica.
 - [ ] **Integración HL7 / FHIR**: interoperabilidad con sistemas de información hospitalaria (HIS/LIS).
+- [ ] **Registro de accesos**: guardar quién consulta qué informe o paciente y cuándo, incluidas las descargas del PDF. La historia clínica exige saber quién accedió a ella.
 - [ ] **Contenedores Docker**: `Dockerfile` y `docker-compose.yml` para desplegar en un solo paso.
 
 ---

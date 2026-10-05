@@ -1,10 +1,13 @@
+// Fecha fija: cambia solo cuando cambia el texto (antes mostraba la fecha del día en que se abría).
+const ULTIMA_ACTUALIZACION = '5 de octubre de 2026';
+
 export default function TerminosCondicionesPage() {
   return (
     <div className="legal-page">
       <div className="card">
         <div className="card-body">
           <h1>Términos y Condiciones de Uso</h1>
-          <p className="text-muted">Última actualización: {new Date().toLocaleDateString('es-CO')}</p>
+          <p className="text-muted">Última actualización: {ULTIMA_ACTUALIZACION}</p>
 
           <div className="alert alert-info">
             Este texto es una plantilla de referencia y debe ser revisado por asesoría legal antes

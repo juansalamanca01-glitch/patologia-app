@@ -5,6 +5,34 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-05
 
+### Informe v2, etapa 9: cierre
+
+**Qué se cambió**
+- **Política de privacidad** (`frontend/src/pages/PoliticaPrivacidadPage.jsx`):
+  - Lista los datos de los pacientes (documento, nombres, fecha de nacimiento, sexo y EPS) y aclara qué no se guarda.
+  - Lista el contenido clínico del informe (solicitud, macroscópica, microscópica, diagnósticos CIE-10, comentarios y adendas) y el registro médico de los usuarios.
+  - Secciones nuevas: "Datos sensibles" (Ley 1581 de 2012, art. 5; Resolución 1995 de 1999) e "Integridad de los informes" (adendas, datos congelados y PDF de borrador sin validez).
+  - El responsable del tratamiento pasa a ser la institución que opera la plataforma. Dice "contraseñas almacenadas con hash" en lugar de "cifrado de contraseñas", y "anatomía patológica" en lugar de "patología clínica".
+- **"Última actualización"** en la política de privacidad y en los términos (`TerminosCondicionesPage.jsx`): es una fecha fija (5 de octubre de 2026). Antes mostraba la fecha del día en que se abría la página, así que siempre parecía recién actualizada.
+- **Nombre del producto:** "Patología Clínica" → "Anatomía Patológica" en `LoginPage.jsx`, en `frontend/index.html` (descripción y título de la pestaña) y en el título del README. La patología clínica es el laboratorio clínico; esta aplicación hace informes de anatomía patológica, como dice el título del PDF.
+- **README, revisión completa:**
+  - el diagrama de arquitectura incluye la app `pacientes`, los diagnósticos y las adendas;
+  - la estructura menciona `ConsecutivoPeticion`, `Adenda` y `admin.py`, y el paso de `seed_data` dice todo lo que crea;
+  - los permisos mencionan D-8, D-9 y D-12, y la nota de `/admin/` dice que la vía normal de corrección es la adenda;
+  - el flujo incluye la vista previa del borrador;
+  - Seguridad: integridad del informe, nombre del PDF sin datos del paciente y enlace a la política de privacidad;
+  - Documentación: enlace a `docs/propuesta-informe-v2.md`;
+  - hoja de ruta: registro de accesos.
+- **Postman** (`PathoLab_API.postman_collection.json`):
+  - variable `refresh_token`, que guarda el login;
+  - peticiones nuevas "Renovar token" (guarda el `refresh` rotado, D-6), "Cerrar sesión", "Editar paciente" y "Editar informe (borrador)";
+  - descripción general actualizada.
+  - Se comprobaron contra una copia de la base: renovar (el `refresh` viejo deja de servir), editar paciente, crear y editar informe (el CIE-10 se normaliza), editar un finalizado (400) y cerrar sesión (el `refresh` deja de servir).
+- **D-7 a D-11:** se revisó el código y ya las cumple; no hubo cambios.
+- **Documentación:** `docs/propuesta-informe-v2.md` (etapa 9 hecha) y `docs/progreso.md`, con la lista de comprobación de la prueba manual final, que reemplaza las pruebas de navegador que estaban sueltas.
+
+**Por qué:** es la etapa 9 de `docs/propuesta-informe-v2.md`. La aplicación ahora guarda datos de salud de pacientes, y la política de privacidad debía decirlo; el README y Postman debían quedar al día con las etapas 1 a 8. El usuario aprobó los seis puntos el 2026-10-05, incluido el cambio de nombre.
+
 ### PDF de un borrador: vista previa solo para su autor o un admin (decisión D-12)
 
 **Qué se cambió**

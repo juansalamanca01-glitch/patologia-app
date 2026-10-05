@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "8bbc54a1-patologia-app-collection",
 		"name": "PathoLab API - Informes de Patología",
-		"description": "Colección para probar la API de PathoLab.\n\nUso: 1) ejecuta \"Login (patólogo)\", que guarda el token en {{access_token}}. 2) Ejecuta las demás peticiones en orden: \"Crear paciente\" guarda {{paciente_id}}, \"Crear informe\" guarda {{informe_id}} y \"Crear publicación\" guarda {{publicacion_id}}.\n\nTodas las peticiones usan el token de la colección (Authorization: Bearer), excepto el login. Los listados vienen paginados de 20 en 20 (?page=2).",
+		"description": "Colección para probar la API de PathoLab.\n\nUso: 1) ejecuta \"Login (patólogo)\", que guarda los tokens en {{access_token}} y {{refresh_token}}. 2) Ejecuta las demás peticiones en orden: \"Crear paciente\" guarda {{paciente_id}}, \"Crear informe\" guarda {{informe_id}} y \"Crear publicación\" guarda {{publicacion_id}}.\n\nTodas las peticiones usan el token de la colección (Authorization: Bearer), excepto el login, \"Renovar token\" y \"Cerrar sesión\", que envían {{refresh_token}} en el cuerpo. \"Cerrar sesión\" invalida solo el token de renovación: el resto de la colección sigue funcionando con el token de acceso hasta que vence. Los listados vienen paginados de 20 en 20 (?page=2).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -23,6 +23,11 @@
 		},
 		{
 			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
 			"value": "",
 			"type": "string"
 		},
@@ -68,7 +73,7 @@
 								""
 							]
 						},
-						"description": "Inicia sesión con el usuario de prueba patologo1 y guarda el token en {{access_token}}. Para probar otros roles usa admin/admin1234 o auditor1/auditor1234.",
+						"description": "Inicia sesión con el usuario de prueba patologo1 y guarda los tokens en {{access_token}} y {{refresh_token}}. Para probar otros roles usa admin/admin1234 o auditor1/auditor1234.",
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"username\": \"patologo1\",\n  \"password\": \"patologo1234\"\n}"
@@ -86,7 +91,8 @@
 								"exec": [
 									"if (pm.response.code === 200 || pm.response.code === 201) {",
 									"    pm.collectionVariables.set('access_token', pm.response.json().access);",
-									"    console.log('Guardado en access_token: ' + pm.response.json().access);",
+									"    pm.collectionVariables.set('refresh_token', pm.response.json().refresh);",
+									"    console.log('Guardados access_token y refresh_token');",
 									"}"
 								]
 							}
@@ -111,6 +117,88 @@
 							]
 						},
 						"description": "Datos del usuario autenticado, incluidos su rol y su registro médico (de solo lectura: lo asigna un administrador)."
+					},
+					"response": []
+				},
+				{
+					"name": "Renovar token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/refresh/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"refresh",
+								""
+							]
+						},
+						"description": "Pide un token de acceso nuevo con {{refresh_token}}. Devuelve también un refresh nuevo: el anterior pasa a la lista negra y deja de servir (decisión D-6). El script guarda los dos.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+						},
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const datos = pm.response.json();",
+									"    pm.collectionVariables.set('access_token', datos.access);",
+									"    // Los tokens de renovación rotan (decisión D-6): hay que guardar el nuevo.",
+									"    pm.collectionVariables.set('refresh_token', datos.refresh);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Cerrar sesión",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/logout/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"logout",
+								""
+							]
+						},
+						"description": "Invalida {{refresh_token}} (lista negra): ya no sirve para renovar. El token de acceso sigue valiendo hasta que vence (máximo 8 horas), así que las demás peticiones de la colección siguen funcionando. Para empezar de nuevo, vuelve a ejecutar el login.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+						},
+						"auth": {
+							"type": "noauth"
+						}
 					},
 					"response": []
 				}
@@ -369,6 +457,36 @@
 					"response": []
 				},
 				{
+					"name": "Editar paciente",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/pacientes/{{paciente_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pacientes",
+								"{{paciente_id}}",
+								""
+							]
+						},
+						"description": "Patólogo o admin (el auditor recibe 403). Cambia solo los campos enviados. Las mismas reglas que al crear: el documento no se repite y no se asigna una EPS desactivada. Un informe ya finalizado sigue mostrando los datos que tenía al finalizar (decisión D-10). Solo datos ficticios.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"apellidos\": \"Tres Corregido\"\n}"
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Historial de informes del paciente",
 					"request": {
 						"method": "GET",
@@ -562,6 +680,36 @@
 							]
 						},
 						"description": "Detalle completo del informe creado."
+					},
+					"response": []
+				},
+				{
+					"name": "Editar informe (borrador)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/informes/{{informe_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"informes",
+								"{{informe_id}}",
+								""
+							]
+						},
+						"description": "Solo el autor o un admin, y solo mientras el informe es un borrador: un informe finalizado responde 400 (se corrige con una adenda). Cambia solo los campos enviados. Si se envía diagnosticos, reemplaza toda la lista; si no se envía, no cambia. El código CIE-10 se normaliza (c443 → C44.3).",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"comentarios\": \"Se sugiere correlación clínica.\",\n  \"diagnosticos\": [\n    {\"descripcion\": \"Carcinoma basocelular nodular\", \"codigo_cie10\": \"c443\"},\n    {\"descripcion\": \"Márgenes quirúrgicos libres de lesión\", \"codigo_cie10\": \"\"}\n  ]\n}"
+						}
 					},
 					"response": []
 				},
