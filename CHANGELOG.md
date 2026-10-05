@@ -5,6 +5,19 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-05
 
+### Documentación: `docs/progreso.md` resumido y al día
+
+**Qué se cambió** (solo documentación; el código no cambia)
+- **"Dónde estamos":** se resume en pocas líneas con el estado actual: proyecto, rama de trabajo, informe v2 terminado y unido a `main`, forma de trabajar y cantidad de pruebas. Se quitan el historial de uniones a `main` y el detalle de cada etapa, que ya están en la tabla "Hecho", en este CHANGELOG y en git (commits "docs: registrar la unión…").
+- **Tabla "Hecho":** dos filas nuevas con datos que solo estaban en el párrafo que se resumió: la prueba manual final del 2026-10-05 (`420b91f`) y la unión de `informe-v2` a `main` (`64c6e22`).
+- **"Siguiente paso":**
+  - la numeración saltaba del 3 al 5; ahora va de 1 a 5, y la referencia "(punto 6)" pasa a "(punto 5)";
+  - las ideas de la hoja de ruta coinciden con la del README; ya no menciona la descripción microscópica, que existe desde la etapa 5 del informe v2;
+  - las instrucciones para unir a `main` dicen ahora que se hace con fast-forward, sin pull request, porque `gh` no está instalado. Ese dato estaba antes en el historial de uniones.
+- Se revisó que el README siga coherente con `progreso.md` (hoja de ruta y pendientes de producción); no necesitó cambios.
+
+**Por qué:** a pedido del usuario. "Dónde estamos" se había vuelto un historial largo y difícil de leer, y "Siguiente paso" tenía la numeración rota y una idea ya hecha.
+
 ### Usuarios en /admin/ con el UserAdmin de Django
 
 **Qué se cambió**
