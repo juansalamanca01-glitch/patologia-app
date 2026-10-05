@@ -20,7 +20,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 242 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 105 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 245 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 105 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -71,10 +71,11 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | D-12 | El PDF de un borrador es una vista previa solo para su autor o un admin (403 para los demás), con marca de agua "BORRADOR" en cada página y archivo `…_borrador.pdf`; botón "Vista previa (borrador)". Lo notó el usuario en la prueba manual de las etapas 7 y 8, que ya hizo | `90d6958` |
 | — | Informe v2, etapa 9 (cierre): D-7 a D-11 revisadas (ya se cumplen); política de privacidad con los datos de pacientes, datos sensibles, integridad del informe y fecha fija (también en los términos); "Patología Clínica" → "Anatomía Patológica"; revisión completa del README; Postman con Renovar token, Cerrar sesión, Editar paciente y Editar informe; lista de comprobación para la prueba manual final | `4b9525a` |
 | — | Pie de página (Política de Privacidad, Términos) en el login y en las páginas legales sin sesión, con "← Volver al inicio de sesión". Lo notó el usuario en la prueba manual final | `99c4b36` |
+| — | `/admin/` de usuarios con el `UserAdmin` de Django: la contraseña se cifra al crear un usuario y ya no se muestra el hash en un campo editable. Lo encontramos al preparar la prueba manual final | `ad97f70` |
 
 ## Siguiente paso
 
-1. **Pendiente de respuesta:** si se une `informe-v2` a `main` y si se arregla el hallazgo de `/admin/` (contraseñas sin cifrar al crear usuarios). La etapa 10 (imagen de la firma) es opcional y no se ha pedido.
+1. **Unir `informe-v2` a `main`:** el usuario lo aprobó el 2026-10-05, después del arreglo de `/admin/`. La etapa 10 (imagen de la firma) es opcional y no se ha pedido.
 2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
 5. **Ideas de la Hoja de Ruta del README:** descripción microscópica, imágenes en los informes, firma digital, HL7/FHIR, Docker.
@@ -88,7 +89,6 @@ Para volver a unir la rama a `main`: comprobar que todas las pruebas pasan, ejec
 
 ## Pendiente de hacer (anotado para no olvidarlo)
 
-- **Hallazgo nuevo (2026-10-05, sin arreglar):** en `/admin/`, `accounts/admin.py` registra `Usuario` con un `ModelAdmin` común y no con el `UserAdmin` de Django. Al crear un usuario desde ahí, la contraseña probablemente se guarda sin cifrar y el login falla. Se propuso al usuario usar `UserAdmin` (con `rol`, `especialidad` y `registro_medico`) después de la prueba manual; falta su confirmación.
 - **Propuesta futura (decisión del usuario en la etapa 7):** que el encabezado del PDF se lea de `backend/.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION` y `LABORATORIO_TELEFONO`, opcional) en lugar de ser fijo. Está en la hoja de ruta del README.
 
 - **Producción:** al publicar la app, configurar en el servidor web un límite de tamaño de petición (por ejemplo, `client_max_body_size 60m;` en Nginx). Ver la nota de I-6 en `settings.py`.

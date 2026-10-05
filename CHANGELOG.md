@@ -5,6 +5,18 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-05
 
+### Usuarios en /admin/ con el UserAdmin de Django
+
+**Qué se cambió**
+- `backend/accounts/admin.py`: `Usuario` se registra con el `UserAdmin` de Django en lugar de un `ModelAdmin` común. `UsuarioCreationForm` y `UsuarioChangeForm` adaptan los formularios de Django al modelo `Usuario`.
+  - **Al crear un usuario** se piden la contraseña dos veces (con los validadores de Django), el rol, el nombre completo, la especialidad y el registro médico. La contraseña se guarda cifrada.
+  - **En la ficha** de un usuario, la contraseña se ve en solo lectura y se cambia con el formulario de Django. Hay una sección "Datos de PathoLab" con rol, nombre completo, teléfono, especialidad, registro médico y activo.
+  - Se mantienen la lista, los filtros y la búsqueda de antes.
+- **Pruebas:** nueva `AdminUsuariosTests` en `backend/accounts/tests.py` (3): crear un usuario cifra la contraseña y guarda el rol y el registro médico, ese usuario puede iniciar sesión, y la ficha no muestra la contraseña en un campo de texto. El backend pasa de 242 a 245 pruebas.
+- **Documentación:** `CLAUDE.md`, `README.md` (usuarios de prueba) y `docs/progreso.md`.
+
+**Por qué:** al preparar la prueba manual final se vio que crear un usuario en `/admin/` guardaba la contraseña tal cual. Django esperaba un hash, así que ese usuario no podía iniciar sesión. Además, la ficha de cualquier usuario mostraba el hash de su contraseña en un campo de texto editable. El usuario aprobó el arreglo el 2026-10-05.
+
 ### Enlaces legales en el login y en las páginas legales sin sesión
 
 **Qué se cambió**
