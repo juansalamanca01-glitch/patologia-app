@@ -340,13 +340,16 @@ También se pueden arrancar por separado, en dos terminales: `python manage.py r
 
 ## Usuarios y Cuentas de Prueba
 
-`python manage.py seed_data` crea un usuario de cada rol:
+`python manage.py seed_data` crea un usuario de cada rol y un segundo patólogo:
 
 | Usuario | Contraseña | Rol |
 |---|---|---|
 | `admin` | `admin1234` | **Administrador** (también tiene acceso a `/admin/`, donde puede crear usuarios y asignarles rol y registro médico) |
 | `patologo1` | `patologo1234` | **Patólogo** (registro médico ficticio `RM-PRUEBA-0001`, para poder finalizar informes) |
+| `patologo2` | `patologo2345` | **Patólogo** (registro médico ficticio `RM-PRUEBA-0002`). Sirve para probar que un patólogo no puede modificar, borrar ni finalizar los informes de otro (decisión D-2) |
 | `auditor1` | `auditor1234` | **Auditor** |
+
+Si un usuario ya existe, `seed_data` no lo cambia (salvo que `patologo1` no tenga registro médico: se le asigna `RM-PRUEBA-0001`).
 
 Los permisos de cada rol están en [Roles y Permisos](#roles-y-permisos).
 

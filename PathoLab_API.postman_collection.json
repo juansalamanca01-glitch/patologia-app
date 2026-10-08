@@ -73,7 +73,7 @@
 								""
 							]
 						},
-						"description": "Inicia sesión con el usuario de prueba patologo1 y guarda los tokens en {{access_token}} y {{refresh_token}}. Para probar otros roles usa admin/admin1234 o auditor1/auditor1234.",
+						"description": "Inicia sesión con el usuario de prueba patologo1 y guarda los tokens en {{access_token}} y {{refresh_token}}. Para probar otros roles usa admin/admin1234 o auditor1/auditor1234. Para comprobar que un patólogo no modifica los informes de otro (D-2), usa patologo2/patologo2345.",
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"username\": \"patologo1\",\n  \"password\": \"patologo1234\"\n}"

@@ -20,7 +20,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 248 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 134 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 251 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 134 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -81,7 +81,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Acomodo del aviso "Tienes cambios sin guardar": los tres botones caben dentro del recuadro (pasan a otra línea o se apilan en pantallas angostas) y no sobra espacio debajo. Solo CSS; los bordes y la tipografía quedan para el Bloque B | commit "fix: botones del aviso de cambios sin guardar" |
 | — | Prueba manual del Bloque A hecha por el usuario: todo salió bien. Se une `ajustes-prueba-manual` a `main` y el Bloque B sigue en la rama `bloque-b-estetica` | `4a9284d` |
 | — | Fase 1 del plan (Bloque B, punto 4): el PDF va todo en negro (el rojo solo en el aviso de adendas y en la marca de agua), con los títulos en negrita y una línea fina negra bajo el encabezado. El usuario lo confirmó el 2026-10-08 | `8021597` |
-| — | Plan de calidad, seguridad y diseño (`docs/plan-calidad-y-diseno.md`), aprobado el 2026-10-08 | commit "docs: plan de calidad y diseño aprobado" |
+| — | Plan de calidad, seguridad y diseño (`docs/plan-calidad-y-diseno.md`), aprobado el 2026-10-08 | `43a40e7` |
+| — | Tarea previa del plan: `seed_data` crea `patologo2` (`patologo2345`, `RM-PRUEBA-0002`) para probar D-2; si ya existe, no lo cambia | commit "feat: patologo2 en seed_data" |
 
 ## Pendientes
 
@@ -107,7 +108,8 @@ Observaciones del usuario en la prueba manual del 2026-10-05.
 
 1. **El trabajo sigue el plan de `docs/plan-calidad-y-diseno.md`** (8 fases y una tarea previa), aprobado por el usuario el 2026-10-08. Las fases 5 y 6 se cierran solo cuando las aprueban el usuario, el equipo y el profesor.
    - **Fase 1 (PDF en negro): terminada** el 2026-10-08. El usuario confirmó el PDF y `bloque-b-estetica` se unió a `main`.
-   - **Ahora: tarea previa**, `patologo2` en `seed_data` (`patologo2345`, `RM-PRUEBA-0002`), en la rama `seed-patologo2`. Hoy `seed_data` no lo crea: se creó a mano para la prueba manual del 2026-10-05.
+   - **Tarea previa (`patologo2` en `seed_data`): terminada** el 2026-10-08 en la rama `seed-patologo2`.
+   - **Ahora: fase 2 (herramientas de calidad)**, en una rama `fase-2-herramientas-calidad` desde `main`. Primero se explica la configuración y se espera confirmación.
    - Después: fase 2 (Prettier, ESLint, Ruff), 3 (auditoría OWASP), 4 (correcciones, abierta), 5 (guía de diseño con `frontend-design`, que está en `~/.claude/skills/` del usuario), 6 (pantalla del informe), 7 (resto de pantallas = Bloque B, punto 5) y 8 (cierre).
    - Al terminar cada fase, se actualiza esta sección.
 2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").

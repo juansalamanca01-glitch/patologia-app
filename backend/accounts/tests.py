@@ -238,6 +238,36 @@ class RegistroMedicoTests(APITestCase):
         call_command('seed_data', stdout=StringIO())
         self.assertEqual(Usuario.objects.get(username='patologo1').registro_medico, 'RM-PRUEBA-0777')
 
+    # patologo2 sirve para probar que un patólogo no modifica informes de otro (D-2).
+
+    def test_seed_data_crea_patologo2_con_su_registro_medico(self):
+        from io import StringIO
+        from django.core.management import call_command
+        call_command('seed_data', stdout=StringIO())
+        patologo2 = Usuario.objects.get(username='patologo2')
+        self.assertEqual(patologo2.rol, Usuario.Rol.PATOLOGO)
+        self.assertEqual(patologo2.registro_medico, 'RM-PRUEBA-0002')
+        self.assertTrue(patologo2.check_password('patologo2345'))
+
+    def test_seed_data_no_duplica_a_patologo2(self):
+        from io import StringIO
+        from django.core.management import call_command
+        call_command('seed_data', stdout=StringIO())
+        call_command('seed_data', stdout=StringIO())
+        self.assertEqual(Usuario.objects.filter(username='patologo2').count(), 1)
+
+    def test_seed_data_no_cambia_a_un_patologo2_que_ya_existia(self):
+        # Como el que se creó a mano para la prueba manual del 2026-10-05.
+        from io import StringIO
+        from django.core.management import call_command
+        Usuario.objects.create_user(
+            username='patologo2', password=self.CLAVE, rol=Usuario.Rol.PATOLOGO, registro_medico='RM-PRUEBA-0888',
+        )
+        call_command('seed_data', stdout=StringIO())
+        patologo2 = Usuario.objects.get(username='patologo2')
+        self.assertEqual(patologo2.registro_medico, 'RM-PRUEBA-0888')
+        self.assertTrue(patologo2.check_password(self.CLAVE))
+
 
 class AdminUsuariosTests(TestCase):
     """

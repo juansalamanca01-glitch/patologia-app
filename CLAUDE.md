@@ -49,7 +49,7 @@ npx vitest run src/pages/PerfilPage.test.jsx  # un solo archivo de pruebas
 
 Las pruebas del backend están en `backend/*/tests.py`: `APITestCase` de DRF para la API y `SimpleTestCase` en `config/tests.py` para la configuración. Las del frontend usan Vitest + React Testing Library + jsdom (configuración en `vite.config.js` y `src/test/setup.js`), en archivos `*.test.jsx` junto al componente, y simulan la API con `vi.mock('../api/client')`. No hay linter configurado. Los hallazgos pendientes de corregir están en `docs/auditoria-inicial.md`. `PathoLab_API.postman_collection.json` contiene la colección de la API.
 
-Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234` (registro médico `RM-PRUEBA-0001`, que se le asigna también si ya existía sin registro), `auditor1/auditor1234`. `seed_data` los crea directamente, sin validadores. La API (registro y cambio de contraseña) sí aplica `AUTH_PASSWORD_VALIDATORS` mediante `validar_contrasena()` de `accounts/serializers.py`, así que esas contraseñas no se aceptarían como contraseña nueva.
+Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234` (registro médico `RM-PRUEBA-0001`, que se le asigna también si ya existía sin registro), `patologo2/patologo2345` (registro médico `RM-PRUEBA-0002`; sirve para probar D-2: un patólogo no modifica informes de otro; si ya existe, no se toca), `auditor1/auditor1234`. `seed_data` los crea directamente, sin validadores. La API (registro y cambio de contraseña) sí aplica `AUTH_PASSWORD_VALIDATORS` mediante `validar_contrasena()` de `accounts/serializers.py`, así que esas contraseñas no se aceptarían como contraseña nueva.
 
 ## Configuración
 

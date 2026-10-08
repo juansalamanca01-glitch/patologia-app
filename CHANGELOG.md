@@ -5,6 +5,29 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-08
 
+### Segundo patólogo de prueba (`patologo2`) en `seed_data`
+
+**Qué se cambió**
+- `backend/informes/management/commands/seed_data.py` crea `patologo2` / `patologo2345`:
+  - "Dra. Ana Ficticia", Patología Quirúrgica;
+  - registro médico ficticio `RM-PRUEBA-0002`, para que pueda finalizar sus propios informes.
+- Si `patologo2` ya existe, no se cambia: ni la contraseña ni el registro.
+- **Pruebas:** 3 nuevas en `RegistroMedicoTests` (`accounts/tests.py`):
+  - lo crea con su rol, su registro y su contraseña;
+  - ejecutar `seed_data` dos veces no lo duplica;
+  - no cambia un `patologo2` que ya existía.
+
+  Las dos primeras fallaban antes del cambio.
+- **Documentación:**
+  - README: tabla de usuarios de prueba, y que `seed_data` no cambia usuarios existentes;
+  - `CLAUDE.md`: usuarios de `seed_data`;
+  - Postman: descripción del login;
+  - `docs/plan-calidad-y-diseno.md` y `docs/progreso.md`.
+
+**Por qué:** es la tarea previa de `docs/plan-calidad-y-diseno.md`, aprobada por el usuario el 2026-10-08.
+- Para probar la decisión D-2 (un patólogo no modifica, borra ni finaliza los informes de otro) hace falta un segundo patólogo.
+- Hasta ahora había que crearlo a mano (así se hizo para la prueba manual del 2026-10-05), y el README no lo mencionaba.
+
 ### PDF en negro (Bloque B, punto 4)
 
 **Qué se cambió**

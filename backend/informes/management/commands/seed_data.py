@@ -1,6 +1,6 @@
 """
-Comando para cargar datos iniciales: usuarios de prueba, 14 patologías con sus
-plantillas, temas del foro, los catálogos de servicios y EPS y 2 pacientes ficticios.
+Comando para cargar datos iniciales: usuarios de prueba (uno por rol y un segundo
+patólogo), 14 patologías con sus plantillas, temas del foro, los catálogos de servicios y EPS y 2 pacientes ficticios.
 Uso: python manage.py seed_data (se puede ejecutar varias veces sin duplicar datos).
 """
 from datetime import date
@@ -45,6 +45,20 @@ class Command(BaseCommand):
         # patologo1 ya existía sin registro (bases creadas antes de la etapa 6); no se cambia uno ya asignado.
         elif Usuario.objects.filter(username='patologo1', registro_medico='').update(registro_medico='RM-PRUEBA-0001'):
             self.stdout.write(self.style.SUCCESS('[OK] Registro medico RM-PRUEBA-0001 asignado a "patologo1"'))
+
+        # ── Segundo patólogo: para probar que un patólogo no modifica informes de otro (D-2) ──
+        # Si ya existe (por ejemplo, creado a mano), no se toca.
+        if not Usuario.objects.filter(username='patologo2').exists():
+            Usuario.objects.create_user(
+                username='patologo2',
+                email='patologo2@patologia.local',
+                password='patologo2345',
+                nombre_completo='Dra. Ana Ficticia',
+                rol='patologo',
+                especialidad='Patología Quirúrgica',
+                registro_medico='RM-PRUEBA-0002',
+            )
+            self.stdout.write(self.style.SUCCESS('[OK] Patologo "patologo2" creado (pass: patologo2345)'))
 
         # ── Auditor de prueba ──────────────────────────────
         if not Usuario.objects.filter(username='auditor1').exists():

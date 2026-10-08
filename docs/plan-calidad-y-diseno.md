@@ -64,7 +64,7 @@ Desde la fase 2 se suman las comprobaciones de formato y linter.
 
 **Archivos:** `backend/informes/management/commands/seed_data.py`, `backend/accounts/tests.py`, `README.md`, `CLAUDE.md`, `PathoLab_API.postman_collection.json`, `CHANGELOG.md`, `docs/progreso.md`.
 
-**Rama:** `seed-patologo2`, desde `main`, después de la fase 1 y antes de la fase 2. **Aprobada el 2026-10-08** con `patologo2345` y `RM-PRUEBA-0002`.
+**Rama:** `seed-patologo2`, desde `main`, después de la fase 1 y antes de la fase 2. **Aprobada el 2026-10-08** con `patologo2345` y `RM-PRUEBA-0002`. **Terminada el 2026-10-08.**
 
 **Terminada cuando:**
 - las 3 pruebas nuevas pasan;
