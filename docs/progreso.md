@@ -13,7 +13,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 - **Proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`.
 - **Plan vigente:** `docs/plan-calidad-y-diseno.md`, aprobado el 2026-10-08. Cada fase va en su propia rama desde `main`.
-- **Rama de trabajo:** `docs-regla-check` (solo documentación). La siguiente será `fase-3-auditoria-owasp`, cuando el usuario lo indique.
+- **Rama de trabajo:** ninguna abierta. Todo está en `main`. La siguiente será `fase-3-auditoria-owasp`, cuando el usuario lo indique.
 - **Estado:**
   - Están terminados y en `main`:
     - la auditoría inicial (salvo I-9c);
@@ -98,7 +98,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Tarea previa 2 del plan: el encabezado del PDF (nombre, dirección y teléfono del laboratorio) se lee de `backend/.env`, con el de demostración por defecto; el teléfono va en su propia línea y solo si existe | `539a88d` |
 | D-15 | El encabezado se congela al finalizar (`datos_finalizacion['laboratorio']`); la migración 0012 da el de demostración a los finalizados existentes. Lo encontró el usuario al probar la tarea previa 2 | `c0f08c8` |
 | — | Fase 2 del plan: Prettier 3.9, ESLint 9 y Ruff 0.16, `npm run check`, `.vscode` (formato al guardar y extensiones), formato automático (`836257b`, en `.git-blame-ignore-revs`), imports ordenados y arreglos a mano aprobados por el usuario (el autoguardado usa `autoguardarRef`) | `6f2e3c3`, `836257b`, `602810e` y `e10ee5f` |
-| — | Regla 7 de `CLAUDE.md`: antes de cada commit que toque código, `npm run check` y todas las pruebas; si algo falla, no hay commit. En los de solo documentación no hace falta ejecutar las pruebas | commit "docs: regla de comprobar antes de cada commit" |
+| — | Regla 7 de `CLAUDE.md`: antes de cada commit que toque código, `npm run check` y todas las pruebas; si algo falla, no hay commit. En los de solo documentación no hace falta ejecutar las pruebas | `19c02fb` |
 
 ## Siguiente paso
 
