@@ -104,7 +104,7 @@ Observaciones del usuario en la prueba manual del 2026-10-05.
 
 ## Siguiente paso
 
-1. **Bloque B, punto 5: rediseño de la interfaz**, en la rama `bloque-b-estetica`: sin bordes redondeados, tipografía más sobria y aspecto profesional y clínico. Usar la skill `frontend-design` que instaló el usuario (el 2026-10-08 todavía no aparecía en la sesión; puede requerir abrir una conversación nueva). **Primero proponer el estilo y esperar confirmación.**
+1. **Bloque B, punto 5: rediseño de la interfaz**, en la rama `bloque-b-estetica`: sin bordes redondeados, tipografía más sobria y aspecto profesional y clínico. Usar la skill `frontend-design`, que está en `~/.claude/skills/frontend-design/` del computador del usuario, fuera del repositorio, por decisión suya del 2026-10-08. Si no aparece en la lista de skills, abrir una conversación nueva. **Primero proponer el estilo y esperar confirmación.**
    - Opcional: que el usuario revise un PDF en el navegador para confirmar el punto 4.
 2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
@@ -115,7 +115,7 @@ Para volver a unir la rama a `main` (con fast-forward desde la terminal, sin pul
 
 ## Pendiente de respuesta del usuario
 
-- **`git push` falla** desde el 2026-10-08: GitHub responde "Invalid username or token". `main` (con el Bloque A unido) y `bloque-b-estetica` están solo en el computador del usuario. Cuando renueve las credenciales de Git, subir las dos ramas. (Etapa 5: el usuario aprobó el 2026-10-04 las secciones nuevas en el PDF actual, los botones para reordenar diagnósticos y dejar la búsqueda sin diagnósticos. El mismo día probó la etapa 5 a mano en el navegador y confirmó que se ven las tarjetas nuevas.)
+- Nada por ahora. (Etapa 5: el usuario aprobó el 2026-10-04 las secciones nuevas en el PDF actual, los botones para reordenar diagnósticos y dejar la búsqueda sin diagnósticos. El mismo día probó la etapa 5 a mano en el navegador y confirmó que se ven las tarjetas nuevas.)
 
 ## Pendiente de hacer (anotado para no olvidarlo)
 
