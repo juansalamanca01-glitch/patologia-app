@@ -16,7 +16,7 @@ except UndefinedValueError:
     raise ImproperlyConfigured(
         'Falta la variable SECRET_KEY. Copia backend/.env.example como backend/.env '
         'y pon una clave propia (ver README).'
-    )
+    ) from None
 
 # Si no se define, DEBUG queda desactivado (modo seguro para producción).
 DEBUG = config('DEBUG', default=False, cast=bool)

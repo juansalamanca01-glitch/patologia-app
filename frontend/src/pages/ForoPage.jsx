@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import client, { LISTA_COMPLETA, resultados } from '../api/client';
@@ -39,7 +39,7 @@ export default function ForoPage() {
   const [nuevoTema, setNuevoTema] = useState(null); // null = formulario cerrado
   const [errorTema, setErrorTema] = useState('');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [pubRes, temaRes] = await Promise.all([
@@ -48,16 +48,16 @@ export default function ForoPage() {
       ]);
       setPublicaciones(resultados(pubRes.data));
       setTemas(resultados(temaRes.data));
-    } catch (err) {
+    } catch {
       setError('No se pudo cargar el foro.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [filtroTema]);
 
   useEffect(() => {
     fetchData();
-  }, [filtroTema]);
+  }, [fetchData]);
 
   const crearPublicacion = async (e) => {
     e.preventDefault();

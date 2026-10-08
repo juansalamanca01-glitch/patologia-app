@@ -69,6 +69,9 @@ export default function BuscarPage() {
 
   useEffect(() => {
     handleSearch();
+    // Búsqueda inicial (sin filtros) solo al abrir la pantalla. handleSearch se recrea en
+    // cada render: con ella como dependencia, la búsqueda se repetiría sin fin.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

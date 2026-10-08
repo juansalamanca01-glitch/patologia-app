@@ -5,6 +5,28 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-08
 
+### Fase 2, parte 4: arreglos a mano de ESLint y Ruff
+
+**Qué se cambió** (cada arreglo lo aprobó el usuario; ninguno cambia el comportamiento):
+- **`react-hooks/exhaustive-deps` (11):**
+  - `useCallback` en `VisorImagenes.jsx` (`cerrar`, `mover`), `CatalogosPage.jsx` (`cargar`), `ForoPage.jsx` y `PatologiasPage.jsx` (`fetchData`) y `PublicacionDetallePage.jsx` (`fetchPublicacion`). Los efectos dependen de esas funciones y se repiten en los mismos casos que antes.
+  - `InformePage.jsx`: se agregan `isEditing` y `navigate`, que no cambian mientras la pantalla está abierta (nuevo y edición son rutas distintas).
+  - Regla desactivada solo en esa línea, con su motivo: la búsqueda inicial de `BuscarPage.jsx` y el cierre de sesión de `CerrarSesionPage.jsx`, que deben correr una sola vez al abrir.
+  - **Autoguardado (D-13):** el temporizador llama a `autoguardarRef.current()`, como ya se hacía con `versionRef`. Se reinicia solo cuando cambia lo escrito, no cuando cambia el indicador "guardando…", y ESLint lo sigue vigilando. Lo eligió el usuario en lugar de desactivar la regla.
+- **Errores de ESLint (9):**
+  - `catch` sin variable (4);
+  - `&quot;` en lugar de comillas sueltas en `SelectorPaciente.jsx` y `PoliticaPrivacidadPage.jsx`, que se ven igual;
+  - un escape de más en el nombre del PDF (`InformePage.jsx`).
+- **Ruff (4):**
+  - `raise ... from None` en `config/settings.py`: sin `SECRET_KEY`, la consola ya no muestra antes el error interno de decouple;
+  - `raise ... from error` en `accounts/serializers.py`;
+  - una `lambda` pasa a `def` en `informes/tests.py`.
+- `scripts/check.mjs`: con `shell: true`, `npm` recibe el comando en un solo texto, y desaparece el aviso DEP0190 de Node.
+- **Pruebas:** no hay nuevas, porque no cambia el comportamiento. Pasan las 21 de D-13 y todas las demás: 12 de la raíz, 134 del frontend y 263 del backend. `npm run build` compila y `npm run check` termina con las cuatro comprobaciones en OK.
+- **Documentación:** `CLAUDE.md` (autoguardado), el plan y `docs/progreso.md`.
+
+**Por qué:** cierre de la fase 2 de `docs/plan-calidad-y-diseno.md`: el código queda sin errores ni avisos de los linters.
+
 ### Fase 2, partes 2 y 3: formato automático e imports ordenados
 
 **Qué se cambió**

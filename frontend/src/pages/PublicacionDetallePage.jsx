@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
@@ -15,21 +15,21 @@ export default function PublicacionDetallePage() {
   const [enviando, setEnviando] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const fetchPublicacion = async () => {
+  const fetchPublicacion = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await client.get(`/foro/publicaciones/${id}/`);
       setPublicacion(data);
-    } catch (err) {
+    } catch {
       setError('No se pudo cargar la publicación.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchPublicacion();
-  }, [id]);
+  }, [fetchPublicacion]);
 
   const enviarComentario = async (e) => {
     e.preventDefault();
@@ -50,7 +50,7 @@ export default function PublicacionDetallePage() {
     try {
       await client.delete(`/foro/publicaciones/${id}/`);
       navigate('/foro');
-    } catch (err) {
+    } catch {
       setError('No se pudo eliminar la publicación.');
     }
   };

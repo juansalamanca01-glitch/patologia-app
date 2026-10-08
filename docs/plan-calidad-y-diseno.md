@@ -162,7 +162,7 @@ Desde la fase 2 se suman las comprobaciones de formato y linter.
 
 ---
 
-## Fase 2: herramientas de calidad (en curso)
+## Fase 2: herramientas de calidad (terminada)
 
 **Qué se hace:**
 
@@ -195,6 +195,21 @@ Desde la fase 2 se suman las comprobaciones de formato y linter.
 - `endOfLine: "auto"` en Prettier y `line-ending = "auto"` en Ruff: con `core.autocrlf=true`, Git deja los archivos en CRLF en Windows.
 - Solo las reglas `rules-of-hooks` y `exhaustive-deps` de `eslint-plugin-react-hooks` 7: su preset completo trae reglas del React Compiler, que el proyecto no usa.
 - `scripts/check.mjs` (`npm run check`) con su prueba.
+
+**Cierre (2026-10-08):**
+- Commits: `6f2e3c3` (herramientas), `836257b` (solo formato, en `.git-blame-ignore-revs`), `602810e` (imports) y el de los arreglos a mano.
+- Los arreglos a mano los aprobó el usuario uno por uno. Ninguno cambia el comportamiento:
+  - 11 `exhaustive-deps`:
+    - 5 funciones con `useCallback`;
+    - 3 efectos con `isEditing` o `navigate` agregados;
+    - 2 desactivados con su motivo: la búsqueda inicial y `/salir`;
+    - el temporizador del autoguardado llama a `autoguardarRef.current()`, a pedido del usuario, para que ESLint lo siga vigilando;
+  - 4 `catch` sin variable;
+  - 4 comillas con `&quot;`;
+  - 1 escape innecesario;
+  - 3 `raise ... from` (B904);
+  - 1 `lambda` cambiada por `def`.
+- `npm run check` termina en OK. Pasan las 21 pruebas de D-13 y todas las demás (12 + 134 + 263).
 
 **Orden de los commits** (el formateo no se mezcla con nada más):
 1. Instalación y configuración de las herramientas, sin tocar el código.

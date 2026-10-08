@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import client, { LISTA_COMPLETA, resultados } from '../api/client';
 
@@ -17,7 +17,7 @@ export default function PatologiasPage() {
   const [formPatologia, setFormPatologia] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null); // { tipo, id }
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [catRes, patRes] = await Promise.all([
@@ -28,16 +28,16 @@ export default function PatologiasPage() {
       ]);
       setCategorias(resultados(catRes.data));
       setPatologias(resultados(patRes.data));
-    } catch (err) {
+    } catch {
       setError('No se pudieron cargar las patologías y categorías.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [filtroCategoria]);
 
   useEffect(() => {
     fetchData();
-  }, [filtroCategoria]);
+  }, [fetchData]);
 
   const guardarCategoria = async (e) => {
     e.preventDefault();

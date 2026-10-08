@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import client, { LISTA_COMPLETA, resultados } from '../api/client';
 
@@ -21,7 +21,7 @@ function TablaCatalogo({ titulo, url, campoActivo, etiquetaNuevo, etiquetaActivo
   const [renombrando, setRenombrando] = useState(null); // { id, nombre, error }
   const [confirmarBorrar, setConfirmarBorrar] = useState(null); // id
 
-  const cargar = async () => {
+  const cargar = useCallback(async () => {
     try {
       const { data } = await client.get(url, { params: LISTA_COMPLETA });
       setElementos(resultados(data));
@@ -30,11 +30,11 @@ function TablaCatalogo({ titulo, url, campoActivo, etiquetaNuevo, etiquetaActivo
     } finally {
       setCargando(false);
     }
-  };
+  }, [url, titulo]);
 
   useEffect(() => {
     cargar();
-  }, []);
+  }, [cargar]);
 
   const agregar = async (e) => {
     e.preventDefault();

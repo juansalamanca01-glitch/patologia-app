@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 // Miniaturas de las imágenes de una publicación del foro y visor para verlas en grande.
 // Cada miniatura es un botón; el visor se cierra con "Cerrar", con Escape o con un clic
@@ -8,8 +8,8 @@ export default function VisorImagenes({ imagenes }) {
   const [abierta, setAbierta] = useState(null); // índice de la imagen ampliada
   const total = imagenes.length;
 
-  const cerrar = () => setAbierta(null);
-  const mover = (paso) => setAbierta((i) => (i + paso + total) % total);
+  const cerrar = useCallback(() => setAbierta(null), []);
+  const mover = useCallback((paso) => setAbierta((i) => (i + paso + total) % total), [total]);
 
   useEffect(() => {
     if (abierta === null) return undefined;
@@ -20,7 +20,7 @@ export default function VisorImagenes({ imagenes }) {
     };
     document.addEventListener('keydown', alPresionar);
     return () => document.removeEventListener('keydown', alPresionar);
-  }, [abierta, total]);
+  }, [abierta, total, cerrar, mover]);
 
   if (total === 0) return null;
   const actual = abierta === null ? null : imagenes[abierta];

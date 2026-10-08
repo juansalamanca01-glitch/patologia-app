@@ -26,8 +26,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const resultados = comprobaciones(raiz).map(({ nombre, comando, args, cwd }) => {
     console.log(`\n=== ${nombre} ===`);
-    // En Windows, npm es un archivo .cmd y necesita la terminal para ejecutarse.
-    const { status, error } = spawnSync(comando, args, { cwd, stdio: 'inherit', shell: comando === 'npm' });
+    // En Windows, npm es un archivo .cmd y necesita la terminal para ejecutarse. Con la
+    // terminal, Node pide el comando en un solo texto; los argumentos son fijos, de este script.
+    const { status, error } =
+      comando === 'npm'
+        ? spawnSync(`npm ${args.join(' ')}`, { cwd, stdio: 'inherit', shell: true })
+        : spawnSync(comando, args, { cwd, stdio: 'inherit' });
     if (error) console.error(`No se pudo ejecutar: ${error.message}`);
     return { nombre, bien: status === 0 };
   });

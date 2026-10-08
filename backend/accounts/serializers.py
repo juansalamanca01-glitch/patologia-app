@@ -15,7 +15,7 @@ def validar_contrasena(clave, usuario):
     try:
         validate_password(clave, user=usuario)
     except DjangoValidationError as error:
-        raise serializers.ValidationError(list(error.messages))
+        raise serializers.ValidationError(list(error.messages)) from error
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
@@ -74,7 +74,7 @@ class RegistroSerializer(serializers.ModelSerializer):
         try:
             validar_contrasena(data['password'], usuario_temporal)
         except serializers.ValidationError as error:
-            raise serializers.ValidationError({'password': error.detail})
+            raise serializers.ValidationError({'password': error.detail}) from error
         return data
 
     def create(self, validated_data):

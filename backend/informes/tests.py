@@ -584,7 +584,10 @@ class ConsultasPorListadoTests(APITestCase):
         from django.utils import timezone
 
         Publicacion.objects.filter(id=normal.id).update(fecha_creacion=timezone.now() - timedelta(days=1))
-        nombres = lambda url, campo: [f[campo] for f in self.client.get(url).data['results']]
+
+        def nombres(url, campo):
+            return [f[campo] for f in self.client.get(url).data['results']]
+
         self.assertEqual(nombres('/api/categorias/', 'nombre'), ['Alfa', 'Media', 'Zeta'])
         self.assertEqual(nombres('/api/foro/temas/', 'nombre'), ['Alfa', 'Media', 'Zeta'])
         self.assertEqual(nombres('/api/foro/publicaciones/', 'titulo'), ['Fijada', 'Reciente', 'Normal'])

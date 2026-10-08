@@ -136,7 +136,7 @@ export default function SelectorPaciente({ paciente, onSeleccionar, disabled = f
 
             {errorBusqueda && <div className="alert alert-error">{errorBusqueda}</div>}
             {encontrados && encontrados.length === 0 && (
-              <p className="text-muted">No se encontraron pacientes. Puede crearlo con "Nuevo paciente".</p>
+              <p className="text-muted">No se encontraron pacientes. Puede crearlo con &quot;Nuevo paciente&quot;.</p>
             )}
             {encontrados && encontrados.length > 0 && (
               <div className="table-responsive">

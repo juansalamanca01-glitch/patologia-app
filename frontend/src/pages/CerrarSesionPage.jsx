@@ -10,6 +10,9 @@ export default function CerrarSesionPage() {
 
   useEffect(() => {
     logout();
+    // Una sola vez al entrar. logout() cambia en cada render de AuthContext: con ella como
+    // dependencia, se llamaría otra vez después de borrar la sesión.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (user) {

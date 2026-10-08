@@ -95,16 +95,14 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | D-14 ampliada: un informe finalizado tampoco se borra desde `/admin/`, tenga o no adendas; idea futura de un estado "Anulado" | `8c084e8` |
 | — | Tarea previa 2 del plan: el encabezado del PDF (nombre, dirección y teléfono del laboratorio) se lee de `backend/.env`, con el de demostración por defecto; el teléfono va en su propia línea y solo si existe | `539a88d` |
 | D-15 | El encabezado se congela al finalizar (`datos_finalizacion['laboratorio']`); la migración 0012 da el de demostración a los finalizados existentes. Lo encontró el usuario al probar la tarea previa 2 | `c0f08c8` |
+| — | Fase 2 del plan: Prettier 3.9, ESLint 9 y Ruff 0.16, `npm run check`, `.vscode` (formato al guardar y extensiones), formato automático (`836257b`, en `.git-blame-ignore-revs`), imports ordenados y arreglos a mano aprobados por el usuario (el autoguardado usa `autoguardarRef`) | `6f2e3c3`, `836257b`, `602810e` y commit "fix: arreglos de ESLint y Ruff" |
 
 ## Siguiente paso
 
-1. **Ahora: fase 2** del plan (Prettier, ESLint y Ruff), en la rama `fase-2-herramientas-calidad`. Aprobada el 2026-10-08 con ajustes (ver el plan). Commits:
-   1. herramientas y configuración (hecho, `6f2e3c3`);
-   2. solo formato (hecho, `836257b`, en `.git-blame-ignore-revs`);
-   3. imports ordenados por Ruff (hecho);
-   4. arreglos a mano, **que se muestran al usuario antes de aplicarlos**.
-2. **Luego, las fases 3 a 8** del plan, en orden. Al terminar cada fase se actualizan esta sección y "Pendientes".
-3. **Para arrancar la aplicación:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
+1. **Fase 2 terminada** en la rama `fase-2-herramientas-calidad`. Falta que el usuario apruebe unirla a `main`.
+2. **Después: fase 3** (auditoría OWASP Top 10:2025, solo el informe `docs/auditoria-owasp.md`, sin tocar código), en la rama `fase-3-auditoria-owasp` desde `main`.
+3. **Luego, las fases 4 a 8** del plan, en orden. Al terminar cada fase se actualizan esta sección y "Pendientes".
+4. **Para arrancar la aplicación:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 
 Para unir una rama a `main` (con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado):
 1. Comprobar que todas las pruebas pasan.
@@ -121,7 +119,6 @@ Inventario del 2026-10-08: todo lo pendiente, sin terminar o anotado para despu�
 
 | # | Qué | Origen |
 |---|---|---|
-| 2 | **Fase 2:** Prettier, ESLint y Ruff | Plan; auditoría inicial, sección 1 ("no hay linter") |
 | 3 | **Fase 3:** auditoría OWASP. Evalúa además estos puntos ya conocidos: | Plan |
 |   | • I-9c: 2 vulnerabilidades moderadas de `react-router` 6 (se cierran con React Router 7). Hay que revisar de nuevo el análisis de I-9a, porque desde D-13 la app usa `createBrowserRouter` | Auditoría inicial, I-9; `CHANGELOG.md`, I-9a |
 |   | • Dependencias de Python sin versiones fijas | `backend/requirements.txt` |

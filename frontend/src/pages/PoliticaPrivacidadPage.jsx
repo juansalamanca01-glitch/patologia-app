@@ -73,7 +73,7 @@ export default function PoliticaPrivacidadPage() {
             firma, y el contenido original se conserva. Al finalizar, los datos del paciente, la EPS, el servicio y la
             firma que imprime el informe quedan guardados tal como estaban, de modo que una corrección posterior de esos
             datos no altera un informe ya entregado. El PDF de un borrador es solo una vista previa para su autor,
-            marcada como "BORRADOR", y no tiene validez.
+            marcada como &quot;BORRADOR&quot;, y no tiene validez.
           </p>
 
           <h2>7. Derechos de los titulares (Habeas Data)</h2>

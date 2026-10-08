@@ -132,7 +132,8 @@ export default function InformePage() {
       .catch(() =>
         setErrors((prev) => ({ ...prev, general: 'No se pudieron cargar las patologías. Recarga la página.' })),
       );
-  }, []);
+    // isEditing es Boolean(id): nuevo y edición son rutas distintas, así que no cambia sin volver a montar.
+  }, [isEditing]);
 
   // EPS y servicios activos (D-4). La EPS o el servicio de un informe guardado se
   // agregan aparte si ya se desactivaron (conOpcionActual).
@@ -181,7 +182,7 @@ export default function InformePage() {
         .catch(() => navigate('/'))
         .finally(() => setLoading(false));
     }
-  }, [id]);
+  }, [id, isEditing, navigate]);
 
   // Carga los campos de la plantilla al cambiar de patología
   useEffect(() => {
@@ -208,7 +209,7 @@ export default function InformePage() {
     } else {
       setPlantillas([]);
     }
-  }, [selectedPatologia]);
+  }, [selectedPatologia, isEditing]);
 
   const handleFieldChange = (fieldName, value) => {
     marcarCambio();
@@ -315,10 +316,15 @@ export default function InformePage() {
       guardandoRef.current = false;
     }
   };
+  // autoguardar se recrea en cada render. El temporizador llama a la última versión por
+  // esta referencia, así que solo se reinicia cuando cambia lo escrito (version), no
+  // cuando cambia el indicador de estado ("guardando…").
+  const autoguardarRef = useRef(autoguardar);
+  autoguardarRef.current = autoguardar;
 
   useEffect(() => {
     if (!autoguardable || version === versionGuardada) return undefined;
-    const temporizador = setTimeout(autoguardar, ESPERA_AUTOGUARDADO_MS);
+    const temporizador = setTimeout(() => autoguardarRef.current(), ESPERA_AUTOGUARDADO_MS);
     return () => clearTimeout(temporizador);
   }, [autoguardable, version, versionGuardada]);
 
@@ -423,7 +429,7 @@ export default function InformePage() {
   // Descarga el PDF con Axios, que envía el token en la cabecera Authorization.
   // Antes el token iba en la URL (?token=...) y quedaba en el historial (auditoría I-5).
   const downloadPDF = async () => {
-    const numero = (informe?.numero_peticion || id).toString().replace(/[^a-zA-Z0-9\-]/g, '_');
+    const numero = (informe?.numero_peticion || id).toString().replace(/[^a-zA-Z0-9-]/g, '_');
     const safeName = borrador ? `${numero}_borrador` : numero;
     // La vista previa de un borrador muestra lo que hay en pantalla: se guarda antes (D-13).
     if (borrador && !(await guardarCambiosPendientes())) return;
