@@ -123,6 +123,11 @@ Desde la fase 2 se suman las comprobaciones de formato y linter.
 - cambiar `LABORATORIO_NOMBRE` en `backend/.env` y reiniciar el backend cambia el encabezado del PDF;
 - sin las variables, el PDF es idéntico al actual.
 
+**Ampliación del 2026-10-08 (decisión D-15):**
+- Al probarla, el usuario encontró que cambiar el `.env` también cambiaba el PDF de los informes finalizados.
+- El encabezado se agregó a los datos congelados (`datos_finalizacion['laboratorio']`). La migración `informes/0012` completa con el encabezado de demostración los informes que ya estaban finalizados.
+- 6 pruebas más: 4 del PDF (una es de resguardo y ya pasaba) y 2 de la migración.
+
 **Relación con el cambio de nombre:** el nombre del proyecto no está decidido (ver "Pendientes" en `docs/progreso.md`). Con esta tarea, el encabezado del PDF de una instalación se cambia en `.env`, sin tocar código. El valor por defecto, en cambio, se cambia junto con el resto del nombre.
 
 ---
@@ -321,7 +326,7 @@ La guía define:
   - sigue sin librería de UI.
 - **Ejemplo visual:** si el usuario lo pide, una página de muestra (HTML estático) con la paleta y los componentes, para verla antes de aprobar.
 
-**Archivos:** `docs/guia-diseno.md` (nuevo), `docs/progreso.md` y `CHANGELOG.md`. Al aprobarse, una decisión nueva en `docs/decisiones.md` (D-15: la guía es la referencia de diseño; D-14 ya se usó para `/admin/`).
+**Archivos:** `docs/guia-diseno.md` (nuevo), `docs/progreso.md` y `CHANGELOG.md`. Al aprobarse, una decisión nueva en `docs/decisiones.md` (D-16: la guía es la referencia de diseño; D-14 se usó para `/admin/` y D-15 para el encabezado congelado).
 
 **Terminada cuando:**
 - **la aprueban el usuario, el equipo y el profesor** (con los cambios que pidan);

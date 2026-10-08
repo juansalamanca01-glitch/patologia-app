@@ -5,6 +5,34 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-08
 
+### El encabezado del PDF se congela al finalizar (decisión D-15)
+
+**Qué se cambió**
+- `backend/informes/models.py`: `Informe.datos_para_congelar()` agrega `laboratorio` (`nombre`, `direccion`, `telefono`), con los valores de `settings` del momento. Al finalizar queda guardado en `datos_finalizacion`, y `datos_impresos()` lo devuelve congelado en los finalizados y actual en los borradores.
+- `backend/informes/utils.py`: `_encabezado()` recibe `datos['laboratorio']` en lugar de leer `settings`.
+- Migración nueva `backend/informes/migrations/0012_encabezado_congelado.py` (solo datos):
+  - agrega el encabezado de demostración a los informes finalizados que no tienen `laboratorio`;
+  - lo escribe la propia migración, para no depender del `.env` del equipo;
+  - no toca los borradores ni los que ya lo tienen;
+  - usa `update()` para no cambiar `fecha_actualizacion`;
+  - la reversa quita la clave.
+- **Pruebas:** 6 nuevas.
+  - En `PdfInformeTests`, 4:
+    - al finalizar se congela el encabezado;
+    - un finalizado conserva su encabezado aunque cambie la configuración;
+    - un borrador usa el encabezado actual (resguardo: ya pasaba);
+    - una adenda no cambia el encabezado congelado.
+  - En `MigracionEncabezadoCongeladoTests`, 2: completa los finalizados, y la reversa lo quita.
+  - Las 5 primeras fallaban antes del cambio. El backend pasa de 257 a 263 pruebas.
+- **Documentación:**
+  - `docs/decisiones.md` (D-15);
+  - README: tabla de variables, "Integridad del informe" y la lista de decisiones;
+  - `CLAUDE.md`;
+  - el plan: la guía de diseño pasa a ser D-16;
+  - `docs/progreso.md`.
+
+**Por qué:** al probar la tarea previa 2, el usuario cambió el encabezado en el `.env` y vio que también cambiaba el PDF de un informe finalizado. Un informe entregado no debe cambiar (D-3, D-10).
+
 ### Encabezado del PDF configurable (tarea previa 2 del plan)
 
 **Qué se cambió**

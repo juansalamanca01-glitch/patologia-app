@@ -27,7 +27,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 257 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 134 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 263 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 134 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -93,7 +93,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Inventario de pendientes (sección "Pendientes"), tarea previa 2 en el plan, decisión D-14 (un finalizado tampoco se modifica en `/admin/`; se implementa en la fase 4) y corrección de las contradicciones entre documentos | `dd38439` |
 | — | `npm audit fix`: `shell-quote` (crítico, raíz) y `source-map-js` (alto, frontend), los dos de herramientas de desarrollo. Quedan solo las 2 moderadas de `react-router` (I-9c, fase 3) | `fadac1d` |
 | — | D-14 ampliada: un informe finalizado tampoco se borra desde `/admin/`, tenga o no adendas; idea futura de un estado "Anulado" | `8c084e8` |
-| — | Tarea previa 2 del plan: el encabezado del PDF (nombre, dirección y teléfono del laboratorio) se lee de `backend/.env`, con el de demostración por defecto; el teléfono va en su propia línea y solo si existe | commit "feat: encabezado del PDF configurable" |
+| — | Tarea previa 2 del plan: el encabezado del PDF (nombre, dirección y teléfono del laboratorio) se lee de `backend/.env`, con el de demostración por defecto; el teléfono va en su propia línea y solo si existe | `539a88d` |
+| D-15 | El encabezado se congela al finalizar (`datos_finalizacion['laboratorio']`); la migración 0012 da el de demostración a los finalizados existentes. Lo encontró el usuario al probar la tarea previa 2 | commit "fix: encabezado congelado al finalizar (D-15)" |
 
 ## Siguiente paso
 
@@ -140,7 +141,7 @@ Inventario del 2026-10-08: todo lo pendiente, sin terminar o anotado para despu�
   | Pantallas | `frontend/src/components/Navbar.jsx:20` (marca del menú), `frontend/src/components/Footer.jsx:6` ("© año PathoLab"), `frontend/src/pages/LoginPage.jsx:37` (título del login) |
   | Pestaña del navegador | `frontend/index.html:7-8` (`<meta name="description">` y `<title>`) |
   | Textos legales | `frontend/src/pages/PoliticaPrivacidadPage.jsx:23`, `frontend/src/pages/TerminosCondicionesPage.jsx:19` y `:66` |
-  | PDF | el valor por defecto de `LABORATORIO_NOMBRE` en `backend/config/settings.py` (sección "Encabezado del PDF"); en una instalación basta con cambiarlo en `backend/.env`. Lo comprueban `backend/config/tests.py` (`EncabezadoLaboratorioTests`) y `backend/informes/tests.py` (`test_el_encabezado_es_el_de_demostracion_sin_telefono` y la lista de `test_las_partes_salen_en_el_orden_del_informe_real`) |
+  | PDF | el valor por defecto de `LABORATORIO_NOMBRE` en `backend/config/settings.py` (sección "Encabezado del PDF"); en una instalación basta con cambiarlo en `backend/.env`. **Los informes finalizados conservan su encabezado congelado (D-15)**, y el cambio de nombre no los modifica. También `ENCABEZADO_DEMOSTRACION` de la migración `informes/0012`, que no se cambia porque es historia. Lo comprueban `backend/config/tests.py` (`EncabezadoLaboratorioTests`) y `backend/informes/tests.py` (`test_el_encabezado_es_el_de_demostracion_sin_telefono` y la lista de `test_las_partes_salen_en_el_orden_del_informe_real`) |
   | `/admin/` | `backend/accounts/admin.py:36` (sección "Datos de PathoLab") |
   | Código interno | `backend/config/settings.py:148` y `backend/config/test_runner.py:14` (`PathoLabTestRunner`), `backend/foro/tests.py:15` (prefijo `patolab-media-pruebas-`), `frontend/src/index.css:2` (comentario), `scripts/dev.mjs:16` y `:48` (mensajes de `npm run dev`) |
   | Nombres de paquete | `package.json` y `package-lock.json` de la raíz (`patolab` y la descripción), `frontend/package.json` y `frontend/package-lock.json` (`patholab-frontend`) |

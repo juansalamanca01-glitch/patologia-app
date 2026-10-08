@@ -253,7 +253,7 @@ class Informe(models.Model):
     comentarios = models.TextField(blank=True, verbose_name='Comentarios')
     # Los dos los llena solo `finalizar` (informe v2, etapa 6); no se escriben por la API ni en /admin/.
     fecha_informe = models.DateTimeField(null=True, blank=True, editable=False, verbose_name='Fecha de informe')
-    # Paciente, EPS, servicio y firma tal como estaban al finalizar (decisión D-10).
+    # Paciente, EPS, servicio, firma (D-10) y encabezado del laboratorio (D-15) tal como estaban al finalizar.
     datos_finalizacion = models.JSONField(
         null=True, blank=True, editable=False, verbose_name='Datos congelados al finalizar',
     )
@@ -304,7 +304,8 @@ class Informe(models.Model):
         """
         Lo que se guarda en datos_finalizacion al finalizar (decisión D-10). La edad
         no se guarda: se calcula con la fecha de nacimiento congelada y la fecha de
-        ingreso, que tampoco cambia en un informe finalizado.
+        ingreso, que tampoco cambia en un informe finalizado. El encabezado del
+        laboratorio también se congela (D-15): cambiar el .env no altera un finalizado.
         """
         paciente = self.paciente
         return {
@@ -319,6 +320,11 @@ class Informe(models.Model):
             'eps_nombre': self.eps.nombre if self.eps else None,
             'servicio_nombre': self.servicio.nombre if self.servicio else None,
             'firma': self.firma_actual(),
+            'laboratorio': {
+                'nombre': settings.LABORATORIO_NOMBRE,
+                'direccion': settings.LABORATORIO_DIRECCION,
+                'telefono': settings.LABORATORIO_TELEFONO,
+            },
         }
 
     def datos_impresos(self):

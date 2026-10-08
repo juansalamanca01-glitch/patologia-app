@@ -135,3 +135,16 @@ Los códigos como "I-7" o "C-2" remiten a `docs/auditoria-inicial.md`.
   - Los borradores siguen editándose en `/admin/` como hasta ahora.
 - **Estado:** decidida el 2026-10-08. **Todavía no está implementada:** hoy `InformeAdmin` deja modificar un informe finalizado. Se implementa en la fase 4 de `docs/plan-calidad-y-diseno.md`, con su prueba.
 - **Motivo:** en el inventario de pendientes se encontró que la excepción de D-3 dejaba cambiar en `/admin/` el contenido, los diagnósticos y hasta el estado de un informe finalizado, sin dejar rastro. Eso contradecía D-9 (las correcciones se hacen con adendas) y lo que dice el README. Un documento clínico entregado no debe poder cambiar por ninguna vía.
+
+## D-15. El encabezado del PDF se congela al finalizar el informe
+
+- **Fecha:** 2026-10-08
+- **Amplía:** D-10 (datos congelados al finalizar).
+- **Relacionado con:** D-3, D-9; tarea previa 2 de `docs/plan-calidad-y-diseno.md` (encabezado configurable desde `backend/.env`)
+- **Decisión:**
+  - Al finalizar, el nombre, la dirección y el teléfono del laboratorio se guardan en `datos_finalizacion`, junto con el paciente, la EPS, el servicio y la firma.
+  - El PDF de un informe **finalizado** imprime siempre ese encabezado, aunque después cambie el `.env`.
+  - Un **borrador** usa el encabezado actual del `.env`.
+  - Una adenda no cambia el encabezado del informe (D-9).
+  - Los informes que ya estaban finalizados reciben el encabezado de demostración ("PathoLab — Laboratorio de Patología (demostración)", "Santiago de Cali, Colombia", sin teléfono). Es el único que existía cuando se imprimieron. Lo hace la migración `informes/0012`.
+- **Motivo:** el usuario comprobó que, al cambiar el encabezado en el `.env`, también cambiaba el PDF de un informe finalizado. Un documento clínico entregado no debe cambiar después, tampoco en los datos del laboratorio que lo emitió. Es la misma idea de D-3 y D-10.

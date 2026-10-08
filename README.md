@@ -86,12 +86,13 @@ Estas reglas responden a decisiones del proyecto registradas en [`docs/decisione
 - **D-1:** los patólogos también administran el catálogo.
 - **D-2:** solo el autor o un administrador modifica un informe.
 - **D-3:** un informe finalizado no se modifica, ni siquiera por un administrador.
-- **D-14:** tampoco desde el panel `/admin/`: ahí un informe finalizado es de solo lectura y no se puede borrar. *Pendiente de implementar en la fase 4 del plan.*
 - **D-8:** el registro médico solo lo asigna un administrador, y el informe lo firma siempre su autor.
 - **D-9:** un informe finalizado se corrige con adendas, que no se editan ni se borran.
 - **D-11:** patólogos y administradores crean y editan pacientes y administran EPS y servicios; solo un administrador borra pacientes.
 - **D-12:** el PDF de un borrador es una vista previa solo para su autor o un administrador.
 - **D-13:** aviso al salir con cambios sin guardar y autoguardado de los borradores existentes (nunca de los informes nuevos ni en el navegador).
+- **D-14:** un informe finalizado tampoco se modifica desde el panel `/admin/`: ahí un informe finalizado es de solo lectura y no se puede borrar. *Pendiente de implementar en la fase 4 del plan.*
+- **D-15:** el encabezado del PDF (datos del laboratorio) también se congela al finalizar.
 
 Un informe finalizado se corrige **siempre** agregándole una adenda. No hay otra vía: según la decisión D-14 (2026-10-08), que reemplaza la excepción de `/admin/` de D-3, tampoco se modifica desde el panel de Django.
 
@@ -274,7 +275,7 @@ cd patologia-app
    | `LABORATORIO_DIRECCION` | Segunda línea: dirección completa y ciudad | "Santiago de Cali, Colombia" |
    | `LABORATORIO_TELEFONO` | Tercera línea, "Teléfono: …" | No se imprime la línea |
 
-   Después de cambiarlas, reinicia el backend. El `.env` se guarda en UTF-8, así que admite tildes y la raya (—).
+   Después de cambiarlas, reinicia el backend. El `.env` se guarda en UTF-8, así que admite tildes y la raya (—). El cambio afecta a los borradores y a los informes que se finalicen después. Un informe finalizado conserva el encabezado que tenía al finalizarse (decisión D-15).
 
 5. **Aplica las migraciones:**
    ```bash
@@ -564,7 +565,7 @@ graph TD
 - **Contraseñas** validadas con los validadores de Django: longitud mínima, que no sean comunes, que no sean solo números y que no se parezcan al usuario.
 - **Configuración segura por defecto**: sin `SECRET_KEY` la app no arranca, y `DEBUG` es `False` si no se define. Con `DEBUG=False` se activan HTTPS, cookies seguras y HSTS, y CORS solo acepta los orígenes de `CORS_ALLOWED_ORIGINS`.
 - **PDF**: el texto escrito por el usuario se escapa, así que no puede romper ni alterar el documento. El nombre del archivo solo lleva el número de petición, nunca datos del paciente. El PDF de un borrador solo lo descargan su autor o un administrador, con marca de agua "BORRADOR".
-- **Integridad del informe**: un informe finalizado no se modifica (se corrige con adendas firmadas) y conserva los datos del paciente, la EPS, el servicio y la firma tal como estaban al finalizar.
+- **Integridad del informe**: un informe finalizado no se modifica (se corrige con adendas firmadas) y conserva los datos del paciente, la EPS, el servicio, la firma y el encabezado del laboratorio tal como estaban al finalizar (D-10, D-15).
 - **Imágenes del foro**: se comprueban el tamaño y que sean imágenes reales.
 - **Datos de pacientes**: son datos de salud, que la Ley 1581 de 2012 considera sensibles. Solo los ven usuarios con sesión y se guardan solo los que aparecen en el informe. La [política de privacidad](frontend/src/pages/PoliticaPrivacidadPage.jsx) de la aplicación (`/politica-privacidad`) lo explica. Antes de un uso real haría falta una revisión legal.
 

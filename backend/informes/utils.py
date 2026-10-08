@@ -5,7 +5,6 @@ import io
 from functools import partial
 from xml.sax.saxutils import escape
 
-from django.conf import settings
 from django.utils import timezone
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -172,17 +171,18 @@ def _estilos():
     return estilos
 
 
-def _encabezado(estilos):
+def _encabezado(laboratorio, estilos):
     """
-    Nombre, dirección y teléfono del laboratorio, desde settings (backend/.env).
-    Se escapan como el texto del usuario (I-3): un & o un < del .env no debe romper el PDF.
+    Nombre, dirección y teléfono del laboratorio, de datos_impresos(): los de
+    backend/.env en un borrador y los congelados al finalizar (D-15). Se escapan
+    como el texto del usuario (I-3): un & o un < del .env no debe romper el PDF.
     """
     bloque = [
-        Paragraph(texto_seguro(settings.LABORATORIO_NOMBRE), estilos['Laboratorio']),
-        Paragraph(texto_seguro(settings.LABORATORIO_DIRECCION), estilos['Ciudad']),
+        Paragraph(texto_seguro(laboratorio['nombre']), estilos['Laboratorio']),
+        Paragraph(texto_seguro(laboratorio['direccion']), estilos['Ciudad']),
     ]
-    if settings.LABORATORIO_TELEFONO:
-        bloque.append(Paragraph(f'Teléfono: {texto_seguro(settings.LABORATORIO_TELEFONO)}', estilos['Ciudad']))
+    if laboratorio['telefono']:
+        bloque.append(Paragraph(f"Teléfono: {texto_seguro(laboratorio['telefono'])}", estilos['Ciudad']))
     return bloque + [
         Spacer(1, 6),
         HRFlowable(width='100%', thickness=0.75, color=NEGRO),
@@ -321,11 +321,11 @@ def generar_pdf_informe(informe) -> io.BytesIO:
         title=f'Informe {informe.numero_peticion}',
     )
     estilos = _estilos()
-    # Paciente, EPS, servicio y firma: congelados si está finalizado (D-10).
+    # Encabezado, paciente, EPS, servicio y firma: congelados si está finalizado (D-10, D-15).
     datos = informe.datos_impresos()
 
     elementos = [
-        *_encabezado(estilos),
+        *_encabezado(datos['laboratorio'], estilos),
         *_tabla_datos(informe, datos, estilos, doc.width),
         *_titulo(informe, estilos),
     ]

@@ -1607,6 +1607,70 @@ class MigracionFinalizacionTests(TransactionTestCase):
         self.assertIsNone(Informe.objects.get(id=sin_paciente.id).datos_finalizacion['paciente'])
 
 
+class MigracionEncabezadoCongeladoTests(TransactionTestCase):
+    """
+    Decisión D-15: la migración 0012 agrega el encabezado de demostración a los
+    informes que ya estaban finalizados, porque es el único que existía cuando se
+    imprimieron. No toca los borradores ni los que ya tienen encabezado congelado.
+    """
+
+    ANTES = [('informes', '0011_adenda')]
+    DESPUES = [('informes', '0012_encabezado_congelado')]
+    DEMOSTRACION = {
+        'nombre': 'PathoLab — Laboratorio de Patología (demostración)',
+        'direccion': 'Santiago de Cali, Colombia',
+        'telefono': '',
+    }
+
+    def crear_informes(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(self.ANTES)
+        modelos = executor.loader.project_state(self.ANTES).apps
+        autor = modelos.get_model('accounts', 'Usuario').objects.create(username='autor_migracion_encabezado')
+        patologia = modelos.get_model('informes', 'Patologia').objects.create(nombre='Patología migración encabezado')
+        Informe0011 = modelos.get_model('informes', 'Informe')
+        congelado = {'paciente': None, 'eps_nombre': None, 'servicio_nombre': None,
+                     'firma': {'nombre': 'Dr. Ficticio', 'especialidad': '', 'registro_medico': 'RM-PRUEBA-0009'}}
+        otro = {'nombre': 'Laboratorio Ficticio Ya Congelado', 'direccion': 'Calle 9', 'telefono': ''}
+        ids = {
+            'finalizado': Informe0011.objects.create(
+                numero_peticion='P-2026-09980', patologia=patologia, autor=autor, estado='finalizado',
+                datos_finalizacion=congelado,
+            ).id,
+            'borrador': Informe0011.objects.create(
+                numero_peticion='P-2026-09981', patologia=patologia, autor=autor,
+            ).id,
+            'ya_congelado': Informe0011.objects.create(
+                numero_peticion='P-2026-09982', patologia=patologia, autor=autor, estado='finalizado',
+                datos_finalizacion={**congelado, 'laboratorio': otro},
+            ).id,
+        }
+        return ids, otro
+
+    def migrar(self, destino):
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        executor.migrate(destino)
+
+    def tearDown(self):
+        self.migrar(MigrationExecutor(connection).loader.graph.leaf_nodes())
+
+    def test_completa_los_finalizados_con_el_encabezado_de_demostracion(self):
+        ids, otro = self.crear_informes()
+        self.migrar(self.DESPUES)
+        finalizado = Informe.objects.get(id=ids['finalizado'])
+        self.assertEqual(finalizado.datos_finalizacion['laboratorio'], self.DEMOSTRACION)
+        self.assertEqual(finalizado.datos_finalizacion['firma']['registro_medico'], 'RM-PRUEBA-0009')
+        self.assertIsNone(Informe.objects.get(id=ids['borrador']).datos_finalizacion)
+        self.assertEqual(Informe.objects.get(id=ids['ya_congelado']).datos_finalizacion['laboratorio'], otro)
+
+    def test_la_reversa_quita_el_encabezado_agregado(self):
+        ids, otro = self.crear_informes()
+        self.migrar(self.DESPUES)
+        self.migrar(self.ANTES)
+        self.assertNotIn('laboratorio', Informe.objects.get(id=ids['finalizado']).datos_finalizacion)
+
+
 class PdfInformeTests(APITestCase):
     """
     Informe v2, etapa 7 (docs/propuesta-informe-v2.md, sección 5): el PDF tiene la
@@ -1797,6 +1861,51 @@ class PdfInformeTests(APITestCase):
         textos = self.generar(self.crear())['textos']
         self.assertEqual(textos[0], 'Laboratorio Ficticio de Prueba')
         self.assertFalse(any('Teléfono' in texto for texto in textos))
+
+    # Decisión D-15: el encabezado se congela al finalizar, como los datos de D-10.
+    LABORATORIO_A = {
+        'LABORATORIO_NOMBRE': 'Laboratorio Ficticio A', 'LABORATORIO_DIRECCION': 'Calle A 1, Ciudad A',
+        'LABORATORIO_TELEFONO': '111 111 1111',
+    }
+    LABORATORIO_B = {
+        'LABORATORIO_NOMBRE': 'Laboratorio Ficticio B', 'LABORATORIO_DIRECCION': 'Calle B 2, Ciudad B',
+        'LABORATORIO_TELEFONO': '',
+    }
+
+    def test_al_finalizar_se_congela_el_encabezado(self):
+        with override_settings(**self.LABORATORIO_A):
+            informe_id = self.crear()
+            self.finalizar(informe_id)
+        self.assertEqual(Informe.objects.get(id=informe_id).datos_finalizacion['laboratorio'], {
+            'nombre': 'Laboratorio Ficticio A', 'direccion': 'Calle A 1, Ciudad A', 'telefono': '111 111 1111',
+        })
+
+    def test_un_finalizado_conserva_el_encabezado_aunque_cambie_la_configuracion(self):
+        with override_settings(**self.LABORATORIO_A):
+            informe_id = self.crear()
+            self.finalizar(informe_id)
+        with override_settings(**self.LABORATORIO_B):
+            textos = self.generar(informe_id)['textos']
+        self.assertEqual(textos[:3], ['Laboratorio Ficticio A', 'Calle A 1, Ciudad A', 'Teléfono: 111 111 1111'])
+
+    def test_un_borrador_usa_el_encabezado_actual(self):
+        with override_settings(**self.LABORATORIO_A):
+            informe_id = self.crear()
+        with override_settings(**self.LABORATORIO_B):
+            textos = self.generar(informe_id)['textos']
+        self.assertEqual(textos[:2], ['Laboratorio Ficticio B', 'Calle B 2, Ciudad B'])
+        self.assertFalse(any('Teléfono' in texto for texto in textos))
+
+    def test_una_adenda_no_cambia_el_encabezado_congelado(self):
+        # D-9: la adenda no modifica el informe, tampoco su encabezado.
+        with override_settings(**self.LABORATORIO_A):
+            informe_id = self.crear()
+            self.finalizar(informe_id)
+        with override_settings(**self.LABORATORIO_B):
+            self.agregar_adenda(informe_id, timezone.make_aware(datetime(2026, 10, 5, 9, 15)))
+            textos = self.generar(informe_id)['textos']
+        self.assertEqual(textos[0], 'Laboratorio Ficticio A')
+        self.assertIn('ADENDAS', textos)
 
     @override_settings(
         LABORATORIO_NOMBRE='<b>Lab</b> & Cía', LABORATORIO_DIRECCION='Calle <font size=40>1',
