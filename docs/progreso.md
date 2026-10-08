@@ -13,7 +13,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 - **Proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`.
 - **Plan vigente:** `docs/plan-calidad-y-diseno.md`, aprobado el 2026-10-08. Cada fase va en su propia rama desde `main`.
-- **Rama de trabajo:** `fase-2-herramientas-calidad`, creada el 2026-10-08 desde `main`.
+- **Rama de trabajo:** ninguna abierta. Todo está en `main`. La siguiente será `fase-3-auditoria-owasp`, cuando el usuario lo indique.
 - **Estado:**
   - Están terminados y en `main`:
     - la auditoría inicial (salvo I-9c);
@@ -95,12 +95,12 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | D-14 ampliada: un informe finalizado tampoco se borra desde `/admin/`, tenga o no adendas; idea futura de un estado "Anulado" | `8c084e8` |
 | — | Tarea previa 2 del plan: el encabezado del PDF (nombre, dirección y teléfono del laboratorio) se lee de `backend/.env`, con el de demostración por defecto; el teléfono va en su propia línea y solo si existe | `539a88d` |
 | D-15 | El encabezado se congela al finalizar (`datos_finalizacion['laboratorio']`); la migración 0012 da el de demostración a los finalizados existentes. Lo encontró el usuario al probar la tarea previa 2 | `c0f08c8` |
-| — | Fase 2 del plan: Prettier 3.9, ESLint 9 y Ruff 0.16, `npm run check`, `.vscode` (formato al guardar y extensiones), formato automático (`836257b`, en `.git-blame-ignore-revs`), imports ordenados y arreglos a mano aprobados por el usuario (el autoguardado usa `autoguardarRef`) | `6f2e3c3`, `836257b`, `602810e` y commit "fix: arreglos de ESLint y Ruff" |
+| — | Fase 2 del plan: Prettier 3.9, ESLint 9 y Ruff 0.16, `npm run check`, `.vscode` (formato al guardar y extensiones), formato automático (`836257b`, en `.git-blame-ignore-revs`), imports ordenados y arreglos a mano aprobados por el usuario (el autoguardado usa `autoguardarRef`) | `6f2e3c3`, `836257b`, `602810e` y `e10ee5f` |
 
 ## Siguiente paso
 
-1. **Fase 2 terminada** en la rama `fase-2-herramientas-calidad`. Falta que el usuario apruebe unirla a `main`.
-2. **Después: fase 3** (auditoría OWASP Top 10:2025, solo el informe `docs/auditoria-owasp.md`, sin tocar código), en la rama `fase-3-auditoria-owasp` desde `main`.
+1. **Fase 2 terminada** y unida a `main` el 2026-10-08.
+2. **Siguiente: fase 3** (auditoría OWASP Top 10:2025, solo el informe `docs/auditoria-owasp.md`, sin tocar código), en la rama `fase-3-auditoria-owasp` desde `main`. **No empezarla hasta que el usuario lo indique** (lo pidió el 2026-10-08).
 3. **Luego, las fases 4 a 8** del plan, en orden. Al terminar cada fase se actualizan esta sección y "Pendientes".
 4. **Para arrancar la aplicación:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 
