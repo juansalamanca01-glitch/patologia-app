@@ -13,7 +13,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 - **Proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`.
 - **Plan vigente:** `docs/plan-calidad-y-diseno.md`, aprobado el 2026-10-08. Cada fase va en su propia rama desde `main`.
-- **Rama de trabajo:** `npm-audit-fix`, creada el 2026-10-08 desde `main`. La siguiente será `encabezado-configurable` (tarea previa 2).
+- **Rama de trabajo:** `docs-d14-borrar`, creada el 2026-10-08 desde `main`. La siguiente será `encabezado-configurable` (tarea previa 2).
 - **Estado:**
   - Están terminados y en `main`:
     - la auditoría inicial (salvo I-9c);
@@ -91,7 +91,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Plan de calidad, seguridad y diseño (`docs/plan-calidad-y-diseno.md`), aprobado el 2026-10-08 | `43a40e7` |
 | — | Tarea previa del plan: `seed_data` crea `patologo2` (`patologo2345`, `RM-PRUEBA-0002`) para probar D-2; si ya existe, no lo cambia | `7ea0125` |
 | — | Inventario de pendientes (sección "Pendientes"), tarea previa 2 en el plan, decisión D-14 (un finalizado tampoco se modifica en `/admin/`; se implementa en la fase 4) y corrección de las contradicciones entre documentos | `dd38439` |
-| — | `npm audit fix`: `shell-quote` (crítico, raíz) y `source-map-js` (alto, frontend), los dos de herramientas de desarrollo. Quedan solo las 2 moderadas de `react-router` (I-9c, fase 3) | commit "fix: npm audit fix" |
+| — | `npm audit fix`: `shell-quote` (crítico, raíz) y `source-map-js` (alto, frontend), los dos de herramientas de desarrollo. Quedan solo las 2 moderadas de `react-router` (I-9c, fase 3) | `fadac1d` |
+| — | D-14 ampliada: un informe finalizado tampoco se borra desde `/admin/`, tenga o no adendas; idea futura de un estado "Anulado" | commit "docs: D-14 también impide borrar" |
 
 ## Siguiente paso
 
@@ -124,7 +125,7 @@ Inventario del 2026-10-08: todo lo pendiente, sin terminar o anotado para despu�
 |   | • Registro de accesos (quién consulta qué informe o paciente y cuándo, también el PDF) | Hoja de ruta del README; Ley 1581 de 2012 |
 |   | • Clave antigua en el historial de git | Auditoría inicial, C-3 |
 |   | • Datos del paciente en la dirección (`?q=`) y tokens en `localStorage` | Etapa 3; plan, fase 3 (A07) |
-| 4 | **Fase 4:** las correcciones que elija el usuario de la fase 3. **Ya incluye D-14:** un informe finalizado es de solo lectura en `/admin/` (campos, diagnósticos y estado), con su prueba. Antes hay que preguntar si tampoco se puede borrar desde `/admin/` | Plan; decisión D-14 |
+| 4 | **Fase 4:** las correcciones que elija el usuario de la fase 3. **Ya incluye D-14:** un informe finalizado es de solo lectura en `/admin/` (campos, diagnósticos y estado), con su prueba. Tampoco se puede borrar desde `/admin/`, tenga o no adendas | Plan; decisión D-14 |
 | 5 | **Fase 5:** guía de diseño. La aprueban el usuario, el equipo y el profesor | Plan; Bloque B, punto 5 |
 | 6 | **Fase 6:** pantalla del informe. La aprueban el usuario, el equipo y el profesor | Plan; Bloque B, punto 5 |
 | 7 | **Fase 7:** resto de pantallas | Plan; Bloque B, punto 5 |
@@ -173,7 +174,8 @@ Vienen de la hoja de ruta del README y de la propuesta v2. Ninguna está pedida:
 - imagen de la firma (propuesta v2, 3.7 y etapa 10, opcional);
 - firma digital criptográfica;
 - integración HL7/FHIR;
-- contenedores Docker.
+- contenedores Docker;
+- estado **"Anulado"** para un informe finalizado por error. Hoy se deja constancia con una adenda, porque un finalizado no se modifica ni se borra (D-3, D-14). Lo anotó el usuario el 2026-10-08.
 
 La etapa 10 de la propuesta (imagen de la firma) no aparece en la hoja de ruta del README; se agrega allí en la fase 8.
 
@@ -197,4 +199,4 @@ Quedan dos:
 
 ## Pendiente de respuesta del usuario
 
-- Nada por ahora. Antes de implementar D-14 en la fase 4, hay que preguntar si un informe finalizado tampoco se puede borrar desde `/admin/` (ver el plan, fase 4).
+- Nada por ahora.

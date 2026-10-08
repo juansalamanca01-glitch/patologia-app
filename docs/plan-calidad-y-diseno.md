@@ -275,13 +275,16 @@ Las categorías de la edición 2025:
   - en `backend/informes/admin.py`, `InformeAdmin` no permite cambiar un informe finalizado. Por ejemplo, `get_readonly_fields()` devuelve todos los campos cuando `obj.esta_finalizado`, y `has_change_permission()` o el guardado lo rechazan si llega una petición;
   - `DiagnosticoInline`, en un finalizado, no deja agregar, cambiar ni borrar filas;
   - el estado no puede volver a `borrador`;
-  - los borradores siguen editándose como hoy.
+  - un informe finalizado **no se puede borrar** desde `/admin/`, tenga o no adendas: `has_delete_permission()` devuelve `False` para un finalizado, y la acción de borrado en lote del listado tampoco lo borra;
+  - los borradores siguen editándose y borrándose como hoy.
 - **Pruebas que deben fallar antes del cambio** (en `informes/tests.py`, con el cliente de pruebas de Django y un superusuario, como `AdminUsuariosTests`):
   - enviar el formulario de cambio de un informe finalizado con otro texto en la microscópica no lo modifica;
   - no se puede pasar el estado a `borrador`;
   - no se pueden agregar, cambiar ni borrar diagnósticos desde el inline;
-  - un borrador sí se sigue editando.
-- **Pregunta para el usuario antes de implementarla:** ¿tampoco se puede **borrar** un informe finalizado desde `/admin/`? D-3 ya lo impide en la API. Un finalizado con adendas no se borra (`PROTECT`), pero uno sin adendas hoy sí.
+  - no se puede borrar un finalizado sin adendas, ni desde su página de borrado ni con la acción en lote del listado;
+  - tampoco uno con adendas;
+  - un borrador sí se sigue editando y borrando.
+- **Borrado:** el usuario respondió el 2026-10-08 que un finalizado tampoco se borra desde `/admin/`, tenga o no adendas. Está en D-14.
 - **Documentación:** quitar el aviso "Pendiente" de D-14 en el README, `CLAUDE.md` y `docs/decisiones.md`.
 
 Cada corrección sigue el procedimiento común:

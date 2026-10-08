@@ -86,7 +86,7 @@ Estas reglas responden a decisiones del proyecto registradas en [`docs/decisione
 - **D-1:** los patólogos también administran el catálogo.
 - **D-2:** solo el autor o un administrador modifica un informe.
 - **D-3:** un informe finalizado no se modifica, ni siquiera por un administrador.
-- **D-14:** tampoco desde el panel `/admin/`: ahí un informe finalizado es de solo lectura. *Pendiente de implementar en la fase 4 del plan.*
+- **D-14:** tampoco desde el panel `/admin/`: ahí un informe finalizado es de solo lectura y no se puede borrar. *Pendiente de implementar en la fase 4 del plan.*
 - **D-8:** el registro médico solo lo asigna un administrador, y el informe lo firma siempre su autor.
 - **D-9:** un informe finalizado se corrige con adendas, que no se editan ni se borran.
 - **D-11:** patólogos y administradores crean y editan pacientes y administran EPS y servicios; solo un administrador borra pacientes.

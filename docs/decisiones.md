@@ -130,6 +130,7 @@ Los códigos como "I-7" o "C-2" remiten a `docs/auditoria-inicial.md`.
 - **Decisión:**
   - En `/admin/`, un informe **finalizado** es de **solo lectura**, igual que sus adendas: sus campos, sus diagnósticos y su estado no se pueden cambiar.
   - Tampoco se puede volver a poner en borrador.
+  - **Tampoco se puede borrar** desde `/admin/`, tenga o no adendas (precisión del usuario del 2026-10-08). Si un informe se finalizó por error, se deja constancia con una adenda. Un estado "Anulado" queda como idea futura (`docs/progreso.md`, "Pendientes").
   - Las correcciones de un informe finalizado se hacen **siempre con adendas** (D-9). No hay ninguna vía para modificarlo.
   - Los borradores siguen editándose en `/admin/` como hasta ahora.
 - **Estado:** decidida el 2026-10-08. **Todavía no está implementada:** hoy `InformeAdmin` deja modificar un informe finalizado. Se implementa en la fase 4 de `docs/plan-calidad-y-diseno.md`, con su prueba.

@@ -5,6 +5,16 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-08
 
+### D-14 también impide borrar un informe finalizado desde `/admin/`
+
+**Qué se cambió** (solo documentación):
+- `docs/decisiones.md`, D-14: un informe finalizado tampoco se puede borrar desde `/admin/`, tenga o no adendas. Si se finalizó por error, se deja constancia con una adenda.
+- `docs/plan-calidad-y-diseno.md`, fase 4: `has_delete_permission()` y la acción de borrado en lote. Se agregan las pruebas de borrado de un finalizado con y sin adendas, y la de que un borrador sí se borra.
+- `docs/progreso.md`: idea futura de un estado "Anulado".
+- README y `CLAUDE.md`: mencionan el borrado en D-14.
+
+**Por qué:** el usuario respondió el 2026-10-08 la pregunta que el plan dejaba para la fase 4. D-3 ya impedía borrar un finalizado por la API, y un finalizado con adendas no se borraba (`PROTECT`), pero uno sin adendas sí se podía borrar desde `/admin/`.
+
 ### `npm audit fix`: avisos crítico y alto de las herramientas de desarrollo
 
 **Qué se cambió** (rama `npm-audit-fix`): se ejecutó `npm audit fix`, sin `--force`, en la raíz y en `frontend/`. Solo cambiaron los `package-lock.json`; ningún `package.json` cambió.

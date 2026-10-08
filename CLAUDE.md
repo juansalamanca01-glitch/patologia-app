@@ -74,7 +74,7 @@ Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234` (registro m
 - En el foro, `fijado` solo lo puede cambiar un admin y la `publicacion` de un comentario no se puede cambiar después de crearlo. Se controla en `get_fields()` de `foro/serializers.py` (auditoría I-8).
 - `EsAutorOAdminOSoloLectura` (informes y foro): todos leen; crear requiere admin o patólogo; editar, borrar o finalizar requiere ser el autor o admin (decisión D-2).
 - Un `Informe` finalizado no se puede editar ni borrar, ni siquiera por un admin: `InformeViewSet.update` y `destroy` responden 400 (decisión D-3).
-- **Decisión D-14:** reemplaza la excepción de `/admin/` de D-3. En `/admin/`, un finalizado debe ser de solo lectura (campos, diagnósticos y estado), y se corrige solo con adendas. **Todavía no está implementada** (fase 4 del plan): hoy `InformeAdmin` lo deja modificar. No agregues otra vía de edición de finalizados.
+- **Decisión D-14:** reemplaza la excepción de `/admin/` de D-3. En `/admin/`, un finalizado debe ser de solo lectura (campos, diagnósticos y estado) y no se puede borrar, tenga o no adendas. Se corrige solo con adendas. **Todavía no está implementada** (fase 4 del plan): hoy `InformeAdmin` lo deja modificar. No agregues otra vía de edición de finalizados.
 
 En el frontend, `AuthContext` expone `isAdmin`, `isPatologo`, `isAuditor` y `canWrite` para ocultar acciones en la UI; la autorización real la hace el backend.
 
