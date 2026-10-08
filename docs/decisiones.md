@@ -122,3 +122,15 @@ Los códigos como "I-7" o "C-2" remiten a `docs/auditoria-inicial.md`.
     - **Cerrar sesión** también avisa. "Salir" navega a `/salir`, donde se cierra la sesión. Así, el aviso aparece antes, con la sesión todavía abierta.
 - **Motivo:** en la prueba manual del 2026-10-05 el usuario notó que al salir del formulario sin guardar se perdía todo lo escrito. Avisar cubre los informes nuevos sin gastar números de petición, y el autoguardado protege el trabajo largo sobre un borrador sin dejar datos sensibles en el equipo.
 
+## D-14. Un informe finalizado tampoco se modifica desde `/admin/`
+
+- **Fecha:** 2026-10-08
+- **Reemplaza:** la excepción de `/admin/` de D-3 ("si hiciera falta una corrección excepcional, un administrador puede hacerla desde el panel `/admin/`"). El resto de D-3 sigue vigente: la API rechaza (400) editar o borrar un informe finalizado, también a un administrador.
+- **Relacionado con:** D-3, D-9, D-10; `docs/progreso.md` (inventario de pendientes del 2026-10-08)
+- **Decisión:**
+  - En `/admin/`, un informe **finalizado** es de **solo lectura**, igual que sus adendas: sus campos, sus diagnósticos y su estado no se pueden cambiar.
+  - Tampoco se puede volver a poner en borrador.
+  - Las correcciones de un informe finalizado se hacen **siempre con adendas** (D-9). No hay ninguna vía para modificarlo.
+  - Los borradores siguen editándose en `/admin/` como hasta ahora.
+- **Estado:** decidida el 2026-10-08. **Todavía no está implementada:** hoy `InformeAdmin` deja modificar un informe finalizado. Se implementa en la fase 4 de `docs/plan-calidad-y-diseno.md`, con su prueba.
+- **Motivo:** en el inventario de pendientes se encontró que la excepción de D-3 dejaba cambiar en `/admin/` el contenido, los diagnósticos y hasta el estado de un informe finalizado, sin dejar rastro. Eso contradecía D-9 (las correcciones se hacen con adendas) y lo que dice el README. Un documento clínico entregado no debe poder cambiar por ninguna vía.

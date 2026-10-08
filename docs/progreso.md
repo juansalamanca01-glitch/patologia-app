@@ -90,10 +90,11 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Fase 1 del plan (Bloque B, punto 4): el PDF va todo en negro (el rojo solo en el aviso de adendas y en la marca de agua), con los títulos en negrita y una línea fina negra bajo el encabezado. El usuario lo confirmó el 2026-10-08 | `8021597` |
 | — | Plan de calidad, seguridad y diseño (`docs/plan-calidad-y-diseno.md`), aprobado el 2026-10-08 | `43a40e7` |
 | — | Tarea previa del plan: `seed_data` crea `patologo2` (`patologo2345`, `RM-PRUEBA-0002`) para probar D-2; si ya existe, no lo cambia | `7ea0125` |
+| — | Inventario de pendientes (sección "Pendientes"), tarea previa 2 en el plan, decisión D-14 (un finalizado tampoco se modifica en `/admin/`; se implementa en la fase 4) y corrección de las contradicciones entre documentos | commit "docs: D-14 y contradicciones corregidas" |
 
 ## Siguiente paso
 
-1. **Ahora:** el usuario revisa el inventario de pendientes del 2026-10-08 (secciones "Pendientes" y "Pendiente de respuesta del usuario"). No se sigue hasta que responda.
+1. **Ahora: `npm audit fix`** de los avisos crítico (`shell-quote`) y alto (`source-map-js`), en la rama `npm-audit-fix` desde `main`, con todas las pruebas en verde. Lo pidió el usuario el 2026-10-08, antes de la tarea previa 2.
 2. **Después: tarea previa 2** del plan (encabezado del PDF configurable), en la rama `encabezado-configurable`. Primero se explica y se espera confirmación.
 3. **Luego, las fases 2 a 8** del plan, en orden. Al terminar cada fase se actualizan esta sección y "Pendientes".
 4. **Para arrancar la aplicación:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
@@ -117,19 +118,19 @@ Inventario del 2026-10-08: todo lo pendiente, sin terminar o anotado para despu�
 | 2 | **Fase 2:** Prettier, ESLint y Ruff | Plan; auditoría inicial, sección 1 ("no hay linter") |
 | 3 | **Fase 3:** auditoría OWASP. Evalúa además estos puntos ya conocidos: | Plan |
 |   | • I-9c: 2 vulnerabilidades moderadas de `react-router` 6 (se cierran con React Router 7). Hay que revisar de nuevo el análisis de I-9a, porque desde D-13 la app usa `createBrowserRouter` | Auditoría inicial, I-9; `CHANGELOG.md`, I-9a |
-|   | • **Nuevo:** `shell-quote` 1.9.0, **crítico**, en la raíz, a través de `concurrently` | `npm audit` del 2026-10-08 |
-|   | • **Nuevo:** `source-map-js` 1.2.1, **alto**, en las herramientas del frontend, a través de Vite y PostCSS | `npm audit` del 2026-10-08 |
+|   | • **Nuevo:** `shell-quote` 1.9.0, **crítico**, en la raíz, a través de `concurrently`. **Se corrige antes**, en la rama `npm-audit-fix` (decisión del usuario del 2026-10-08) | `npm audit` del 2026-10-08 |
+|   | • **Nuevo:** `source-map-js` 1.2.1, **alto**, en las herramientas del frontend, a través de Vite y PostCSS. **Se corrige antes**, en la misma rama | `npm audit` del 2026-10-08 |
 |   | • Dependencias de Python sin versiones fijas | `backend/requirements.txt` |
-|   | • `/admin/` permite editar informes finalizados (ver la sección 2) | D-3 frente a D-9 y el README |
+|   | • `/admin/` permite editar informes finalizados. **Ya decidido (D-14):** solo se registra en el informe | D-3 frente a D-9 y el README |
 |   | • Conflicto entre pestañas o equipos: gana el último guardado (propuesta: comparar `fecha_actualizacion` y responder 409) | D-13; anotado por el usuario el 2026-10-05 |
 |   | • Registro de accesos (quién consulta qué informe o paciente y cuándo, también el PDF) | Hoja de ruta del README; Ley 1581 de 2012 |
 |   | • Clave antigua en el historial de git | Auditoría inicial, C-3 |
 |   | • Datos del paciente en la dirección (`?q=`) y tokens en `localStorage` | Etapa 3; plan, fase 3 (A07) |
-| 4 | **Fase 4:** las correcciones que elija el usuario de la fase 3 | Plan |
+| 4 | **Fase 4:** las correcciones que elija el usuario de la fase 3. **Ya incluye D-14:** un informe finalizado es de solo lectura en `/admin/` (campos, diagnósticos y estado), con su prueba. Antes hay que preguntar si tampoco se puede borrar desde `/admin/` | Plan; decisión D-14 |
 | 5 | **Fase 5:** guía de diseño. La aprueban el usuario, el equipo y el profesor | Plan; Bloque B, punto 5 |
 | 6 | **Fase 6:** pantalla del informe. La aprueban el usuario, el equipo y el profesor | Plan; Bloque B, punto 5 |
 | 7 | **Fase 7:** resto de pantallas | Plan; Bloque B, punto 5 |
-| 8 | **Fase 8:** cierre, que incluye las contradicciones entre documentos de la sección 5 | Plan |
+| 8 | **Fase 8:** cierre. Incluye volver a buscar contradicciones entre documentos (sección 5) | Plan |
 
 ### 2. Necesitan una decisión del usuario
 
@@ -150,15 +151,9 @@ Inventario del 2026-10-08: todo lo pendiente, sin terminar o anotado para despu�
   | Repositorio y carpetas | el repositorio `github.com/juansalamanca01-glitch/patologia-app` (no lleva "PathoLab"); la carpeta local `patolab-app-actualizado`, que también aparece en `docs/progreso.md:14` y en la memoria de Claude Code |
 
   Esta lista es del 2026-10-08. Antes de hacer el cambio, se vuelve a buscar con `git grep -i "patholab\|patolab"`.
-- **Informes finalizados en `/admin/`:**
-  - D-3 permite "una corrección excepcional" desde `/admin/`, y hoy `InformeAdmin` deja cambiar el contenido, los diagnósticos y el estado de un informe finalizado sin dejar rastro.
-  - D-9 dice que un finalizado se corrige con adendas, y el README que "no se modifica".
-  - **Opciones:**
-    - dejar `/admin/` en solo lectura para los finalizados, con una decisión nueva que precise D-3;
-    - mantener la excepción y registrar quién cambió qué.
-
-  Se evalúa en la fase 3 y se decide antes de la fase 4.
-- **Avisos crítico y alto de `npm audit`** (sección 1, fase 3): hay que decidir si se corrigen ya, con `npm audit fix` sin cambio de versión principal, o se esperan a la fase 4. Ver "Pendiente de respuesta del usuario".
+- **Ya decidido el 2026-10-08:**
+  - informes finalizados de solo lectura en `/admin/` (D-14, fase 4);
+  - corregir ya los avisos de `npm audit` (rama `npm-audit-fix`).
 
 ### 3. Para producción (al publicar la aplicación)
 
@@ -186,26 +181,22 @@ La etapa 10 de la propuesta (imagen de la firma) no aparece en la hoja de ruta d
 
 ### 5. Contradicciones entre documentos encontradas en el inventario
 
-Se corrigen en la fase 8 (están listadas también en el plan), salvo que el usuario pida hacerlo antes:
-- `CLAUDE.md` dice que los hallazgos pendientes están en `docs/auditoria-inicial.md`, y solo queda I-9c. También dice "No hay linter configurado" (lo cambia la fase 2).
-- `docs/auditoria-inicial.md`:
-  - I-13 no tiene línea de estado;
-  - el estado de I-7 dice que falta corregir el README, y ya se hizo;
-  - la tabla de la sección 5 no dice qué se corrigió.
-- `docs/propuesta-informe-v2.md`:
-  - el estado dice "etapas 1 a 7", y también están hechas la 8 y la 9;
-  - la sección 8 nombra solo `RM-PRUEBA-0001`;
-  - la sección 8 dice que no se ponen datos del paciente en URL, y la búsqueda `?q=` sí los lleva (aprobado en la etapa 3).
-- `CHANGELOG.md`, I-9a: el análisis menciona `BrowserRouter`, y la app usa `createBrowserRouter` desde D-13.
-- `docs/decisiones.md`, D-3 frente a D-9 y el README (sección 2, `/admin/`).
+El 2026-10-08 se corrigieron en la rama `docs-pendientes` (ver `CHANGELOG.md`):
+- `CLAUDE.md`;
+- `docs/auditoria-inicial.md`: I-7, I-13 y la columna "Hoy" de la sección 5;
+- `docs/propuesta-informe-v2.md`: el estado, la sección 8 y la tabla de la sección 7;
 - `README.md`:
-  - la tabla "Documentación del Proyecto" no incluye `docs/plan-calidad-y-diseno.md`;
-  - "Pruebas Automáticas" no menciona las pruebas de D-13 ni del visor de imágenes.
+  - la tabla de documentación;
+  - "Pruebas";
+  - la imagen de la firma en la hoja de ruta;
+  - D-14.
+
+D-3 frente a D-9 se resolvió con D-14.
+
+Quedan dos:
+- `CHANGELOG.md`, I-9a: el análisis menciona `BrowserRouter`, y la app usa `createBrowserRouter` desde D-13. Se comprueba en la fase 3, por decisión del usuario.
+- `CLAUDE.md` dice "No hay linter configurado": cambia en la fase 2.
 
 ## Pendiente de respuesta del usuario
 
-- **Revisión del inventario** (secciones 1 a 5 de "Pendientes").
-- **Avisos crítico (`shell-quote`) y alto (`source-map-js`) de `npm audit`:** ¿se corrigen ya, antes de la tarea previa 2, o en la fase 4?
-  - Son herramientas de desarrollo: no llegan a la aplicación publicada.
-  - `npm audit fix` los arregla sin cambio de versión principal.
-- **Contradicciones de la sección 5:** ¿se corrigen ya, en esta rama (solo documentación), o en la fase 8?
+- Nada por ahora. Antes de implementar D-14 en la fase 4, hay que preguntar si un informe finalizado tampoco se puede borrar desde `/admin/` (ver el plan, fase 4).

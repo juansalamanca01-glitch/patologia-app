@@ -163,7 +163,7 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### I-7. Los patólogos pueden administrar el catálogo, aunque la documentación dice que es tarea del admin
 
-> **Estado: resuelto por decisión (2026-10-03).** Ver la decisión D-1 en `docs/decisiones.md`: por criterio del profesor, los patólogos **sí** pueden administrar el catálogo. El código de permisos no cambia. Solo queda corregir el README para que lo diga, y eso se hará junto con I-12.
+> **Estado: resuelto por decisión (2026-10-03).** Ver la decisión D-1 en `docs/decisiones.md`: por criterio del profesor, los patólogos **sí** pueden administrar el catálogo. El código de permisos no cambia. El README se corrigió para que lo diga, junto con I-12 (`e3743c2`).
 
 - **Dónde:** `CategoriaViewSet`, `PatologiaViewSet` y `PlantillaViewSet` (`informes/views.py`) y `TemaForoViewSet` (`foro/views.py`). Todos usan `EsPatologoOAdmin`.
 - **Qué pasa:** el README dice que el **Administrador** se encarga de la "gestión de patologías y plantillas". En el código, cualquier patólogo puede crear, editar y **borrar** patologías, plantillas (los campos de los formularios), categorías y temas del foro.
@@ -220,6 +220,8 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 - **Cómo arreglarlo:** reescribir esas secciones con bloques de código normales (```` ``` ````) y añadir los módulos nuevos (ver la tabla de la sección 5).
 
 ### I-13. No existe ninguna prueba automática
+
+> **Estado: corregido.** Las pruebas empezaron con C-1 (2026-10-03, backend) y M-8 (frontend, Vitest). Cada hallazgo y cada etapa posterior agregó las suyas. El 2026-10-08 hay 8 pruebas de la raíz, 251 del backend y 134 del frontend; las cifras actuales están en `docs/progreso.md`. Las 5 pruebas recomendadas abajo existen.
 
 Esto ya se explicó en la sección 1, pero se repite aquí porque es un problema importante.
 
@@ -337,24 +339,26 @@ En `config/urls.py`, los archivos de `/media/` solo se sirven si `DEBUG=True`. E
 
 ## 5. Documentación frente al código real
 
-| Lo que dice la documentación | Lo que hace el código | ¿Coincide? |
-|---|---|---|
-| Finalizar un informe "bloquea edición" (README) | Se puede editar y borrar (C-2) | ❌ |
-| Si falta un campo obligatorio, la API responde 400 (guía, pregunta 1) | Se salta si `datos_ingresados` está vacío (I-2) | ❌ Parcial |
-| El Admin gestiona patologías y plantillas (README) | Los patólogos también pueden (I-7) | ✅ El código queda así por decisión D-1; falta corregir el README |
-| `GET /api/patologias/` lista patologías **activas** | Lista todas (M-5) | ❌ |
-| El proxy de Vite redirige `/api` al backend (README) | `client.js` llama directo a `localhost:8000`; el proxy solo se usa para el PDF (I-10) | ❌ Parcial |
-| Usuarios `admin`, `patologo1`, `auditor1` (README) | Correcto en el código, pero el README muestra "dmin" y "uditor1" por el texto dañado (I-12) | ⚠️ |
-| La API tiene "25 operaciones, 4 módulos, 9 rutas" (guía, diapositiva 4) | Ahora hay más: categorías, registro, foro (4 recursos), descargar-pdf | ❌ Desactualizado |
-| Estructura del proyecto (README) | Faltan `foro/`, `throttles.py`, `Footer.jsx` y 6 páginas nuevas | ❌ Desactualizado |
-| Búsqueda "por patología" (README) | La API acepta `?patologia=`, pero `BuscarPage` no tiene ese filtro | ⚠️ Parcial |
-| "Tamaño máximo de subida 10 MB" (comentario en `settings.py`) | No hay límite real (I-6) | ❌ |
-| Login JWT con el rol dentro del token (guía) | Correcto | ✅ |
-| Texto macroscópico generado automáticamente (README y guía) | Correcto; coincide con el ejemplo de la guía | ✅ |
-| 14 patologías precargadas con `seed_data` | Correcto | ✅ |
-| Exportación a PDF con ReportLab | Correcto (salvo I-3) | ✅ |
-| Colección de Postman | Solo 5 peticiones, sin foro ni categorías; usa la ruta `/pdf/` que el frontend no usa | ⚠️ Incompleta |
-| `iniciar_y_probar.ps1` | Funciona; supone que la patología con `id=1` es "Biopsia de Piel", lo cual es cierto solo con una base de datos nueva | ✅ |
+> **Estado (revisado el 2026-10-08):** la tabla muestra lo que se encontró el 2026-10-03. La columna "Hoy" dice qué pasó con cada diferencia.
+
+| Lo que dice la documentación | Lo que hace el código | ¿Coincide? | Hoy |
+|---|---|---|---|
+| Finalizar un informe "bloquea edición" (README) | Se puede editar y borrar (C-2) | ❌ | Corregido (C-2, D-3) |
+| Si falta un campo obligatorio, la API responde 400 (guía, pregunta 1) | Se salta si `datos_ingresados` está vacío (I-2) | ❌ Parcial | Corregido (I-2) |
+| El Admin gestiona patologías y plantillas (README) | Los patólogos también pueden (I-7) | ✅ El código queda así por decisión D-1; falta corregir el README | README corregido (I-12) |
+| `GET /api/patologias/` lista patologías **activas** | Lista todas (M-5) | ❌ | Corregido con `?activa=` (M-5, D-4) |
+| El proxy de Vite redirige `/api` al backend (README) | `client.js` llama directo a `localhost:8000`; el proxy solo se usa para el PDF (I-10) | ❌ Parcial | Corregido (I-10) |
+| Usuarios `admin`, `patologo1`, `auditor1` (README) | Correcto en el código, pero el README muestra "dmin" y "uditor1" por el texto dañado (I-12) | ⚠️ | Corregido (I-12); desde el 2026-10-08 también `patologo2` |
+| La API tiene "25 operaciones, 4 módulos, 9 rutas" (guía, diapositiva 4) | Ahora hay más: categorías, registro, foro (4 recursos), descargar-pdf | ❌ Desactualizado | La guía de exposición se eliminó (`945affb`) |
+| Estructura del proyecto (README) | Faltan `foro/`, `throttles.py`, `Footer.jsx` y 6 páginas nuevas | ❌ Desactualizado | Corregido (I-12) |
+| Búsqueda "por patología" (README) | La API acepta `?patologia=`, pero `BuscarPage` no tiene ese filtro | ⚠️ Parcial | La búsqueda de texto (`?q=`) incluye el nombre de la patología, como dice el README; `BuscarPage` no tiene un filtro aparte |
+| "Tamaño máximo de subida 10 MB" (comentario en `settings.py`) | No hay límite real (I-6) | ❌ | Corregido (I-6) |
+| Login JWT con el rol dentro del token (guía) | Correcto | ✅ | — |
+| Texto macroscópico generado automáticamente (README y guía) | Correcto; coincide con el ejemplo de la guía | ✅ | — |
+| 14 patologías precargadas con `seed_data` | Correcto | ✅ | — |
+| Exportación a PDF con ReportLab | Correcto (salvo I-3) | ✅ | I-3 corregido |
+| Colección de Postman | Solo 5 peticiones, sin foro ni categorías; usa la ruta `/pdf/` que el frontend no usa | ⚠️ Incompleta | Rehecha y probada (I-12); el frontend usa `/pdf/` desde I-5 |
+| `iniciar_y_probar.ps1` | Funciona; supone que la patología con `id=1` es "Biopsia de Piel", lo cual es cierto solo con una base de datos nueva | ✅ | Se eliminó (`b1ef010`); lo reemplaza `npm run dev` |
 
 ---
 

@@ -238,13 +238,11 @@ Las categorías de la edición 2025:
 - **Avisos nuevos de `npm audit` (2026-10-08), que no existían en I-9:**
   - **Crítico:** `shell-quote` 1.9.0, que usa `concurrently` 10.0.5 en la raíz (solo para `npm run dev`).
   - **Alto:** `source-map-js` 1.2.1, que usa Vite a través de PostCSS en el frontend (solo en desarrollo).
-  - Los dos tienen arreglo sin cambio de versión principal (`npm audit fix`).
+  - Por decisión del usuario (2026-10-08), se corrigen **antes** de la tarea previa 2, con `npm audit fix`, en la rama `npm-audit-fix`. El informe solo registra cómo quedaron.
 - **`requirements.txt` con rangos de versiones** (`Django>=4.2,<5.0`…) y sin archivo de bloqueo (A03).
 - **Edición de informes finalizados en `/admin/`** (A01/A08).
-  - D-3 permite "una corrección excepcional" desde `/admin/`.
-  - `InformeAdmin` deja cambiar el contenido, los diagnósticos y hasta el `estado` de un informe finalizado, sin dejar rastro.
-  - Esto choca con D-9 (las correcciones se hacen con adendas) y con el README ("un informe finalizado no se modifica").
-  - **Necesita una decisión del usuario.**
+  - Hoy `InformeAdmin` deja cambiar el contenido, los diagnósticos y hasta el `estado` de un informe finalizado, sin dejar rastro.
+  - **Ya decidido:** D-14 (2026-10-08). Su implementación está en la fase 4. El informe solo la registra en A01/A08 con referencia a D-14.
 - **Conflicto entre pestañas** (D-13): gana el último guardado, sin aviso (A06/A08). Propuesta anotada: comparar `fecha_actualizacion` y responder 409.
 - **Registro de accesos:** no se registra quién consulta qué informe o paciente (A09).
 - **Clave antigua en el historial de git** (C-3): cualquier servidor que la haya usado debe cambiarla (A04).
@@ -271,6 +269,20 @@ Las categorías de la edición 2025:
 ## Fase 4: correcciones de seguridad
 
 **Abierta.** Se define cuando el usuario revise el informe de la fase 3: qué hallazgos se corrigen, en qué orden y si van en una o en varias ramas.
+
+**Ya incluida (decisión D-14, 2026-10-08): informes finalizados de solo lectura en `/admin/`.**
+- **Qué se hace:**
+  - en `backend/informes/admin.py`, `InformeAdmin` no permite cambiar un informe finalizado. Por ejemplo, `get_readonly_fields()` devuelve todos los campos cuando `obj.esta_finalizado`, y `has_change_permission()` o el guardado lo rechazan si llega una petición;
+  - `DiagnosticoInline`, en un finalizado, no deja agregar, cambiar ni borrar filas;
+  - el estado no puede volver a `borrador`;
+  - los borradores siguen editándose como hoy.
+- **Pruebas que deben fallar antes del cambio** (en `informes/tests.py`, con el cliente de pruebas de Django y un superusuario, como `AdminUsuariosTests`):
+  - enviar el formulario de cambio de un informe finalizado con otro texto en la microscópica no lo modifica;
+  - no se puede pasar el estado a `borrador`;
+  - no se pueden agregar, cambiar ni borrar diagnósticos desde el inline;
+  - un borrador sí se sigue editando.
+- **Pregunta para el usuario antes de implementarla:** ¿tampoco se puede **borrar** un informe finalizado desde `/admin/`? D-3 ya lo impide en la API. Un finalizado con adendas no se borra (`PROTECT`), pero uno sin adendas hoy sí.
+- **Documentación:** quitar el aviso "Pendiente" de D-14 en el README, `CLAUDE.md` y `docs/decisiones.md`.
 
 Cada corrección sigue el procedimiento común:
 - una prueba que demuestre el fallo;
@@ -306,7 +318,7 @@ La guía define:
   - sigue sin librería de UI.
 - **Ejemplo visual:** si el usuario lo pide, una página de muestra (HTML estático) con la paleta y los componentes, para verla antes de aprobar.
 
-**Archivos:** `docs/guia-diseno.md` (nuevo), `docs/progreso.md` y `CHANGELOG.md`. Al aprobarse, una decisión nueva en `docs/decisiones.md` (D-14: la guía es la referencia de diseño).
+**Archivos:** `docs/guia-diseno.md` (nuevo), `docs/progreso.md` y `CHANGELOG.md`. Al aprobarse, una decisión nueva en `docs/decisiones.md` (D-15: la guía es la referencia de diseño; D-14 ya se usó para `/admin/`).
 
 **Terminada cuando:**
 - **la aprueban el usuario, el equipo y el profesor** (con los cambios que pidan);
@@ -401,23 +413,12 @@ Se hace por grupos de pantallas, con un commit por grupo, para revisar de a poco
    - ventana angosta.
 4. Unión a `main` y cierre del plan: en este documento, el estado pasa a "terminado".
 
-**Contradicciones y textos desactualizados ya detectados** (inventario del 2026-10-08), que se corrigen aquí si no se corrigieron antes:
-- `CLAUDE.md`:
-  - dice "Los hallazgos pendientes de corregir están en `docs/auditoria-inicial.md`", pero de esa auditoría solo queda I-9c;
-  - dice "No hay linter configurado" (lo cambia la fase 2).
-- `docs/auditoria-inicial.md`:
-  - I-13 (no hay pruebas) no tiene línea de estado, aunque hoy hay casi 400 pruebas;
-  - el estado de I-7 dice que falta corregir el README, y ya se corrigió en I-12;
-  - la tabla de la sección 5 conserva los ❌ de la auditoría, sin decir que ya se corrigieron.
-- `docs/propuesta-informe-v2.md`:
-  - el "Estado" del encabezado dice que se terminaron las etapas 1 a 7, pero también están hechas la 8 y la 9;
-  - la sección 8 nombra solo el registro de prueba de `patologo1`;
-  - la sección 8 dice que nunca se ponen datos del paciente en una URL, pero la búsqueda `?q=` de pacientes sí los lleva (aprobado en la etapa 3, con la nota de producción).
-- `CHANGELOG.md` (I-9a): el análisis de GHSA-337j menciona `BrowserRouter`. No se reescribe el historial: se agrega una entrada nueva con el análisis revisado (fase 3).
-- `README.md`:
-  - la tabla "Documentación del Proyecto" no incluye `docs/plan-calidad-y-diseno.md`;
-  - "Pruebas Automáticas" (frontend) no menciona el aviso de cambios sin guardar, el autoguardado, `/salir` ni el visor de imágenes.
-- `docs/decisiones.md`: según lo que decida el usuario sobre `/admin/` (fase 3), una decisión nueva que precise D-3.
+**Contradicciones ya detectadas** (inventario del 2026-10-08):
+- Casi todas se corrigieron el 2026-10-08 en la rama `docs-pendientes`. Ver `CHANGELOG.md`.
+- Quedan dos:
+  - `CHANGELOG.md` (I-9a): el análisis de GHSA-337j menciona `BrowserRouter`, y la app usa `createBrowserRouter` desde D-13. La comprobación va en la fase 3, que agrega una entrada nueva con el análisis revisado (el historial no se reescribe).
+  - `CLAUDE.md` dice "No hay linter configurado": lo cambia la fase 2.
+- En el cierre se vuelve a comprobar que no aparecieron otras.
 
 **Archivos:** `README.md`, `CLAUDE.md`, `docs/*.md`, `PathoLab_API.postman_collection.json`, `CHANGELOG.md` y `docs/progreso.md`.
 

@@ -5,6 +5,45 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-08
 
+### Inventario de pendientes, decisión D-14 y documentación corregida
+
+**Qué se cambió** (solo documentación, rama `docs-pendientes`):
+- `docs/progreso.md`: sección "Pendientes" nueva, ordenada y sin duplicados, con origen y destino de cada punto:
+  - del plan;
+  - decisiones del usuario, con la lista de lugares donde aparece "PathoLab" para el posible cambio de nombre;
+  - producción;
+  - ideas futuras;
+  - contradicciones.
+
+  También se actualizaron "Dónde estamos" y "Siguiente paso".
+- `docs/plan-calidad-y-diseno.md`:
+  - tarea previa 2 (encabezado del PDF configurable desde `backend/.env`);
+  - puntos conocidos que debe evaluar la fase 3;
+  - la implementación de D-14 en la fase 4, con sus pruebas;
+  - la guía de diseño pasa a ser D-15.
+- `docs/decisiones.md`: **D-14**. Un informe finalizado tampoco se modifica desde `/admin/` (campos, diagnósticos y estado de solo lectura); se corrige siempre con adendas. Reemplaza la excepción de `/admin/` de D-3, sin borrar D-3. **Todavía no está implementada** (fase 4).
+- `README.md`:
+  - D-14 en la lista de decisiones y en "Roles y Permisos", con el aviso de que falta implementarla;
+  - `docs/plan-calidad-y-diseno.md` en la tabla de documentación;
+  - "Pruebas Automáticas" incluye D-13 y el visor de imágenes;
+  - la imagen de la firma (etapa 10) en la hoja de ruta.
+- `CLAUDE.md`:
+  - de la auditoría inicial solo queda I-9c, y los pendientes están en `progreso.md`;
+  - D-14 y su estado.
+- `docs/auditoria-inicial.md`:
+  - estado de I-13 (corregido) e I-7 (README corregido);
+  - columna "Hoy" en la tabla de la sección 5.
+- `docs/propuesta-informe-v2.md`:
+  - estado (etapas 8 y 9 hechas);
+  - sección 8: registro de `patologo2` y la excepción aprobada de `?q=` en la URL;
+  - nota de D-14 en la sección 7.
+
+**Por qué:**
+- El usuario pidió un inventario de todo lo pendiente antes de seguir con el plan.
+- Al hacerlo aparecieron contradicciones entre documentos. La más seria: D-3 permitía corregir en `/admin/` un informe finalizado, y `InformeAdmin` deja cambiar su contenido y su estado sin rastro. Eso contradice D-9 y el README. El usuario la resolvió con D-14.
+- Queda sin corregir, por decisión del usuario, el análisis de React Router en la entrada de I-9a: se vuelve a comprobar en la fase 3.
+
+
 ### Segundo patólogo de prueba (`patologo2`) en `seed_data`
 
 **Qué se cambió**

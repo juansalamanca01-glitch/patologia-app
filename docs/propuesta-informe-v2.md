@@ -1,7 +1,7 @@
 # Propuesta: informe de anatomía patológica v2
 
 **Fecha:** 2026-10-04
-**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); las etapas 1 (número de petición), 2 (catálogos y opciones), 3 (pacientes), 4 (datos de la solicitud), 5 (contenido del informe), 6 (firma y finalización) y 7 (PDF nuevo) se terminaron el 2026-10-04.
+**Estado:** aprobada el 2026-10-04 con las respuestas del usuario (sección 10). Las decisiones D-7 a D-11 están en `docs/decisiones.md`. Se implementa por etapas (sección 9); las etapas 1 (número de petición), 2 (catálogos y opciones), 3 (pacientes), 4 (datos de la solicitud), 5 (contenido del informe), 6 (firma y finalización) y 7 (PDF nuevo) se terminaron el 2026-10-04, y las etapas 8 (adendas) y 9 (cierre), el 2026-10-05. Solo queda la etapa 10 (imagen de la firma), que es opcional y no se ha pedido.
 
 **Objetivo:** que el informe tenga los datos y el orden de un informe real de laboratorio:
 
@@ -419,7 +419,7 @@ Se actualiza en cada etapa, según las reglas 2, 3 y 6 de `CLAUDE.md`:
 |---|---|
 | D-1 (los patólogos administran el catálogo) | El catálogo de patologías no cambia. Los catálogos nuevos (EPS, servicios) siguen el mismo criterio (P-4, D-11). |
 | D-2 (solo el autor o un admin edita, borra o finaliza) | No cambia. Las adendas siguen la misma regla. La firma es siempre la del autor. |
-| D-3 (un informe finalizado no se modifica) | No cambia. Las adendas **no modifican** el informe: se agregan aparte. Los datos congelados refuerzan D-3. La excepción de `/admin/` sigue igual, pero en `/admin/` las adendas son de solo lectura. |
+| D-3 (un informe finalizado no se modifica) | No cambia. Las adendas **no modifican** el informe: se agregan aparte. Los datos congelados refuerzan D-3. La excepción de `/admin/` sigue igual, pero en `/admin/` las adendas son de solo lectura. **Actualización del 2026-10-08:** la decisión D-14 elimina esa excepción (un finalizado tampoco se modifica en `/admin/`); se implementa en la fase 4 de `docs/plan-calidad-y-diseno.md`. |
 | D-4 (se desactiva en lugar de borrar) | Se aplica igual a EPS y servicios. |
 | D-5, D-6 | No se ven afectadas. |
 
@@ -439,11 +439,11 @@ Se actualiza en cada etapa, según las reglas 2, 3 y 6 de `CLAUDE.md`:
 - **Nombres:** se usan nombres claramente ficticios, como "Paciente Ficticio Uno" o "Prueba Apellido Dos".
 - **Documentos:** llevan el prefijo `PRUEBA` (por ejemplo `PRUEBA0001`). El campo es alfanumérico, así que un número ficticio no puede coincidir con el de una persona real.
 - **Médicos tratantes:** "Médico Ficticio".
-- **Registro médico de prueba:** `RM-PRUEBA-0001` para `patologo1` en `seed_data`.
+- **Registro médico de prueba:** `RM-PRUEBA-0001` para `patologo1` en `seed_data`, y desde el 2026-10-08 `RM-PRUEBA-0002` para `patologo2`.
 - **Fechas de nacimiento:** fijas e inventadas.
 - **Pacientes en `seed_data`:** crea 2 pacientes ficticios para poder probar en el navegador. No crea informes, como hoy.
 - **Catálogo de EPS en `seed_data`:** incluye "Particular" y "Otra", más una lista corta de EPS colombianas reales. Son nombres de entidades públicas, no datos de personas, y el catálogo se puede editar (confirmado en P-8).
-- **Ley:** los datos de salud son datos sensibles (Ley 1581 de 2012) y forman parte de la historia clínica (Resolución 1995 de 1999). La propuesta guarda solo los datos mínimos, nunca pone datos del paciente en URL, nombres de archivo ni logs, y actualiza la política de privacidad. Antes de un uso real haría falta una revisión legal, que este proyecto no reemplaza.
+- **Ley:** los datos de salud son datos sensibles (Ley 1581 de 2012) y forman parte de la historia clínica (Resolución 1995 de 1999). La propuesta guarda solo los datos mínimos, nunca pone datos del paciente en nombres de archivo ni logs, y actualiza la política de privacidad. En las URL, la única excepción es la búsqueda de pacientes (`GET /api/pacientes/?q=`), que lleva el nombre o el documento buscado: el usuario la aprobó en la etapa 3, con la condición de que en producción los registros del servidor web no guarden esos parámetros (README, "Seguridad"). Antes de un uso real haría falta una revisión legal, que este proyecto no reemplaza.
 
 ---
 

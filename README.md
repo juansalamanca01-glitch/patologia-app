@@ -86,13 +86,16 @@ Estas reglas responden a decisiones del proyecto registradas en [`docs/decisione
 - **D-1:** los patólogos también administran el catálogo.
 - **D-2:** solo el autor o un administrador modifica un informe.
 - **D-3:** un informe finalizado no se modifica, ni siquiera por un administrador.
+- **D-14:** tampoco desde el panel `/admin/`: ahí un informe finalizado es de solo lectura. *Pendiente de implementar en la fase 4 del plan.*
 - **D-8:** el registro médico solo lo asigna un administrador, y el informe lo firma siempre su autor.
 - **D-9:** un informe finalizado se corrige con adendas, que no se editan ni se borran.
 - **D-11:** patólogos y administradores crean y editan pacientes y administran EPS y servicios; solo un administrador borra pacientes.
 - **D-12:** el PDF de un borrador es una vista previa solo para su autor o un administrador.
 - **D-13:** aviso al salir con cambios sin guardar y autoguardado de los borradores existentes (nunca de los informes nuevos ni en el navegador).
 
-La forma normal de corregir un informe finalizado es agregarle una adenda. Para una corrección excepcional, el administrador puede usar el panel de Django (`/admin/`), donde las adendas y los datos congelados son de solo lectura.
+Un informe finalizado se corrige **siempre** agregándole una adenda. No hay otra vía: según la decisión D-14 (2026-10-08), que reemplaza la excepción de `/admin/` de D-3, tampoco se modifica desde el panel de Django.
+
+> **Pendiente:** hoy `/admin/` todavía permite cambiar un informe finalizado (solo las adendas y los datos congelados son de solo lectura). Se bloquea en la fase 4 de [`docs/plan-calidad-y-diseno.md`](docs/plan-calidad-y-diseno.md).
 
 ---
 
@@ -375,7 +378,7 @@ npm test
 ```
 
 - **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones, búsqueda e historial), los datos de la solicitud del informe (paciente obligatorio, fecha de ingreso, EPS del momento del estudio, búsqueda por paciente), el contenido del informe (microscópica, comentarios, diagnósticos y validación del CIE-10), la finalización (requisitos, fecha de informe, firma del autor y datos congelados), las adendas (solo en finalizados, permisos, numeración, firma congelada, sin edición y en el PDF), quién puede descargar el PDF de un borrador y su marca de agua, el registro médico, los catálogos de EPS y servicios (y su borrado cuando están en uso), las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
-- **Frontend:** cubre el formulario del informe (paciente, datos de la solicitud, diagnósticos, firma, requisitos para finalizar, adendas y orden de las tarjetas), la página de pacientes y su historial, la pantalla de catálogos, los listados, la página de perfil, la exportación a PDF (y la vista previa de un borrador), las imágenes del foro y la dirección de la API.
+- **Frontend:** cubre el formulario del informe (paciente, datos de la solicitud, diagnósticos, firma, requisitos para finalizar, adendas y orden de las tarjetas), la página de pacientes y su historial, la pantalla de catálogos, los listados, la página de perfil, la exportación a PDF (y la vista previa de un borrador), el aviso al salir con cambios sin guardar y el autoguardado de los borradores (D-13), el cierre de sesión por `/salir`, las imágenes del foro y su visor, y la dirección de la API.
 
 ---
 
@@ -571,7 +574,8 @@ Para publicar la app en un servidor:
 | [`docs/auditoria-inicial.md`](docs/auditoria-inicial.md) | Auditoría del código, con el estado de cada hallazgo |
 | [`docs/decisiones.md`](docs/decisiones.md) | Decisiones de diseño y de reglas de negocio |
 | [`docs/propuesta-informe-v2.md`](docs/propuesta-informe-v2.md) | Diseño del informe de anatomía patológica v2 (pacientes, solicitud, diagnósticos, firma, PDF y adendas) |
-| [`docs/progreso.md`](docs/progreso.md) | Estado actual del trabajo y próximos pasos |
+| [`docs/plan-calidad-y-diseno.md`](docs/plan-calidad-y-diseno.md) | Plan por fases: herramientas de calidad, auditoría OWASP, guía de diseño y rediseño de la interfaz |
+| [`docs/progreso.md`](docs/progreso.md) | Estado actual del trabajo, pendientes y próximos pasos |
 
 ---
 
@@ -581,6 +585,7 @@ Para publicar la app en un servidor:
 - [ ] **Catálogo CIE-10 y CIE-O**: autocompletado de los códigos de diagnóstico y de morfología tumoral.
 - [ ] **Imágenes en los informes**: adjuntar microfotografías al informe y al PDF (hoy solo el foro admite imágenes).
 - [ ] **Encabezado del PDF configurable**: leer el nombre, la dirección y el teléfono del laboratorio desde `backend/.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION`, `LABORATORIO_TELEFONO`). Hoy el encabezado es fijo, de demostración.
+- [ ] **Imagen de la firma**: el administrador sube una imagen (PNG o JPG) de la firma del patólogo y el PDF la imprime sobre su nombre (etapa 10, opcional, de `docs/propuesta-informe-v2.md`).
 - [ ] **Firma digital**: firma electrónica del patólogo con certificado o trazo digital. Hoy el informe lleva el nombre, la especialidad y el registro médico del autor, pero no es una firma criptográfica.
 - [ ] **Integración HL7 / FHIR**: interoperabilidad con sistemas de información hospitalaria (HIS/LIS).
 - [ ] **Registro de accesos**: guardar quién consulta qué informe o paciente y cuándo, incluidas las descargas del PDF. La historia clínica exige saber quién accedió a ella.
