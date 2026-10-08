@@ -5,7 +5,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 - **Decisiones tomadas:** `docs/decisiones.md`.
 - **Lista completa de problemas:** `docs/auditoria-inicial.md`.
 
-**Última actualización:** 2026-10-05
+**Última actualización:** 2026-10-08
 
 ---
 
@@ -79,6 +79,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | D-13 | Pendientes, punto 3: aviso al salir con cambios sin guardar (Seguir editando, Salir sin guardar, Guardar y salir) y autoguardado a los 5 s de los borradores existentes, con indicador de estado; `App.jsx` pasa a `createBrowserRouter` para usar `useBlocker`; se muestran los errores de `datos_ingresados` del backend | `0c05b68` |
 | D-13 | Ampliación: finalizar y la vista previa del PDF guardan primero los cambios pendientes (si no son válidos, no siguen y muestran qué falta); "Salir" pasa por `/salir`, así que cerrar sesión con cambios sin guardar también avisa. Encontrado al hacer el punto 3 y aprobado por el usuario | `a9b648d` |
 | — | Acomodo del aviso "Tienes cambios sin guardar": los tres botones caben dentro del recuadro (pasan a otra línea o se apilan en pantallas angostas) y no sobra espacio debajo. Solo CSS; los bordes y la tipografía quedan para el Bloque B | commit "fix: botones del aviso de cambios sin guardar" |
+| — | Prueba manual del Bloque A hecha por el usuario: todo salió bien. Se une `ajustes-prueba-manual` a `main` y el Bloque B sigue en la rama `bloque-b-estetica` | (este commit) |
 
 ## Pendientes
 
@@ -95,27 +96,14 @@ Observaciones del usuario en la prueba manual del 2026-10-05.
 
    **Aprobado el 2026-10-05 como D-13** (opción B): aviso con "Seguir editando", "Salir sin guardar" y "Guardar y salir" (si este falla por validación, no se sale) y autoguardado a los 5 segundos solo en borradores existentes. **Hecho.**
 
-**Bloque B (estética), todavía sin empezar:**
+**Bloque B (estética), en la rama `bloque-b-estetica`:**
 
 4. PDF: todo en negro (sin azul), títulos en negrita y sin la línea azul debajo del título.
 5. Rediseño general: sin bordes redondeados, tipografía más sobria, aspecto profesional y clínico.
 
 ## Siguiente paso
 
-1. **Próxima sesión: prueba manual del Bloque A** en la rama `ajustes-prueba-manual`, como `patologo1`, con `npm run dev` y la página recargada. **No unir a `main` hasta que el usuario haga esta prueba** (lo pidió el 2026-10-05). Después se decide si se une a `main` y se sigue con el Bloque B.
-   - **Tarjeta Paciente** de cualquier informe: cada etiqueta (Paciente, Identificación, Edad, Sexo) se ve en gris, encima de su dato.
-   - **Foro**, en una publicación con 2 o más imágenes: miniaturas más grandes; al hacer clic se ve la imagen ampliada con "1 de 2"; flechas ‹ › y las del teclado; se cierra con "Cerrar", con Escape y con un clic en el fondo.
-   - **Borrador existente:**
-     - Escribir en Comentarios. Junto al título aparece "Cambios sin guardar" y, unos 5 s después, "Guardado automáticamente a las hh:mm".
-     - Escribir otra vez y, antes de 5 s, hacer clic en otra opción del menú. Aparece el aviso con sus tres botones, completos dentro del recuadro (revisarlo también con la ventana angosta). Probar "Seguir editando" y luego "Guardar y salir".
-     - Escribir y hacer clic en "Salir" (cerrar sesión). Aparece el mismo aviso. Elegir "Guardar y salir", volver a entrar y comprobar que lo escrito quedó guardado.
-     - **Cambiar algo y finalizar de inmediato:** el informe finalizado debe tener el cambio.
-     - **Cambiar algo y abrir de inmediato la vista previa del PDF:** debe mostrar el cambio.
-     - Borrar el texto de un diagnóstico y finalizar ("Si, Confirmar"). No finaliza y marca el diagnóstico vacío.
-   - **Informe nuevo:**
-     - Escribir algo y esperar más de 5 s. No se guarda solo, y el indicador dice "Cambios sin guardar".
-     - Salir por el menú y elegir "Guardar y salir" sin paciente. No sale y muestra "Seleccione un paciente.".
-     - Recargar la página con cambios. El navegador muestra su propio aviso. El informe v2 está terminado y en `main` desde el 2026-10-05; la etapa 10 (imagen de la firma) es opcional y no se ha pedido.
+1. **Bloque B, punto 4 (PDF)**, en la rama `bloque-b-estetica`. Aprobado el 2026-10-08: todo el texto y las líneas en negro (sin azul ni gris); el aviso de adendas y la marca de agua BORRADOR siguen en rojo; títulos en negrita explícita; la línea gruesa azul del encabezado pasa a una línea fina negra. Después, el punto 5 (rediseño de la interfaz), con la skill `frontend-design` que instaló el usuario.
 2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
 4. **Ideas de la Hoja de Ruta del README:** plantillas microscópicas e IHQ, catálogo CIE-10 y CIE-O, imágenes en los informes, encabezado del PDF configurable, firma digital, integración HL7/FHIR, registro de accesos y contenedores Docker.
