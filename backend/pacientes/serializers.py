@@ -1,9 +1,10 @@
 import re
 
-from rest_framework import serializers
 from django.utils import timezone
+from rest_framework import serializers
 
 from config.catalogos import NombreCatalogoMixin
+
 from .models import EPS, Paciente
 
 EDAD_MAXIMA_ANIOS = 130

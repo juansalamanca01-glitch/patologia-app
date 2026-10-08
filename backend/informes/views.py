@@ -1,28 +1,29 @@
 import re
 
-from rest_framework import viewsets, status, filters
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Max, ProtectedError, Q
+from django.http import HttpResponse
+from django.utils import timezone
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.http import HttpResponse
-from django.db import IntegrityError, transaction
-from django.db.models import Count, Max, Q, ProtectedError
-from django.utils import timezone
 
-from accounts.permissions import EsPatologoOAdmin, EsAutorOAdminOSoloLectura
+from accounts.permissions import EsAutorOAdminOSoloLectura, EsPatologoOAdmin
 from config.catalogos import filtrar_por_activo
 from pacientes.models import Sexo, TipoDocumento
-from .models import Categoria, Patologia, Plantilla, Informe, Servicio, firma_de
+
+from .models import Categoria, Informe, Patologia, Plantilla, Servicio, firma_de
 from .serializers import (
+    AdendaSerializer,
     CategoriaSerializer,
-    PatologiaSerializer,
+    InformeListSerializer,
+    InformeSerializer,
     PatologiaListSerializer,
+    PatologiaSerializer,
     PlantillaSerializer,
     ServicioSerializer,
-    AdendaSerializer,
-    InformeSerializer,
-    InformeListSerializer,
 )
 from .utils import generar_descripcion_macroscopica, generar_pdf_informe
 

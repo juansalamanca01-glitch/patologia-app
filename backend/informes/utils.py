@@ -7,22 +7,22 @@ from functools import partial
 from xml.sax.saxutils import escape
 
 from django.utils import timezone
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import cm
 from reportlab.lib.colors import HexColor, black
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
-    SimpleDocTemplate,
+    CondPageBreak,
+    HRFlowable,
+    KeepTogether,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
-    HRFlowable,
-    KeepTogether,
-    CondPageBreak,
 )
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 
 from pacientes.models import Sexo
 

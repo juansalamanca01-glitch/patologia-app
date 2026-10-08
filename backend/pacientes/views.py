@@ -5,6 +5,7 @@ from rest_framework.response import Response
 
 from accounts.permissions import EsPatologoOAdmin, EsPatologoOAdminYSoloAdminBorra
 from config.catalogos import filtrar_por_activo
+
 from .models import EPS, Paciente
 from .serializers import EPSSerializer, PacienteSerializer
 

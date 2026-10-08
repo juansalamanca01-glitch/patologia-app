@@ -6,8 +6,9 @@ Uso: python manage.py seed_data (se puede ejecutar varias veces sin duplicar dat
 
 from datetime import date
 
-from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
+
 from foro.models import TemaForo
 from informes.models import Patologia, Plantilla, Servicio
 from pacientes.models import EPS, Paciente, Sexo, TipoDocumento

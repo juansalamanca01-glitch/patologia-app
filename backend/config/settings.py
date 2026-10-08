@@ -1,6 +1,7 @@
-from pathlib import Path
 from datetime import timedelta
-from decouple import config, Csv, UndefinedValueError
+from pathlib import Path
+
+from decouple import Csv, UndefinedValueError, config
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent

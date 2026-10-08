@@ -1,15 +1,15 @@
+from django.contrib.auth import get_user_model
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from django.contrib.auth import get_user_model
 
-from .serializers import RegistroSerializer, UsuarioSerializer, CambiarPasswordSerializer
 from .permissions import EsAdmin
+from .serializers import CambiarPasswordSerializer, RegistroSerializer, UsuarioSerializer
 from .throttles import LoginRateThrottle, RegistroRateThrottle
 
 Usuario = get_user_model()

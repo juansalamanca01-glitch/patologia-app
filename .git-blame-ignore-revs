@@ -1,0 +1,6 @@
+# Commits que "git blame" debe saltar: solo cambian el formato, no el código.
+# GitHub lo usa automáticamente. En local se activa una vez con:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Fase 2: formato automático con Prettier y Ruff (2026-10-08)
+836257b83e65484b330c0b581264030795ecb525

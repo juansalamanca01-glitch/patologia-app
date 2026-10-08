@@ -5,6 +5,20 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-08
 
+### Fase 2, partes 2 y 3: formato automático e imports ordenados
+
+**Qué se cambió**
+- **Parte 2, commit `836257b`, solo formato:**
+  - `prettier --write` en `frontend/`: 43 archivos de `src/`, `index.html` y `vite.config.js`;
+  - `ruff format` en `backend/`: 27 archivos, sin las migraciones.
+
+  Sobre todo se parten las líneas de más de 120 caracteres, se juntan en una las expresiones que cabían, y se agregan comas finales y comillas uniformes. No cambia el comportamiento: pasaron todas las pruebas (12 de la raíz, 134 del frontend y 263 del backend) y `npm run build`.
+- **Parte 3, `ruff check --select I --fix`:** Ruff ordena los imports de 27 archivos del backend (38 bloques): primero la biblioteca estándar, luego los paquetes instalados y al final los del proyecto.
+- `.git-blame-ignore-revs` (nuevo): lleva el commit `836257b`, para que `git blame` lo salte. El README explica cómo activarlo en local.
+- **Pendiente (parte 4):** los arreglos a mano de ESLint (11 `exhaustive-deps`, 4 variables sin usar, 4 comillas en JSX y 1 escape) y de Ruff (3 B904 y 1 `lambda`). Se muestran al usuario antes de aplicarlos.
+
+**Por qué:** fase 2 de `docs/plan-calidad-y-diseno.md`. El formateo va en su propio commit, sin nada más, para poder revisarlo y saltarlo en `git blame`.
+
 ### Fase 2, parte 1: herramientas de formato y linter
 
 **Qué se cambió** (sin tocar todavía el código de la aplicación):

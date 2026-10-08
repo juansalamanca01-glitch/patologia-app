@@ -214,6 +214,7 @@ patologia-app/
 ├── CHANGELOG.md               # Registro de cambios
 ├── scripts/                   # "npm run dev" (comprobaciones y arranque) y "npm run check" (formato y linter)
 ├── .vscode/                   # Formato al guardar y extensiones recomendadas para VS Code
+├── .git-blame-ignore-revs     # Commits de solo formato que git blame debe saltar
 ├── package.json               # Comandos de la raíz (npm run dev, npm run check, npm test)
 ├── CLAUDE.md                  # Guía para el asistente de código
 └── PathoLab_API.postman_collection.json
@@ -429,6 +430,11 @@ También están `npm run lint` (frontend) y `python -m ruff check .` (backend, c
 - **Ruff** (`charliermarsh.ruff`).
 
 Al guardar se usan las mismas versiones que `npm run check`: el Prettier de `frontend/node_modules` y el Ruff del entorno virtual del backend. Prettier solo formatea archivos de `frontend/`, así que no toca la documentación ni la colección de Postman.
+
+**`git blame`:** el primer formateo cambió muchas líneas sin cambiar el código. `.git-blame-ignore-revs` le dice a `git blame` que salte ese commit, para que cada línea siga mostrando quién la escribió de verdad. GitHub lo usa solo; en tu copia local, actívalo una vez:
+```bash
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
 
 ---
 

@@ -99,9 +99,9 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 ## Siguiente paso
 
 1. **Ahora: fase 2** del plan (Prettier, ESLint y Ruff), en la rama `fase-2-herramientas-calidad`. Aprobada el 2026-10-08 con ajustes (ver el plan). Commits:
-   1. herramientas y configuración (hecho);
-   2. solo formato;
-   3. imports ordenados por Ruff;
+   1. herramientas y configuración (hecho, `6f2e3c3`);
+   2. solo formato (hecho, `836257b`, en `.git-blame-ignore-revs`);
+   3. imports ordenados por Ruff (hecho);
    4. arreglos a mano, **que se muestran al usuario antes de aplicarlos**.
 2. **Luego, las fases 3 a 8** del plan, en orden. Al terminar cada fase se actualizan esta sección y "Pendientes".
 3. **Para arrancar la aplicación:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").

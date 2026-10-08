@@ -1,8 +1,8 @@
 from datetime import date
 
+from django.conf import settings
 from django.db import IntegrityError, models, transaction
 from django.db.models import F
-from django.conf import settings
 from django.utils import timezone
 
 from pacientes.models import edad_en_texto

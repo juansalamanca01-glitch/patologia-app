@@ -10,6 +10,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import Usuario
+
 from .models import Comentario, ImagenPublicacion, Publicacion
 
 CARPETA_MEDIA_PRUEBAS = tempfile.mkdtemp(prefix='patolab-media-pruebas-')
@@ -156,6 +157,7 @@ class TemasInicialesTests(APITestCase):
 
     def ejecutar_seed(self):
         from io import StringIO
+
         from django.core.management import call_command
 
         call_command('seed_data', stdout=StringIO())

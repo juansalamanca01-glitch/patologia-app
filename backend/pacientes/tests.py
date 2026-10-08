@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import Usuario
+
 from .models import EPS, Paciente
 
 
@@ -60,6 +61,7 @@ class CatalogoEPSTests(APITestCase):
     def test_seed_data_carga_las_eps(self):
         # Lista corta de EPS reales más "Particular" y "Otra" (P-8).
         from io import StringIO
+
         from django.core.management import call_command
 
         call_command('seed_data', stdout=StringIO())
@@ -257,6 +259,7 @@ class PacienteAPITests(APITestCase):
 
     def test_seed_data_crea_dos_pacientes_ficticios(self):
         from io import StringIO
+
         from django.core.management import call_command
 
         call_command('seed_data', stdout=StringIO())

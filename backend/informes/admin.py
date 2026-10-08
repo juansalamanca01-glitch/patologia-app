@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Adenda, Categoria, ConsecutivoPeticion, Diagnostico, Patologia, Plantilla, Informe, Servicio
+
+from .models import Adenda, Categoria, ConsecutivoPeticion, Diagnostico, Informe, Patologia, Plantilla, Servicio
 
 
 class PlantillaInline(admin.TabularInline):

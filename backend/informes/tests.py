@@ -1,5 +1,6 @@
 import threading
-from datetime import date, datetime, timedelta, timezone as dt_timezone
+from datetime import date, datetime, timedelta
+from datetime import timezone as dt_timezone
 from unittest import mock
 
 from django.db import IntegrityError, connection, transaction
@@ -11,6 +12,7 @@ from rest_framework.test import APIClient, APITestCase
 
 from accounts.models import Usuario
 from pacientes.models import EPS, Paciente
+
 from .models import Categoria, Diagnostico, Informe, Patologia, Plantilla, Servicio
 
 
@@ -578,6 +580,7 @@ class ConsultasPorListadoTests(APITestCase):
         Comentario.objects.create(publicacion=normal, autor=self.usuario, contenido='c')
         # Se crean en el mismo instante: se hace "Normal" un día más antigua para que no empaten.
         from datetime import timedelta
+
         from django.utils import timezone
 
         Publicacion.objects.filter(id=normal.id).update(fecha_creacion=timezone.now() - timedelta(days=1))
@@ -972,6 +975,7 @@ class CatalogoServiciosTests(APITestCase):
 
     def test_seed_data_carga_los_servicios(self):
         from io import StringIO
+
         from django.core.management import call_command
 
         call_command('seed_data', stdout=StringIO())
@@ -2508,6 +2512,7 @@ class AdendaTests(APITestCase):
     def test_en_admin_las_adendas_son_de_solo_lectura(self):
         from django.contrib import admin as admin_django
         from django.test import RequestFactory
+
         from .models import Adenda
 
         modelo_admin = admin_django.site._registry[Informe]
@@ -2590,6 +2595,7 @@ class PdfBorradorTests(APITestCase):
     def marcas_y_paginas(self):
         """Descarga como el autor y devuelve cuántas marcas "BORRADOR" se dibujan y cuántas páginas hay."""
         import re
+
         from reportlab.pdfgen.canvas import Canvas
 
         with mock.patch.object(

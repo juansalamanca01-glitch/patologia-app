@@ -5,7 +5,8 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from config.catalogos import NombreCatalogoMixin
-from .models import Adenda, Categoria, Diagnostico, Patologia, Plantilla, Informe, Servicio
+
+from .models import Adenda, Categoria, Diagnostico, Informe, Patologia, Plantilla, Servicio
 
 MAX_DIAGNOSTICOS = 20
 # Letra, dos cifras y, opcionalmente, un punto con uno o dos caracteres: C44, C44.3, M80.90.
