@@ -1,10 +1,11 @@
 {
   "name": "patolab",
   "private": true,
-  "description": "Comandos de desarrollo de PathoLab: levantar backend y frontend con un solo comando.",
+  "description": "Comandos de desarrollo de PathoLab: levantar backend y frontend con un solo comando y revisar formato y linter.",
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "check": "node scripts/check.mjs",
     "test": "node --test scripts/*.test.mjs"
   },
   "engines": {

@@ -1,0 +1,20 @@
+# Ruff: formato y linter del backend (fase 2 de docs/plan-calidad-y-diseno.md).
+line-length = 120
+# El README admite Python 3.10 o superior.
+target-version = "py310"
+# Las migraciones son código generado y ya aplicado: no se formatean ni se revisan.
+extend-exclude = ["*/migrations/*"]
+
+[format]
+quote-style = "single"
+# Respeta el final de línea de cada archivo (en Windows, Git los deja en CRLF).
+line-ending = "auto"
+
+[lint]
+# E/W: errores de estilo de PEP 8; F: errores (Pyflakes); I: orden de los imports;
+# B: errores probables (bugbear); DJ: buenas prácticas de Django.
+select = ["E", "W", "F", "I", "B", "DJ"]
+
+[lint.per-file-ignores]
+# Tablas de datos de las plantillas: partirlas las haría más difíciles de leer.
+"informes/management/commands/seed_data.py" = ["E501"]

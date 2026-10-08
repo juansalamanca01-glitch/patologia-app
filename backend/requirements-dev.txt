@@ -1,0 +1,7 @@
+# Dependencias de desarrollo: las de producción más las herramientas de calidad.
+# Instalar con: pip install -r requirements-dev.txt
+-r requirements.txt
+
+# Formato y linter del backend (fase 2 del plan). Versión exacta: cada versión
+# puede formatear distinto.
+ruff==0.16.10

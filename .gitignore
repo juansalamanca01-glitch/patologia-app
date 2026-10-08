@@ -33,7 +33,10 @@ yarn-error.log*
 !.env.example
 
 # IDE
-.vscode/
+# De .vscode/ solo se comparten el formato al guardar y las extensiones recomendadas (fase 2).
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 *.sublime-project
 *.sublime-workspace

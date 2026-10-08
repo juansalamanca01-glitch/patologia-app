@@ -5,6 +5,34 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-08
 
+### Fase 2, parte 1: herramientas de formato y linter
+
+**Qué se cambió** (sin tocar todavía el código de la aplicación):
+- **Frontend**, dependencias de desarrollo:
+  - Prettier 3.9.9, con versión exacta;
+  - ESLint 9.39 con `@eslint/js`, `eslint-plugin-react`, `eslint-plugin-react-hooks` 7, `globals` y `eslint-config-prettier`.
+- **Frontend**, archivos nuevos:
+  - `.prettierrc`: comillas simples, punto y coma, 120 caracteres y `endOfLine: "auto"`;
+  - `.prettierignore`;
+  - `eslint.config.js`: reglas recomendadas de JavaScript y React, solo `rules-of-hooks` y `exhaustive-deps` de los hooks, sin `prop-types`, globales de Vitest en las pruebas y `eslint-config-prettier` al final.
+- **Frontend**, scripts nuevos: `format`, `format:check` y `lint` (con `--max-warnings 0`).
+- **Backend**:
+  - `requirements-dev.txt`: `-r requirements.txt` más `ruff==0.16.10`;
+  - `ruff.toml`: 120 caracteres, comillas simples, `py310`, `line-ending = "auto"`, sin las migraciones, reglas E, W, F, I, B y DJ, con E501 desactivada solo en las tablas de `seed_data.py`.
+- **Raíz:**
+  - `npm run check` (`scripts/check.mjs`): corre las cuatro comprobaciones sin cambiar archivos y termina con error si alguna falla;
+  - 4 pruebas en `scripts/check.test.mjs`. La raíz pasa de 8 a 12 pruebas.
+- **VS Code:**
+  - `.vscode/settings.json`: formato al guardar con el Prettier de `frontend/node_modules` (solo donde hay `.prettierrc`) y el Ruff del venv;
+  - `.vscode/extensions.json`: Prettier, ESLint y Ruff;
+  - `.gitignore` ignora el resto de `.vscode/`.
+- **Documentación:**
+  - README: sección nueva "Formato y Linter", tecnologías, estructura, instalación con `requirements-dev.txt` y VS Code;
+  - `CLAUDE.md`: comandos; desaparece "No hay linter configurado";
+  - el plan y `docs/progreso.md`.
+
+**Por qué:** fase 2 de `docs/plan-calidad-y-diseno.md`. Hasta ahora el formato dependía de cada persona y no había linter (auditoría inicial, sección 1). El formateo del código va en el commit siguiente, solo, para que no se mezcle con cambios reales.
+
 ### El encabezado del PDF se congela al finalizar (decisión D-15)
 
 **Qué se cambió**

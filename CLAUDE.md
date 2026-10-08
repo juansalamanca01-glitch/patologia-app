@@ -21,13 +21,14 @@ PathoLab: app web para crear, gestionar y exportar a PDF informes histopatológi
 Desde la raíz (después de `npm install` en la raíz):
 ```powershell
 npm run dev      # arranca backend (8000) y frontend (5173) juntos; Ctrl + C detiene los dos
-npm test         # pruebas de scripts/ (comprobaciones previas de npm run dev)
+npm run check    # formato y linter de frontend (Prettier, ESLint) y backend (Ruff), sin cambiar archivos
+npm test         # pruebas de scripts/ (comprobaciones de npm run dev y de npm run check)
 ```
 `scripts/dev.mjs` revisa el entorno con `scripts/entorno.mjs` (venv, `backend/.env`, `frontend/node_modules`), avisa de migraciones pendientes (`migrate --check`) y lanza los dos servidores con `concurrently`.
 
 Backend (desde `backend/`, con el venv activado: `.\venv\Scripts\Activate.ps1`):
 ```powershell
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # producción (requirements.txt) + Ruff
 python manage.py migrate
 python manage.py seed_data        # usuarios de prueba, 14 patologías con sus plantillas, temas del foro, servicios, EPS y 2 pacientes ficticios (idempotente)
 python manage.py runserver        # http://127.0.0.1:8000
@@ -35,6 +36,8 @@ python manage.py makemigrations <app>
 python manage.py test                                  # todas las pruebas
 python manage.py test accounts                         # pruebas de una app
 python manage.py test accounts.tests.PerfilCamposProtegidosTests.test_no_puede_cambiar_su_rol  # una sola prueba
+python -m ruff format .           # formato (ruff.toml: 120 caracteres, comillas simples, py310; sin migraciones)
+python -m ruff check .            # linter (E, W, F, I, B, DJ); --fix para los arreglos automáticos
 ```
 
 Frontend (desde `frontend/`):
@@ -45,9 +48,11 @@ npm run build
 npm test         # pruebas con Vitest (una vez)
 npm run test:watch  # pruebas en modo observación
 npx vitest run src/pages/PerfilPage.test.jsx  # un solo archivo de pruebas
+npm run format   # Prettier (.prettierrc: comillas simples, punto y coma, 120 caracteres, endOfLine auto)
+npm run lint     # ESLint 9 (eslint.config.js; --max-warnings 0)
 ```
 
-Las pruebas del backend están en `backend/*/tests.py`: `APITestCase` de DRF para la API y `SimpleTestCase` en `config/tests.py` para la configuración. Las del frontend usan Vitest + React Testing Library + jsdom (configuración en `vite.config.js` y `src/test/setup.js`), en archivos `*.test.jsx` junto al componente, y simulan la API con `vi.mock('../api/client')`. No hay linter configurado (llega en la fase 2 del plan). De `docs/auditoria-inicial.md` solo queda abierto I-9c. El plan de trabajo está en `docs/plan-calidad-y-diseno.md`, y todos los pendientes, en la sección "Pendientes" de `docs/progreso.md`. `PathoLab_API.postman_collection.json` contiene la colección de la API.
+Las pruebas del backend están en `backend/*/tests.py`: `APITestCase` de DRF para la API y `SimpleTestCase` en `config/tests.py` para la configuración. Las del frontend usan Vitest + React Testing Library + jsdom (configuración en `vite.config.js` y `src/test/setup.js`), en archivos `*.test.jsx` junto al componente, y simulan la API con `vi.mock('../api/client')`. El formato lo hacen Prettier (frontend) y Ruff (backend), y los linters son ESLint y Ruff. `npm run check` debe terminar sin errores ni avisos. Si una regla no aplica en un caso, se desactiva solo en esa línea y con su motivo en un comentario. `.vscode/settings.json` formatea al guardar con las mismas versiones (Prettier de `frontend/node_modules`, Ruff del venv). De `docs/auditoria-inicial.md` solo queda abierto I-9c. El plan de trabajo está en `docs/plan-calidad-y-diseno.md`, y todos los pendientes, en la sección "Pendientes" de `docs/progreso.md`. `PathoLab_API.postman_collection.json` contiene la colección de la API.
 
 Usuarios de `seed_data`: `admin/admin1234`, `patologo1/patologo1234` (registro médico `RM-PRUEBA-0001`, que se le asigna también si ya existía sin registro), `patologo2/patologo2345` (registro médico `RM-PRUEBA-0002`; sirve para probar D-2: un patólogo no modifica informes de otro; si ya existe, no se toca), `auditor1/auditor1234`. `seed_data` los crea directamente, sin validadores. La API (registro y cambio de contraseña) sí aplica `AUTH_PASSWORD_VALIDATORS` mediante `validar_contrasena()` de `accounts/serializers.py`, así que esas contraseñas no se aceptarían como contraseña nueva.
 

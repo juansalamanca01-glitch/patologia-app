@@ -1,0 +1,5 @@
+# Prettier solo formatea el código fuente y la configuración del frontend.
+dist/
+coverage/
+node_modules/
+package-lock.json

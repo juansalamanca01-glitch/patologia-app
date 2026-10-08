@@ -21,6 +21,7 @@
 - [Arrancar el Proyecto](#arrancar-el-proyecto)
 - [Usuarios y Cuentas de Prueba](#usuarios-y-cuentas-de-prueba)
 - [Pruebas Automáticas](#pruebas-automáticas)
+- [Formato y Linter](#formato-y-linter)
 - [Catálogo de Patologías Incluidas](#catálogo-de-patologías-incluidas)
 - [Referencia de la API REST](#referencia-de-la-api-rest)
 - [Flujo de Trabajo del Informe](#flujo-de-trabajo-del-informe)
@@ -138,12 +139,14 @@ Un informe finalizado se corrige **siempre** agregándole una adenda. No hay otr
   - python-decouple (configuración desde `.env`)
   - ReportLab (PDF) y Pillow (validación de imágenes)
   - SQLite en desarrollo; PostgreSQL si se define `DB_NAME` en el `.env`
+  - Ruff (formato y linter, solo en desarrollo)
 - **Frontend**:
   - React 18 y React Router 6 (router de datos: `createBrowserRouter`)
   - Vite 6.4
   - Axios (añade el token JWT a cada petición y lo renueva automáticamente si vence)
   - Estilos propios en `src/index.css`, sin librería de componentes
   - Pruebas con Vitest 5 y React Testing Library
+  - Prettier (formato) y ESLint (errores y malas prácticas), solo en desarrollo
 
 ---
 
@@ -185,7 +188,9 @@ patologia-app/
 │   │   ├── views.py / urls.py # Endpoints /api/foro/
 │   │   └── tests.py
 │   ├── manage.py
-│   ├── requirements.txt
+│   ├── requirements.txt       # Dependencias de producción
+│   ├── requirements-dev.txt   # Las de producción más Ruff (formato y linter)
+│   ├── ruff.toml              # Configuración de Ruff
 │   └── .env.example           # Plantilla del .env (SECRET_KEY obligatoria)
 ├── frontend/
 │   ├── src/
@@ -201,12 +206,15 @@ patologia-app/
 │   │   ├── App.jsx            # Rutas (protegidas, públicas y legales)
 │   │   └── index.css          # Estilos globales
 │   ├── package.json
+│   ├── .prettierrc            # Configuración de Prettier (formato)
+│   ├── eslint.config.js       # Configuración de ESLint (errores y malas prácticas)
 │   ├── vite.config.js         # Proxy /api → backend y configuración de Vitest
 │   └── .env.example           # Plantilla del .env (VITE_API_URL)
 ├── docs/                      # Auditoría, decisiones, propuesta del informe v2 y estado del trabajo
 ├── CHANGELOG.md               # Registro de cambios
-├── scripts/                   # "npm run dev": comprobaciones y arranque de backend + frontend
-├── package.json               # Comandos de la raíz (npm run dev, npm test)
+├── scripts/                   # "npm run dev" (comprobaciones y arranque) y "npm run check" (formato y linter)
+├── .vscode/                   # Formato al guardar y extensiones recomendadas para VS Code
+├── package.json               # Comandos de la raíz (npm run dev, npm run check, npm test)
 ├── CLAUDE.md                  # Guía para el asistente de código
 └── PathoLab_API.postman_collection.json
 ```
@@ -253,8 +261,9 @@ cd patologia-app
 
 3. **Instala las dependencias:**
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
    ```
+   `requirements-dev.txt` instala las dependencias de producción (`requirements.txt`) más Ruff, la herramienta de formato y linter. En un servidor basta con `pip install -r requirements.txt`.
 
 4. **Crea el archivo `.env` (obligatorio):**
    ```bash
@@ -384,12 +393,42 @@ python manage.py test informes            # las de una app
 npm test                                  # todas las pruebas, una vez
 npm run test:watch                        # se repiten al guardar cambios
 
-# Comprobaciones de "npm run dev" (desde la raíz)
+# Comprobaciones de "npm run dev" y "npm run check" (desde la raíz)
 npm test
 ```
 
 - **Backend:** cubre el número de petición (formato, reinicio por año, creación simultánea desde varios hilos y numeración de los informes existentes al migrar), los permisos por rol, los pacientes (edad calculada, documento único, validaciones, búsqueda e historial), los datos de la solicitud del informe (paciente obligatorio, fecha de ingreso, EPS del momento del estudio, búsqueda por paciente), el contenido del informe (microscópica, comentarios, diagnósticos y validación del CIE-10), la finalización (requisitos, fecha de informe, firma del autor y datos congelados), las adendas (solo en finalizados, permisos, numeración, firma congelada, sin edición y en el PDF), quién puede descargar el PDF de un borrador y su marca de agua, el registro médico, los catálogos de EPS y servicios (y su borrado cuando están en uso), las opciones fijas (`/api/opciones/`), el bloqueo de informes finalizados, la validación de campos obligatorios y de contraseñas, el PDF, la paginación y estadísticas, la subida de imágenes y la configuración segura.
 - **Frontend:** cubre el formulario del informe (paciente, datos de la solicitud, diagnósticos, firma, requisitos para finalizar, adendas y orden de las tarjetas), la página de pacientes y su historial, la pantalla de catálogos, los listados, la página de perfil, la exportación a PDF (y la vista previa de un borrador), el aviso al salir con cambios sin guardar y el autoguardado de los borradores (D-13), el cierre de sesión por `/salir`, las imágenes del foro y su visor, y la dirección de la API.
+
+---
+
+## Formato y Linter
+
+El formato del código lo deciden herramientas, no cada persona, para que los cambios de una revisión sean solo cambios reales:
+
+| Herramienta | Dónde | Qué hace |
+|---|---|---|
+| **Prettier** 3.9 | `frontend/` | Formato de JavaScript, JSX, CSS, HTML y JSON (comillas simples, punto y coma, líneas de hasta 120 caracteres) |
+| **ESLint** 9 | `frontend/` | Errores y malas prácticas: variables sin usar, reglas de los hooks de React, etc. El formato lo deja a Prettier (`eslint-config-prettier`) |
+| **Ruff** 0.16 | `backend/` | Formato (como Black, con comillas simples) y linter de Python: errores, orden de los imports, errores probables y buenas prácticas de Django. No revisa las migraciones |
+
+Antes de hacer un commit, desde la raíz:
+```bash
+npm run check
+```
+Revisa las cuatro cosas (formato y linter de cada lado) sin cambiar ningún archivo, y termina con error si alguna falla. Para corregir el formato:
+```bash
+cd frontend && npm run format          # Prettier
+cd backend && python -m ruff format .  # Ruff (con el entorno virtual activado)
+```
+También están `npm run lint` (frontend) y `python -m ruff check .` (backend, con `--fix` para los arreglos automáticos).
+
+**VS Code:** el proyecto trae `.vscode/settings.json`, que formatea al guardar (Prettier en el frontend y Ruff en el backend), y `.vscode/extensions.json`, con las extensiones recomendadas. La primera vez que abras el proyecto, VS Code ofrecerá instalarlas:
+- **Prettier** (`esbenp.prettier-vscode`);
+- **ESLint** (`dbaeumer.vscode-eslint`);
+- **Ruff** (`charliermarsh.ruff`).
+
+Al guardar se usan las mismas versiones que `npm run check`: el Prettier de `frontend/node_modules` y el Ruff del entorno virtual del backend. Prettier solo formatea archivos de `frontend/`, así que no toca la documentación ni la colección de Postman.
 
 ---
 

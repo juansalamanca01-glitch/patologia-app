@@ -162,7 +162,7 @@ Desde la fase 2 se suman las comprobaciones de formato y linter.
 
 ---
 
-## Fase 2: herramientas de calidad
+## Fase 2: herramientas de calidad (en curso)
 
 **Qué se hace:**
 
@@ -186,6 +186,15 @@ Desde la fase 2 se suman las comprobaciones de formato y linter.
 4. **Comando único:**
    - `npm run check` en la raíz corre las cuatro comprobaciones (formato y linter de cada lado).
    - `scripts/entorno.mjs` no cambia: las comprobaciones no bloquean `npm run dev`.
+
+**Ajustes aprobados por el usuario el 2026-10-08:**
+- 120 caracteres de ancho.
+- `.vscode/settings.json` (formato al guardar) y `.vscode/extensions.json` (Prettier, ESLint y Ruff), explicados en el README.
+- `target-version = "py310"` en Ruff, porque el README admite Python 3.10. Nada del código exige 3.11.
+- Versiones: Prettier 3.9.9 y Ruff 0.16.10, exactas; ESLint 9.39 y no 10, porque `eslint-plugin-react` todavía no lo admite.
+- `endOfLine: "auto"` en Prettier y `line-ending = "auto"` en Ruff: con `core.autocrlf=true`, Git deja los archivos en CRLF en Windows.
+- Solo las reglas `rules-of-hooks` y `exhaustive-deps` de `eslint-plugin-react-hooks` 7: su preset completo trae reglas del React Compiler, que el proyecto no usa.
+- `scripts/check.mjs` (`npm run check`) con su prueba.
 
 **Orden de los commits** (el formateo no se mezcla con nada más):
 1. Instalación y configuración de las herramientas, sin tocar el código.

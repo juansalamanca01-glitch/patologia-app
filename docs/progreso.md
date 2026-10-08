@@ -13,7 +13,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 - **Proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`.
 - **Plan vigente:** `docs/plan-calidad-y-diseno.md`, aprobado el 2026-10-08. Cada fase va en su propia rama desde `main`.
-- **Rama de trabajo:** `encabezado-configurable`, creada el 2026-10-08 desde `main` (tarea previa 2). La siguiente será `fase-2-herramientas-calidad`.
+- **Rama de trabajo:** `fase-2-herramientas-calidad`, creada el 2026-10-08 desde `main`.
 - **Estado:**
   - Están terminados y en `main`:
     - la auditoría inicial (salvo I-9c);
@@ -27,7 +27,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 263 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 134 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 12 de la raíz (`npm test`, comprobaciones de `npm run dev` y de `npm run check`), 263 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 134 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -94,11 +94,15 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | `npm audit fix`: `shell-quote` (crítico, raíz) y `source-map-js` (alto, frontend), los dos de herramientas de desarrollo. Quedan solo las 2 moderadas de `react-router` (I-9c, fase 3) | `fadac1d` |
 | — | D-14 ampliada: un informe finalizado tampoco se borra desde `/admin/`, tenga o no adendas; idea futura de un estado "Anulado" | `8c084e8` |
 | — | Tarea previa 2 del plan: el encabezado del PDF (nombre, dirección y teléfono del laboratorio) se lee de `backend/.env`, con el de demostración por defecto; el teléfono va en su propia línea y solo si existe | `539a88d` |
-| D-15 | El encabezado se congela al finalizar (`datos_finalizacion['laboratorio']`); la migración 0012 da el de demostración a los finalizados existentes. Lo encontró el usuario al probar la tarea previa 2 | commit "fix: encabezado congelado al finalizar (D-15)" |
+| D-15 | El encabezado se congela al finalizar (`datos_finalizacion['laboratorio']`); la migración 0012 da el de demostración a los finalizados existentes. Lo encontró el usuario al probar la tarea previa 2 | `c0f08c8` |
 
 ## Siguiente paso
 
-1. **Ahora: fase 2** del plan (Prettier, ESLint y Ruff), en la rama `fase-2-herramientas-calidad` desde `main`. Primero se muestra la configuración propuesta y se espera confirmación.
+1. **Ahora: fase 2** del plan (Prettier, ESLint y Ruff), en la rama `fase-2-herramientas-calidad`. Aprobada el 2026-10-08 con ajustes (ver el plan). Commits:
+   1. herramientas y configuración (hecho);
+   2. solo formato;
+   3. imports ordenados por Ruff;
+   4. arreglos a mano, **que se muestran al usuario antes de aplicarlos**.
 2. **Luego, las fases 3 a 8** del plan, en orden. Al terminar cada fase se actualizan esta sección y "Pendientes".
 3. **Para arrancar la aplicación:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 
