@@ -12,8 +12,15 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 ## Dónde estamos
 
 - **Proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`.
-- **Rama de trabajo:** `ajustes-prueba-manual`, creada el 2026-10-05 desde `main` (que es igual a `informe-v2`) para las observaciones de la prueba manual (sección "Pendientes"). Se trabaja solo el Bloque A, en el orden 1, 2, 3.
-- **Estado:** la auditoría inicial y el informe de anatomía patológica v2 (etapas 1 a 9, D-12 y los arreglos que salieron de la prueba manual final) están terminados y en `main`. El detalle está en la tabla "Hecho" y en `CHANGELOG.md`.
+- **Plan vigente:** `docs/plan-calidad-y-diseno.md`, aprobado el 2026-10-08. Cada fase va en su propia rama desde `main`.
+- **Rama de trabajo:** `docs-pendientes`, creada el 2026-10-08 desde `main` para el inventario de pendientes (solo documentación).
+- **Estado:**
+  - Están terminados y en `main`:
+    - la auditoría inicial (salvo I-9c);
+    - el informe de anatomía patológica v2 (etapas 1 a 9 y D-12);
+    - los Bloques A y B (punto 4) de la prueba manual;
+    - la fase 1 y la tarea previa 1 del plan.
+  - El detalle está en la tabla "Hecho" y en `CHANGELOG.md`.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
   1. Escribir una prueba que demuestre el fallo y mostrar que falla.
   2. Explicar el arreglo y esperar confirmación.
@@ -82,53 +89,123 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Prueba manual del Bloque A hecha por el usuario: todo salió bien. Se une `ajustes-prueba-manual` a `main` y el Bloque B sigue en la rama `bloque-b-estetica` | `4a9284d` |
 | — | Fase 1 del plan (Bloque B, punto 4): el PDF va todo en negro (el rojo solo en el aviso de adendas y en la marca de agua), con los títulos en negrita y una línea fina negra bajo el encabezado. El usuario lo confirmó el 2026-10-08 | `8021597` |
 | — | Plan de calidad, seguridad y diseño (`docs/plan-calidad-y-diseno.md`), aprobado el 2026-10-08 | `43a40e7` |
-| — | Tarea previa del plan: `seed_data` crea `patologo2` (`patologo2345`, `RM-PRUEBA-0002`) para probar D-2; si ya existe, no lo cambia | commit "feat: patologo2 en seed_data" |
-
-## Pendientes
-
-Observaciones del usuario en la prueba manual del 2026-10-05.
-
-**Bloque A (funcional), en la rama `ajustes-prueba-manual`, en este orden:**
-1. ~~En la pantalla del informe, los datos del paciente aparecen pegados a su etiqueta (por ejemplo, "Nombreluis"). Pasa solo en pantalla; en el PDF se ve bien.~~ **Hecho**: lista de definiciones (`<dt>`/`<dd>`) en `SelectorPaciente`.
-2. ~~En el foro, las imágenes se ven pequeñas y no se pueden abrir en grande. Al hacer clic deberían verse ampliadas.~~ **Hecho**: miniaturas más grandes y visor (`components/VisorImagenes.jsx`).
-3. Si el usuario sale del formulario del informe sin guardar, pierde todo lo que escribió. **Primero se proponen opciones, sin implementar.** Idea del usuario:
-   - avisar antes de salir si hay cambios sin guardar;
-   - en informes que ya existen como borrador, autoguardar en el servidor;
-   - no autoguardar informes nuevos (gastaría números de petición);
-   - no guardar copias en el navegador (serían datos de pacientes en el computador).
-
-   **Aprobado el 2026-10-05 como D-13** (opción B): aviso con "Seguir editando", "Salir sin guardar" y "Guardar y salir" (si este falla por validación, no se sale) y autoguardado a los 5 segundos solo en borradores existentes. **Hecho.**
-
-**Bloque B (estética), en la rama `bloque-b-estetica`:**
-
-4. ~~PDF: todo en negro (sin azul), títulos en negrita y sin la línea azul debajo del título.~~ **Hecho** el 2026-10-08: negro en todo, rojo solo en el aviso de adendas y la marca de agua, línea fina negra en el encabezado.
-5. Rediseño general: sin bordes redondeados, tipografía más sobria, aspecto profesional y clínico. **Pasa a las fases 5, 6 y 7 de `docs/plan-calidad-y-diseno.md`.**
+| — | Tarea previa del plan: `seed_data` crea `patologo2` (`patologo2345`, `RM-PRUEBA-0002`) para probar D-2; si ya existe, no lo cambia | `7ea0125` |
 
 ## Siguiente paso
 
-1. **El trabajo sigue el plan de `docs/plan-calidad-y-diseno.md`** (8 fases y una tarea previa), aprobado por el usuario el 2026-10-08. Las fases 5 y 6 se cierran solo cuando las aprueban el usuario, el equipo y el profesor.
-   - **Fase 1 (PDF en negro): terminada** el 2026-10-08. El usuario confirmó el PDF y `bloque-b-estetica` se unió a `main`.
-   - **Tarea previa (`patologo2` en `seed_data`): terminada** el 2026-10-08 en la rama `seed-patologo2`.
-   - **Ahora: fase 2 (herramientas de calidad)**, en una rama `fase-2-herramientas-calidad` desde `main`. Primero se explica la configuración y se espera confirmación.
-   - Después: fase 2 (Prettier, ESLint, Ruff), 3 (auditoría OWASP), 4 (correcciones, abierta), 5 (guía de diseño con `frontend-design`, que está en `~/.claude/skills/` del usuario), 6 (pantalla del informe), 7 (resto de pantallas = Bloque B, punto 5) y 8 (cierre).
-   - Al terminar cada fase, se actualiza esta sección.
-2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
-3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
-4. **Ideas de la Hoja de Ruta del README:** plantillas microscópicas e IHQ, catálogo CIE-10 y CIE-O, imágenes en los informes, encabezado del PDF configurable, firma digital, integración HL7/FHIR, registro de accesos y contenedores Docker.
-5. **Para trabajo nuevo:** crear una rama desde `main` con un nombre que describa la tarea.
+1. **Ahora:** el usuario revisa el inventario de pendientes del 2026-10-08 (secciones "Pendientes" y "Pendiente de respuesta del usuario"). No se sigue hasta que responda.
+2. **Después: tarea previa 2** del plan (encabezado del PDF configurable), en la rama `encabezado-configurable`. Primero se explica y se espera confirmación.
+3. **Luego, las fases 2 a 8** del plan, en orden. Al terminar cada fase se actualizan esta sección y "Pendientes".
+4. **Para arrancar la aplicación:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 
-Para volver a unir la rama a `main` (con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado): comprobar que todas las pruebas pasan, ejecutar `git switch main`, luego `git merge --ff-only <rama de trabajo>` y `git push origin main`, y volver con `git switch <rama de trabajo>`. Siempre preguntar antes al usuario.
+Para unir una rama a `main` (con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado):
+1. Comprobar que todas las pruebas pasan.
+2. Ejecutar `git switch main`, luego `git merge --ff-only <rama de trabajo>` y `git push origin main`.
+3. Volver con `git switch <rama de trabajo>`.
+
+Siempre se pregunta antes al usuario.
+
+## Pendientes
+
+Inventario del 2026-10-08: todo lo pendiente, sin terminar o anotado para después en la documentación. En el código no hay comentarios `TODO` ni `FIXME`. Cada punto aparece una sola vez, con su origen.
+
+### 1. Del plan (`docs/plan-calidad-y-diseno.md`), en orden
+
+| # | Qué | Origen |
+|---|---|---|
+| 1 | **Tarea previa 2:** encabezado del PDF configurable desde `backend/.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION`, `LABORATORIO_TELEFONO`), con el valor actual por defecto | Propuesta v2, 5.1 (P-9); hoja de ruta del README; `CLAUDE.md`; pedido del usuario del 2026-10-08 |
+| 2 | **Fase 2:** Prettier, ESLint y Ruff | Plan; auditoría inicial, sección 1 ("no hay linter") |
+| 3 | **Fase 3:** auditoría OWASP. Evalúa además estos puntos ya conocidos: | Plan |
+|   | • I-9c: 2 vulnerabilidades moderadas de `react-router` 6 (se cierran con React Router 7). Hay que revisar de nuevo el análisis de I-9a, porque desde D-13 la app usa `createBrowserRouter` | Auditoría inicial, I-9; `CHANGELOG.md`, I-9a |
+|   | • **Nuevo:** `shell-quote` 1.9.0, **crítico**, en la raíz, a través de `concurrently` | `npm audit` del 2026-10-08 |
+|   | • **Nuevo:** `source-map-js` 1.2.1, **alto**, en las herramientas del frontend, a través de Vite y PostCSS | `npm audit` del 2026-10-08 |
+|   | • Dependencias de Python sin versiones fijas | `backend/requirements.txt` |
+|   | • `/admin/` permite editar informes finalizados (ver la sección 2) | D-3 frente a D-9 y el README |
+|   | • Conflicto entre pestañas o equipos: gana el último guardado (propuesta: comparar `fecha_actualizacion` y responder 409) | D-13; anotado por el usuario el 2026-10-05 |
+|   | • Registro de accesos (quién consulta qué informe o paciente y cuándo, también el PDF) | Hoja de ruta del README; Ley 1581 de 2012 |
+|   | • Clave antigua en el historial de git | Auditoría inicial, C-3 |
+|   | • Datos del paciente en la dirección (`?q=`) y tokens en `localStorage` | Etapa 3; plan, fase 3 (A07) |
+| 4 | **Fase 4:** las correcciones que elija el usuario de la fase 3 | Plan |
+| 5 | **Fase 5:** guía de diseño. La aprueban el usuario, el equipo y el profesor | Plan; Bloque B, punto 5 |
+| 6 | **Fase 6:** pantalla del informe. La aprueban el usuario, el equipo y el profesor | Plan; Bloque B, punto 5 |
+| 7 | **Fase 7:** resto de pantallas | Plan; Bloque B, punto 5 |
+| 8 | **Fase 8:** cierre, que incluye las contradicciones entre documentos de la sección 5 | Plan |
+
+### 2. Necesitan una decisión del usuario
+
+- **Nombre del proyecto.** El equipo probablemente cambiará "PathoLab", y el nombre nuevo no está decidido. No se cambia nada hasta que lo esté; entonces se cambia de una sola vez en todos estos lugares:
+
+  | Dónde | Archivo y lugar |
+  |---|---|
+  | Pantallas | `frontend/src/components/Navbar.jsx:20` (marca del menú), `frontend/src/components/Footer.jsx:6` ("© año PathoLab"), `frontend/src/pages/LoginPage.jsx:37` (título del login) |
+  | Pestaña del navegador | `frontend/index.html:7-8` (`<meta name="description">` y `<title>`) |
+  | Textos legales | `frontend/src/pages/PoliticaPrivacidadPage.jsx:23`, `frontend/src/pages/TerminosCondicionesPage.jsx:19` y `:66` |
+  | PDF | `backend/informes/utils.py:87` (`ENCABEZADO_LABORATORIO`; con la tarea previa 2 pasa a ser el valor por defecto en `settings.py`), y las pruebas que lo comprueban, `backend/informes/tests.py:1752` y `:1781` |
+  | `/admin/` | `backend/accounts/admin.py:36` (sección "Datos de PathoLab") |
+  | Código interno | `backend/config/settings.py:148` y `backend/config/test_runner.py:14` (`PathoLabTestRunner`), `backend/foro/tests.py:15` (prefijo `patolab-media-pruebas-`), `frontend/src/index.css:2` (comentario), `scripts/dev.mjs:16` y `:48` (mensajes de `npm run dev`) |
+  | Nombres de paquete | `package.json` y `package-lock.json` de la raíz (`patolab` y la descripción), `frontend/package.json` y `frontend/package-lock.json` (`patholab-frontend`) |
+  | Ejemplos de dominio | `frontend/.env.example:9`, `frontend/src/api/client.js:7` y `frontend/src/api/client.test.js:24-30` (`api.patolab.com`) |
+  | Postman | `PathoLab_API.postman_collection.json`: el nombre del archivo y las líneas 4 y 5 (nombre y descripción de la colección) |
+  | Documentación | `README.md` (título, línea 9, línea 40, líneas 207 y 505 con el nombre del archivo de Postman, línea 593), `CLAUDE.md:5` y `:50`, `docs/auditoria-inicial.md:1`, `docs/propuesta-informe-v2.md:304` y `:485` (P-9), `docs/plan-calidad-y-diseno.md` (varias). `CHANGELOG.md` (7 líneas) es historial: no se reescribe, se agrega una entrada |
+  | Repositorio y carpetas | el repositorio `github.com/juansalamanca01-glitch/patologia-app` (no lleva "PathoLab"); la carpeta local `patolab-app-actualizado`, que también aparece en `docs/progreso.md:14` y en la memoria de Claude Code |
+
+  Esta lista es del 2026-10-08. Antes de hacer el cambio, se vuelve a buscar con `git grep -i "patholab\|patolab"`.
+- **Informes finalizados en `/admin/`:**
+  - D-3 permite "una corrección excepcional" desde `/admin/`, y hoy `InformeAdmin` deja cambiar el contenido, los diagnósticos y el estado de un informe finalizado sin dejar rastro.
+  - D-9 dice que un finalizado se corrige con adendas, y el README que "no se modifica".
+  - **Opciones:**
+    - dejar `/admin/` en solo lectura para los finalizados, con una decisión nueva que precise D-3;
+    - mantener la excepción y registrar quién cambió qué.
+
+  Se evalúa en la fase 3 y se decide antes de la fase 4.
+- **Avisos crítico y alto de `npm audit`** (sección 1, fase 3): hay que decidir si se corrigen ya, con `npm audit fix` sin cambio de versión principal, o se esperan a la fase 4. Ver "Pendiente de respuesta del usuario".
+
+### 3. Para producción (al publicar la aplicación)
+
+- Definir `SECRET_KEY` propia, `DEBUG=False`, `ALLOWED_HOSTS` y `CORS_ALLOWED_ORIGINS`. No reutilizar la clave antigua, que quedó en el historial de git (C-3).
+- Migrar de SQLite a **PostgreSQL**: `settings.py` ya lo permite con `DB_NAME`. Hay que pasar los datos y correr todas las pruebas contra PostgreSQL, en especial la de concurrencia del número de petición.
+- Configurar en el servidor web un límite de tamaño de petición, por ejemplo `client_max_body_size 60m;` en Nginx (nota de I-6 en `settings.py`).
+- Servir la carpeta `media/`, porque Django solo la sirve en desarrollo (M-12).
+- Configurar los registros del servidor web para que no guarden los parámetros de `GET /api/pacientes/?q=`, que llevan el nombre o el documento, o protegerlos como datos sensibles. Lo aprobó así el usuario en la etapa 3.
+- Revisión legal antes de un uso real con pacientes (Ley 1581 de 2012, Resolución 1995 de 1999), como dicen el README y la propuesta v2, sección 8.
+
+El **registro de accesos** también hace falta en producción, pero se evalúa en la fase 3 (sección 1).
+
+### 4. Ideas futuras, sin fase en el plan
+
+Vienen de la hoja de ruta del README y de la propuesta v2. Ninguna está pedida:
+- plantillas microscópicas e IHQ;
+- catálogo CIE-10 y CIE-O con autocompletado (propuesta v2, 3.6);
+- imágenes en los informes;
+- imagen de la firma (propuesta v2, 3.7 y etapa 10, opcional);
+- firma digital criptográfica;
+- integración HL7/FHIR;
+- contenedores Docker.
+
+La etapa 10 de la propuesta (imagen de la firma) no aparece en la hoja de ruta del README; se agrega allí en la fase 8.
+
+### 5. Contradicciones entre documentos encontradas en el inventario
+
+Se corrigen en la fase 8 (están listadas también en el plan), salvo que el usuario pida hacerlo antes:
+- `CLAUDE.md` dice que los hallazgos pendientes están en `docs/auditoria-inicial.md`, y solo queda I-9c. También dice "No hay linter configurado" (lo cambia la fase 2).
+- `docs/auditoria-inicial.md`:
+  - I-13 no tiene línea de estado;
+  - el estado de I-7 dice que falta corregir el README, y ya se hizo;
+  - la tabla de la sección 5 no dice qué se corrigió.
+- `docs/propuesta-informe-v2.md`:
+  - el estado dice "etapas 1 a 7", y también están hechas la 8 y la 9;
+  - la sección 8 nombra solo `RM-PRUEBA-0001`;
+  - la sección 8 dice que no se ponen datos del paciente en URL, y la búsqueda `?q=` sí los lleva (aprobado en la etapa 3).
+- `CHANGELOG.md`, I-9a: el análisis menciona `BrowserRouter`, y la app usa `createBrowserRouter` desde D-13.
+- `docs/decisiones.md`, D-3 frente a D-9 y el README (sección 2, `/admin/`).
+- `README.md`:
+  - la tabla "Documentación del Proyecto" no incluye `docs/plan-calidad-y-diseno.md`;
+  - "Pruebas Automáticas" no menciona las pruebas de D-13 ni del visor de imágenes.
 
 ## Pendiente de respuesta del usuario
 
-- Nada por ahora. (Etapa 5: el usuario aprobó el 2026-10-04 las secciones nuevas en el PDF actual, los botones para reordenar diagnósticos y dejar la búsqueda sin diagnósticos. El mismo día probó la etapa 5 a mano en el navegador y confirmó que se ven las tarjetas nuevas.)
-
-## Pendiente de hacer (anotado para no olvidarlo)
-
-- **Conflicto entre pestañas (D-13, para más adelante):** si el mismo borrador está abierto en dos pestañas o en dos equipos, gana el último guardado, y el autoguardado lo hace más probable. Hay que avisar del conflicto, por ejemplo comparando `fecha_actualizacion` antes de guardar y respondiendo 409 si el informe cambió desde que se cargó. Lo pidió anotar el usuario el 2026-10-05.
-- **Propuesta futura (decisión del usuario en la etapa 7):** que el encabezado del PDF se lea de `backend/.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION` y `LABORATORIO_TELEFONO`, opcional) en lugar de ser fijo. Está en la hoja de ruta del README.
-
-- **Producción:** al publicar la app, configurar en el servidor web un límite de tamaño de petición (por ejemplo, `client_max_body_size 60m;` en Nginx). Ver la nota de I-6 en `settings.py`.
-- **Producción:** migrar la base de datos de SQLite a **PostgreSQL**. `settings.py` ya lo permite definiendo `DB_NAME`. Hay que pasar los datos y correr todas las pruebas contra PostgreSQL, en especial la de concurrencia del número de petición.
-- **Producción:** agregar un **registro de accesos**: quién consulta qué informe o paciente y cuándo, incluidas las descargas del PDF. Los datos de salud son datos sensibles (Ley 1581 de 2012), y la historia clínica exige saber quién accedió a ella.
-- **Producción:** la búsqueda de pacientes (`GET /api/pacientes/?q=`) lleva el nombre o el documento en la dirección. Hay que configurar los registros del servidor web para que no guarden esos parámetros, o protegerlos como datos sensibles. Lo aprobó así el usuario en la etapa 3.
+- **Revisión del inventario** (secciones 1 a 5 de "Pendientes").
+- **Avisos crítico (`shell-quote`) y alto (`source-map-js`) de `npm audit`:** ¿se corrigen ya, antes de la tarea previa 2, o en la fase 4?
+  - Son herramientas de desarrollo: no llegan a la aplicación publicada.
+  - `npm audit fix` los arregla sin cambio de versión principal.
+- **Contradicciones de la sección 5:** ¿se corrigen ya, en esta rama (solo documentación), o en la fase 8?

@@ -1,7 +1,11 @@
 # Plan: calidad, seguridad y diseño
 
 **Fecha:** 2026-10-08
-**Estado:** aprobado por el usuario el 2026-10-08, con un cambio: las fases 5 y 6 las aprueban el usuario, el equipo y el profesor. La fase 1 se cerró ese mismo día.
+**Estado:** aprobado por el usuario el 2026-10-08, con un cambio: las fases 5 y 6 las aprueban el usuario, el equipo y el profesor.
+- Ese mismo día se cerraron la fase 1 y la tarea previa 1.
+- También se agregaron la tarea previa 2 y los puntos del inventario de pendientes.
+
+Lo que no pertenece a ninguna fase está en "Pendientes" de `docs/progreso.md`: producción, decisiones del usuario e ideas futuras.
 
 **Objetivo:** después del informe v2 y de los ajustes de la prueba manual (Bloque A), el trabajo sigue en 8 fases:
 - dejar el PDF sobrio;
@@ -39,7 +43,7 @@ Desde la fase 2 se suman las comprobaciones de formato y linter.
 
 ---
 
-## Tarea previa (propuesta): `patologo2` en `seed_data`
+## Tarea previa 1: `patologo2` en `seed_data` (terminada)
 
 **Qué se encontró:**
 - `seed_data` crea solo `admin`, `patologo1` y `auditor1` (`backend/informes/management/commands/seed_data.py`). No crea `patologo2`.
@@ -70,6 +74,56 @@ Desde la fase 2 se suman las comprobaciones de formato y linter.
 - las 3 pruebas nuevas pasan;
 - `python manage.py seed_data` en una base vacía permite entrar como `patologo2`;
 - el README lista los 4 usuarios.
+
+---
+
+## Tarea previa 2: encabezado del PDF configurable
+
+**Origen:**
+- Observación del usuario del 2026-10-08: el encabezado "PathoLab — Laboratorio de Patología (demostración)" probablemente no se quede así.
+- Ya estaba anotado como propuesta futura:
+  - `docs/propuesta-informe-v2.md`, sección 5.1 (respuesta P-9);
+  - la hoja de ruta del README;
+  - `CLAUDE.md`;
+  - `docs/progreso.md`.
+
+**Qué se hace:**
+- **Configuración:** `backend/config/settings.py` lee con `python-decouple`, desde `backend/.env`:
+
+  | Variable | Valor por defecto |
+  |---|---|
+  | `LABORATORIO_NOMBRE` | "PathoLab — Laboratorio de Patología (demostración)" |
+  | `LABORATORIO_DIRECCION` | "Santiago de Cali, Colombia" (el texto de la segunda línea actual) |
+  | `LABORATORIO_TELEFONO` | vacío |
+
+  Sin `.env`, o sin estas variables, el PDF queda exactamente igual que hoy.
+- **PDF:** `_encabezado()` (`backend/informes/utils.py`) usa esos valores en lugar de las constantes `ENCABEZADO_LABORATORIO` y `ENCABEZADO_CIUDAD`.
+  - Si el teléfono está vacío, no se imprime su línea.
+  - Los valores pasan por `texto_seguro()`, como todo texto que no escribe el programa (I-3): ReportLab interpreta etiquetas.
+- **`.env.example`:** explica las tres variables, con un ejemplo ficticio. No se usa el nombre ni los datos de ningún laboratorio real.
+- **Pruebas** (en `PdfInformeTests`, con `override_settings`):
+  - sin configurar, se imprimen los valores por defecto;
+  - con valores propios, se imprimen esos;
+  - con teléfono, aparece su línea; sin teléfono, no;
+  - un valor con `<` o `&` sale escapado;
+  - un valor con tildes y raya (—) leído del `.env` se imprime bien (codificación UTF-8).
+
+**Archivos:**
+- Código: `backend/config/settings.py`, `backend/.env.example`, `backend/informes/utils.py` y `backend/informes/tests.py`.
+- Documentación:
+  - README: "Características", la configuración del `.env` y la hoja de ruta, donde el punto se marca como hecho;
+  - `CLAUDE.md`: hoy dice que el encabezado es fijo;
+  - `docs/propuesta-informe-v2.md`: nota en la sección 5.1;
+  - `CHANGELOG.md` y `docs/progreso.md`.
+
+**Rama:** `encabezado-configurable`, desde `main`, después de la tarea previa 1 y antes de la fase 2. Pedida por el usuario el 2026-10-08. **Antes de implementarla, se explica y se espera confirmación.**
+
+**Terminada cuando:**
+- las pruebas nuevas pasan;
+- cambiar `LABORATORIO_NOMBRE` en `backend/.env` y reiniciar el backend cambia el encabezado del PDF;
+- sin las variables, el PDF es idéntico al actual.
+
+**Relación con el cambio de nombre:** el nombre del proyecto no está decidido (ver "Pendientes" en `docs/progreso.md`). Con esta tarea, el encabezado del PDF de una instalación se cambia en `.env`, sin tocar código. El valor por defecto, en cambio, se cambia junto con el resto del nombre.
 
 ---
 
@@ -175,6 +229,27 @@ Las categorías de la edición 2025:
 | A08 | Fallos de integridad de software o datos | Datos congelados (D-10), adendas (D-9), número de petición (D-7) |
 | A09 | Fallos en el registro y las alertas de seguridad | Registro de accesos (pendiente en `progreso.md`), qué se registra hoy |
 | A10 | Mal manejo de condiciones excepcionales | Errores 500, mensajes que revelan detalles internos, comportamiento ante fallos |
+
+**Puntos ya conocidos que el informe debe evaluar** (salen del inventario del 2026-10-08):
+- **I-9c:** 2 vulnerabilidades moderadas de `react-router` 6, que solo se cierran con React Router 7 (`docs/auditoria-inicial.md`, I-9; `CHANGELOG.md`, I-9a).
+  - El análisis de I-9a dice que GHSA-337j-9hxr-rhxg no afecta porque "PathoLab usa `BrowserRouter` sin SSR".
+  - Desde D-13, `App.jsx` usa `createBrowserRouter`, justo la API que nombra el aviso.
+  - La conclusión (no hay SSR) probablemente sigue siendo válida, pero hay que volver a comprobarla.
+- **Avisos nuevos de `npm audit` (2026-10-08), que no existían en I-9:**
+  - **Crítico:** `shell-quote` 1.9.0, que usa `concurrently` 10.0.5 en la raíz (solo para `npm run dev`).
+  - **Alto:** `source-map-js` 1.2.1, que usa Vite a través de PostCSS en el frontend (solo en desarrollo).
+  - Los dos tienen arreglo sin cambio de versión principal (`npm audit fix`).
+- **`requirements.txt` con rangos de versiones** (`Django>=4.2,<5.0`…) y sin archivo de bloqueo (A03).
+- **Edición de informes finalizados en `/admin/`** (A01/A08).
+  - D-3 permite "una corrección excepcional" desde `/admin/`.
+  - `InformeAdmin` deja cambiar el contenido, los diagnósticos y hasta el `estado` de un informe finalizado, sin dejar rastro.
+  - Esto choca con D-9 (las correcciones se hacen con adendas) y con el README ("un informe finalizado no se modifica").
+  - **Necesita una decisión del usuario.**
+- **Conflicto entre pestañas** (D-13): gana el último guardado, sin aviso (A06/A08). Propuesta anotada: comparar `fecha_actualizacion` y responder 409.
+- **Registro de accesos:** no se registra quién consulta qué informe o paciente (A09).
+- **Clave antigua en el historial de git** (C-3): cualquier servidor que la haya usado debe cambiarla (A04).
+- **Datos del paciente en la dirección** (`GET /api/pacientes/?q=`), aprobado en la etapa 3 con la condición de configurar los registros del servidor web (A02).
+- **Tokens en `localStorage`** (A07): conviene evaluar el riesgo frente a XSS.
 
 **Dependencias:**
 - **npm:** `npm audit` en `frontend/` y en la raíz.
@@ -325,6 +400,24 @@ Se hace por grupos de pantallas, con un commit por grupo, para revisar de a poco
    - el aviso de cambios sin guardar;
    - ventana angosta.
 4. Unión a `main` y cierre del plan: en este documento, el estado pasa a "terminado".
+
+**Contradicciones y textos desactualizados ya detectados** (inventario del 2026-10-08), que se corrigen aquí si no se corrigieron antes:
+- `CLAUDE.md`:
+  - dice "Los hallazgos pendientes de corregir están en `docs/auditoria-inicial.md`", pero de esa auditoría solo queda I-9c;
+  - dice "No hay linter configurado" (lo cambia la fase 2).
+- `docs/auditoria-inicial.md`:
+  - I-13 (no hay pruebas) no tiene línea de estado, aunque hoy hay casi 400 pruebas;
+  - el estado de I-7 dice que falta corregir el README, y ya se corrigió en I-12;
+  - la tabla de la sección 5 conserva los ❌ de la auditoría, sin decir que ya se corrigieron.
+- `docs/propuesta-informe-v2.md`:
+  - el "Estado" del encabezado dice que se terminaron las etapas 1 a 7, pero también están hechas la 8 y la 9;
+  - la sección 8 nombra solo el registro de prueba de `patologo1`;
+  - la sección 8 dice que nunca se ponen datos del paciente en una URL, pero la búsqueda `?q=` de pacientes sí los lleva (aprobado en la etapa 3, con la nota de producción).
+- `CHANGELOG.md` (I-9a): el análisis de GHSA-337j menciona `BrowserRouter`. No se reescribe el historial: se agrega una entrada nueva con el análisis revisado (fase 3).
+- `README.md`:
+  - la tabla "Documentación del Proyecto" no incluye `docs/plan-calidad-y-diseno.md`;
+  - "Pruebas Automáticas" (frontend) no menciona el aviso de cambios sin guardar, el autoguardado, `/salir` ni el visor de imágenes.
+- `docs/decisiones.md`: según lo que decida el usuario sobre `/admin/` (fase 3), una decisión nueva que precise D-3.
 
 **Archivos:** `README.md`, `CLAUDE.md`, `docs/*.md`, `PathoLab_API.postman_collection.json`, `CHANGELOG.md` y `docs/progreso.md`.
 
