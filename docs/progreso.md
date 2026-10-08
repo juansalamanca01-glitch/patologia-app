@@ -13,20 +13,22 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 - **Proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`.
 - **Plan vigente:** `docs/plan-calidad-y-diseno.md`, aprobado el 2026-10-08. Cada fase va en su propia rama desde `main`.
-- **Rama de trabajo:** ninguna abierta. Todo está en `main`. La siguiente será `fase-3-auditoria-owasp`, cuando el usuario lo indique.
+- **Rama de trabajo:** `docs-regla-check` (solo documentación). La siguiente será `fase-3-auditoria-owasp`, cuando el usuario lo indique.
 - **Estado:**
   - Están terminados y en `main`:
     - la auditoría inicial (salvo I-9c);
     - el informe de anatomía patológica v2 (etapas 1 a 9 y D-12);
     - los Bloques A y B (punto 4) de la prueba manual;
-    - la fase 1 y la tarea previa 1 del plan.
+    - las fases 1 y 2 y las tareas previas 1 y 2 del plan.
   - El detalle está en la tabla "Hecho" y en `CHANGELOG.md`.
 - **Forma de trabajar con cada hallazgo** (ver las reglas en `CLAUDE.md`):
   1. Escribir una prueba que demuestre el fallo y mostrar que falla.
   2. Explicar el arreglo y esperar confirmación.
   3. Aplicar el arreglo y mostrar que la prueba pasa.
-  4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
-  5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
+  4. Registrar el cambio en `CHANGELOG.md` y actualizar la documentación.
+  5. Antes del commit, si el cambio toca código, ejecutar `npm run check` y todas las pruebas (raíz, backend y frontend). Si algo falla, no se hace el commit hasta corregirlo. Si el commit solo cambia documentación, no hace falta ejecutar las pruebas (regla 7 de `CLAUDE.md`).
+  6. Hacer el commit.
+  7. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
 - **Pruebas:** 12 de la raíz (`npm test`, comprobaciones de `npm run dev` y de `npm run check`), 263 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 134 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
@@ -96,6 +98,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Tarea previa 2 del plan: el encabezado del PDF (nombre, dirección y teléfono del laboratorio) se lee de `backend/.env`, con el de demostración por defecto; el teléfono va en su propia línea y solo si existe | `539a88d` |
 | D-15 | El encabezado se congela al finalizar (`datos_finalizacion['laboratorio']`); la migración 0012 da el de demostración a los finalizados existentes. Lo encontró el usuario al probar la tarea previa 2 | `c0f08c8` |
 | — | Fase 2 del plan: Prettier 3.9, ESLint 9 y Ruff 0.16, `npm run check`, `.vscode` (formato al guardar y extensiones), formato automático (`836257b`, en `.git-blame-ignore-revs`), imports ordenados y arreglos a mano aprobados por el usuario (el autoguardado usa `autoguardarRef`) | `6f2e3c3`, `836257b`, `602810e` y `e10ee5f` |
+| — | Regla 7 de `CLAUDE.md`: antes de cada commit que toque código, `npm run check` y todas las pruebas; si algo falla, no hay commit. En los de solo documentación no hace falta ejecutar las pruebas | commit "docs: regla de comprobar antes de cada commit" |
 
 ## Siguiente paso
 

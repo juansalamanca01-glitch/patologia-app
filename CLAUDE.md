@@ -15,6 +15,9 @@ PathoLab: app web para crear, gestionar y exportar a PDF informes histopatológi
    - **Al empezar cada conversación nueva**, antes de cualquier otra cosa, leer `docs/progreso.md` para saber qué se hizo, qué falta, cuál es la siguiente tarea, en qué rama se trabaja y qué preguntas esperan respuesta del usuario.
    - **Al terminar cada tarea o etapa**, actualizar `docs/progreso.md` **antes de hacer el commit**, para que vaya en el mismo commit.
    - Actualizarlo también cada vez que quede algo pendiente de confirmar, para que el trabajo se pueda retomar aunque la conversación se corte.
+7. **Comprobar antes de cada commit.**
+   - Antes de cada commit que toque código, ejecutar `npm run check` (desde la raíz) y todas las pruebas: las de la raíz (`npm test`), las del backend (`python manage.py test`) y las del frontend (`npm test` en `frontend/`). Si algo falla, no se hace el commit hasta corregirlo.
+   - En los commits que solo cambian documentación no hace falta ejecutar las pruebas.
 
 ## Comandos
 

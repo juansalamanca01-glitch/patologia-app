@@ -5,6 +5,14 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-08
 
+### Regla de comprobar antes de cada commit
+
+**Qué se cambió** (solo documentación):
+- `CLAUDE.md`, regla de trabajo 7 (nueva): antes de cada commit que toque código se ejecutan `npm run check` y todas las pruebas (raíz, backend y frontend), y si algo falla no se hace el commit hasta corregirlo. En los commits que solo cambian documentación no hace falta ejecutar las pruebas.
+- `docs/progreso.md`: el mismo paso en la "Forma de trabajar". Además se completa la lista de lo terminado, que no mencionaba la fase 2 ni la tarea previa 2.
+
+**Por qué:** pedido del usuario. Así ningún commit deja el código con errores de formato, avisos de los linters o pruebas rotas.
+
 ### Fase 2, parte 4: arreglos a mano de ESLint y Ruff
 
 **Qué se cambió** (cada arreglo lo aprobó el usuario; ninguno cambia el comportamiento):
