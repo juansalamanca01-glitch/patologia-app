@@ -20,7 +20,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 245 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 134 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 248 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 134 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -79,7 +79,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | D-13 | Pendientes, punto 3: aviso al salir con cambios sin guardar (Seguir editando, Salir sin guardar, Guardar y salir) y autoguardado a los 5 s de los borradores existentes, con indicador de estado; `App.jsx` pasa a `createBrowserRouter` para usar `useBlocker`; se muestran los errores de `datos_ingresados` del backend | `0c05b68` |
 | D-13 | Ampliación: finalizar y la vista previa del PDF guardan primero los cambios pendientes (si no son válidos, no siguen y muestran qué falta); "Salir" pasa por `/salir`, así que cerrar sesión con cambios sin guardar también avisa. Encontrado al hacer el punto 3 y aprobado por el usuario | `a9b648d` |
 | — | Acomodo del aviso "Tienes cambios sin guardar": los tres botones caben dentro del recuadro (pasan a otra línea o se apilan en pantallas angostas) y no sobra espacio debajo. Solo CSS; los bordes y la tipografía quedan para el Bloque B | commit "fix: botones del aviso de cambios sin guardar" |
-| — | Prueba manual del Bloque A hecha por el usuario: todo salió bien. Se une `ajustes-prueba-manual` a `main` y el Bloque B sigue en la rama `bloque-b-estetica` | (este commit) |
+| — | Prueba manual del Bloque A hecha por el usuario: todo salió bien. Se une `ajustes-prueba-manual` a `main` y el Bloque B sigue en la rama `bloque-b-estetica` | `4a9284d` |
+| — | Bloque B, punto 4: el PDF va todo en negro (el rojo solo en el aviso de adendas y en la marca de agua), con los títulos en negrita y una línea fina negra bajo el encabezado | commit "style: PDF en negro" |
 
 ## Pendientes
 
@@ -98,12 +99,13 @@ Observaciones del usuario en la prueba manual del 2026-10-05.
 
 **Bloque B (estética), en la rama `bloque-b-estetica`:**
 
-4. PDF: todo en negro (sin azul), títulos en negrita y sin la línea azul debajo del título.
+4. ~~PDF: todo en negro (sin azul), títulos en negrita y sin la línea azul debajo del título.~~ **Hecho** el 2026-10-08: negro en todo, rojo solo en el aviso de adendas y la marca de agua, línea fina negra en el encabezado.
 5. Rediseño general: sin bordes redondeados, tipografía más sobria, aspecto profesional y clínico.
 
 ## Siguiente paso
 
-1. **Bloque B, punto 4 (PDF)**, en la rama `bloque-b-estetica`. Aprobado el 2026-10-08: todo el texto y las líneas en negro (sin azul ni gris); el aviso de adendas y la marca de agua BORRADOR siguen en rojo; títulos en negrita explícita; la línea gruesa azul del encabezado pasa a una línea fina negra. Después, el punto 5 (rediseño de la interfaz), con la skill `frontend-design` que instaló el usuario.
+1. **Bloque B, punto 5: rediseño de la interfaz**, en la rama `bloque-b-estetica`: sin bordes redondeados, tipografía más sobria y aspecto profesional y clínico. Usar la skill `frontend-design` que instaló el usuario (el 2026-10-08 todavía no aparecía en la sesión; puede requerir abrir una conversación nueva). **Primero proponer el estilo y esperar confirmación.**
+   - Opcional: que el usuario revise un PDF en el navegador para confirmar el punto 4.
 2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
 4. **Ideas de la Hoja de Ruta del README:** plantillas microscópicas e IHQ, catálogo CIE-10 y CIE-O, imágenes en los informes, encabezado del PDF configurable, firma digital, integración HL7/FHIR, registro de accesos y contenedores Docker.
@@ -113,7 +115,7 @@ Para volver a unir la rama a `main` (con fast-forward desde la terminal, sin pul
 
 ## Pendiente de respuesta del usuario
 
-- Nada por ahora. (Etapa 5: el usuario aprobó el 2026-10-04 las secciones nuevas en el PDF actual, los botones para reordenar diagnósticos y dejar la búsqueda sin diagnósticos. El mismo día probó la etapa 5 a mano en el navegador y confirmó que se ven las tarjetas nuevas.)
+- **`git push` falla** desde el 2026-10-08: GitHub responde "Invalid username or token". `main` (con el Bloque A unido) y `bloque-b-estetica` están solo en el computador del usuario. Cuando renueve las credenciales de Git, subir las dos ramas. (Etapa 5: el usuario aprobó el 2026-10-04 las secciones nuevas en el PDF actual, los botones para reordenar diagnósticos y dejar la búsqueda sin diagnósticos. El mismo día probó la etapa 5 a mano en el navegador y confirmó que se ven las tarjetas nuevas.)
 
 ## Pendiente de hacer (anotado para no olvidarlo)
 

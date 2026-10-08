@@ -9,7 +9,7 @@ from django.utils import timezone
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
-from reportlab.lib.colors import HexColor
+from reportlab.lib.colors import HexColor, black
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable, KeepTogether, CondPageBreak,
@@ -89,11 +89,9 @@ ENCABEZADO_CIUDAD = 'Santiago de Cali, Colombia'
 
 SIN_DATO = '—'
 AVISO_BORRADOR = 'BORRADOR — SIN VALIDEZ'
-AZUL_OSCURO = HexColor('#1a365d')
-AZUL = HexColor('#2b6cb0')
-GRIS_TEXTO = HexColor('#2d3748')
-GRIS_SUAVE = HexColor('#718096')
-GRIS_LINEA = HexColor('#cbd5e0')
+# Todo el informe va en negro; el rojo queda solo para las alertas
+# (aviso de adendas y marca de agua del borrador).
+NEGRO = black
 ROJO = HexColor('#c53030')
 
 
@@ -124,7 +122,7 @@ class CanvasNumerado(canvas.Canvas):
                 self._dibujar_marca_agua()
             antes, despues = self._pie
             self.setFont('Helvetica', 8)
-            self.setFillColor(GRIS_SUAVE)
+            self.setFillColor(NEGRO)
             self.drawCentredString(letter[0] / 2, 1 * cm, f'{antes}Página {numero} de {total}{despues}')
             super().showPage()
         super().save()
@@ -144,21 +142,23 @@ def _estilos():
     estilos = getSampleStyleSheet()
     estilos.add(ParagraphStyle(
         'Laboratorio', parent=estilos['Normal'], fontName='Helvetica-Bold', fontSize=13,
-        textColor=AZUL_OSCURO, alignment=TA_CENTER, leading=16,
+        textColor=NEGRO, alignment=TA_CENTER, leading=16,
     ))
     estilos.add(ParagraphStyle(
-        'Ciudad', parent=estilos['Normal'], fontSize=9, textColor=GRIS_SUAVE, alignment=TA_CENTER,
+        'Ciudad', parent=estilos['Normal'], fontSize=9, textColor=NEGRO, alignment=TA_CENTER,
     ))
-    estilos.add(ParagraphStyle('Celda', parent=estilos['Normal'], fontSize=9, leading=12, textColor=GRIS_TEXTO))
+    estilos.add(ParagraphStyle('Celda', parent=estilos['Normal'], fontSize=9, leading=12, textColor=NEGRO))
     estilos.add(ParagraphStyle(
-        'TituloInforme', parent=estilos['Title'], fontSize=15, textColor=AZUL_OSCURO, spaceBefore=14, spaceAfter=4,
+        'TituloInforme', parent=estilos['Title'], fontName='Helvetica-Bold', fontSize=15, textColor=NEGRO,
+        spaceBefore=14, spaceAfter=4,
     ))
     estilos.add(ParagraphStyle('TipoEstudio', parent=estilos['Normal'], fontSize=11, alignment=TA_CENTER))
     estilos.add(ParagraphStyle(
-        'Muestra', parent=estilos['Normal'], fontSize=8.5, textColor=GRIS_SUAVE, alignment=TA_CENTER,
+        'Muestra', parent=estilos['Normal'], fontSize=8.5, textColor=NEGRO, alignment=TA_CENTER,
     ))
     estilos.add(ParagraphStyle(
-        'Subtitulo', parent=estilos['Heading2'], fontSize=11.5, textColor=GRIS_TEXTO, spaceBefore=12, spaceAfter=4,
+        'Subtitulo', parent=estilos['Heading2'], fontName='Helvetica-Bold', fontSize=11.5, textColor=NEGRO,
+        spaceBefore=12, spaceAfter=4,
     ))
     estilos.add(ParagraphStyle(
         'CuerpoTexto', parent=estilos['BodyText'], fontSize=10, alignment=TA_JUSTIFY, leading=14,
@@ -171,7 +171,7 @@ def _estilos():
     ))
     estilos.add(ParagraphStyle(
         'TituloAdenda', parent=estilos['Normal'], fontName='Helvetica-Bold', fontSize=10.5,
-        textColor=GRIS_TEXTO, spaceBefore=18, spaceAfter=4,
+        textColor=NEGRO, spaceBefore=18, spaceAfter=4,
     ))
     return estilos
 
@@ -181,7 +181,7 @@ def _encabezado(estilos):
         Paragraph(ENCABEZADO_LABORATORIO, estilos['Laboratorio']),
         Paragraph(ENCABEZADO_CIUDAD, estilos['Ciudad']),
         Spacer(1, 6),
-        HRFlowable(width='100%', thickness=2, color=AZUL),
+        HRFlowable(width='100%', thickness=0.75, color=NEGRO),
         Spacer(1, 10),
     ]
 
@@ -221,8 +221,8 @@ def _tabla_datos(informe, datos, estilos, ancho):
     tabla = Table(filas, colWidths=[ancho / 2, ancho / 2])
     tabla.setStyle(TableStyle(
         [
-            ('BOX', (0, 0), (-1, -1), 0.75, GRIS_LINEA),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, GRIS_LINEA),
+            ('BOX', (0, 0), (-1, -1), 0.75, NEGRO),
+            ('INNERGRID', (0, 0), (-1, -1), 0.25, NEGRO),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('TOPPADDING', (0, 0), (-1, -1), 4),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
@@ -252,7 +252,7 @@ def _seccion(titulo, parrafos, estilos):
         # la sección empieza en la siguiente.
         CondPageBreak(4 * cm),
         Paragraph(titulo, estilos['Subtitulo']),
-        HRFlowable(width='100%', thickness=0.5, color=GRIS_LINEA),
+        HRFlowable(width='100%', thickness=0.5, color=NEGRO),
         Spacer(1, 4),
         *[Paragraph(parrafo, estilos['CuerpoTexto']) for parrafo in parrafos],
     ]
@@ -262,7 +262,7 @@ def _lineas_firma(firma, estilos):
     """Línea de firma con nombre, especialidad y registro médico (D-8, D-9)."""
     bloque = [
         Spacer(1, 32),
-        HRFlowable(width=7 * cm, thickness=0.75, color=GRIS_TEXTO, spaceAfter=4),
+        HRFlowable(width=7 * cm, thickness=0.75, color=NEGRO, spaceAfter=4),
         Paragraph(texto_seguro(firma['nombre']), estilos['Firma']),
     ]
     if firma['especialidad']:

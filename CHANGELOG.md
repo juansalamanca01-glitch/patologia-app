@@ -3,6 +3,23 @@
 Todos los cambios de código del proyecto se documentan aquí, del más reciente al más antiguo.
 Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1" remiten a `docs/auditoria-inicial.md`.
 
+## 2026-10-08
+
+### PDF en negro (Bloque B, punto 4)
+
+**Qué se cambió**
+- `backend/informes/utils.py`: las constantes `AZUL_OSCURO`, `AZUL`, `GRIS_TEXTO`, `GRIS_SUAVE` y `GRIS_LINEA` se reemplazan por una sola, `NEGRO`.
+  - Todo el texto va en negro: encabezado, título, tabla de datos, secciones, firma, adendas y pie de página. También las líneas: tabla, bajo cada sección y de firma.
+  - `ROJO` queda solo en el aviso de adendas y en la marca de agua BORRADOR, porque son alertas.
+- Los estilos `TituloInforme` y `Subtitulo` declaran `fontName='Helvetica-Bold'`. Ya eran negrita por herencia de los estilos de ReportLab; ahora queda escrito.
+- La línea bajo el encabezado del laboratorio pasa de 2 puntos en azul a 0.75 en negro.
+- **Pruebas:** 3 nuevas en `PdfInformeTests` (`informes/tests.py`), que espían el lienzo al generar el PDF:
+  - el PDF, finalizado con adenda o borrador, solo usa negro y el rojo de las alertas;
+  - los títulos van en negrita y en negro;
+  - el encabezado lleva una línea fina negra.
+
+**Por qué:** observación del usuario en la prueba manual del 2026-10-05: el informe debe verse sobrio, como un documento clínico impreso, sin azul y con los títulos en negrita.
+
 ## 2026-10-05
 
 ### Botones del aviso "Tienes cambios sin guardar"

@@ -1874,6 +1874,62 @@ class PdfInformeTests(APITestCase):
         self.assertIn('<b>Motivo:</b> &lt;b&gt;Motivo', textos)
         self.assertIn('Línea 1 &amp; &lt;font size=40&gt;<br/>Línea 2', textos)
 
+    # --- Colores y títulos (Bloque B, punto 4) ---
+
+    def dibujo(self, informe_id):
+        """
+        Genera el PDF y devuelve los colores que usa el lienzo (relleno y trazo, en
+        hexadecimal), los Paragraph con su estilo y los HRFlowable con su grosor y color.
+        """
+        from reportlab.lib.colors import toColor
+        from reportlab.pdfgen.canvas import Canvas
+        from reportlab.platypus import HRFlowable, Paragraph
+        with mock.patch.object(Canvas, 'setFillColor', autospec=True, side_effect=Canvas.setFillColor) as rellenos, \
+                mock.patch.object(Canvas, 'setStrokeColor', autospec=True,
+                                  side_effect=Canvas.setStrokeColor) as trazos, \
+                mock.patch('informes.utils.Paragraph', wraps=Paragraph) as parrafos, \
+                mock.patch('informes.utils.HRFlowable', wraps=HRFlowable) as lineas:
+            respuesta = self.client.get(f'{self.URL}{informe_id}/pdf/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        return {
+            'colores': {
+                toColor(llamada.args[1]).hexval()
+                for llamada in rellenos.call_args_list + trazos.call_args_list
+            },
+            'parrafos': {str(llamada.args[0]): llamada.args[1] for llamada in parrafos.call_args_list},
+            'lineas': [llamada.kwargs for llamada in lineas.call_args_list],
+        }
+
+    def test_el_pdf_solo_usa_negro_y_el_rojo_de_las_alertas(self):
+        # El rojo queda solo en el aviso de adendas y en la marca de agua del borrador.
+        finalizado = self.crear()
+        self.finalizar(finalizado)
+        self.agregar_adenda(finalizado, timezone.make_aware(datetime(2026, 10, 5, 9, 15)))
+        borrador = self.crear()
+        for informe_id in (finalizado, borrador):
+            with self.subTest(informe_id=informe_id):
+                self.assertLessEqual(self.dibujo(informe_id)['colores'], {'0x000000', '0xc53030'})
+
+    def test_los_titulos_van_en_negrita_y_en_negro(self):
+        from reportlab.lib.colors import black
+        informe_id = self.crear()
+        self.finalizar(informe_id)
+        self.agregar_adenda(informe_id, timezone.make_aware(datetime(2026, 10, 5, 9, 15)))
+        parrafos = self.dibujo(informe_id)['parrafos']
+        from .utils import ENCABEZADO_LABORATORIO
+        for titulo in (ENCABEZADO_LABORATORIO, 'INFORME DE ANATOMÍA PATOLÓGICA', 'DESCRIPCIÓN MACROSCÓPICA',
+                       'DIAGNÓSTICOS', 'ADENDAS', 'Adenda N.º 1 — 05/10/2026 09:15'):
+            with self.subTest(titulo=titulo):
+                self.assertEqual(parrafos[titulo].fontName, 'Helvetica-Bold')
+                self.assertEqual(parrafos[titulo].textColor, black)
+
+    def test_el_encabezado_lleva_una_linea_fina_negra(self):
+        from reportlab.lib.colors import black
+        informe_id = self.crear()
+        primera_linea = self.dibujo(informe_id)['lineas'][0]
+        self.assertLessEqual(primera_linea['thickness'], 0.75)
+        self.assertEqual(primera_linea['color'], black)
+
 
 class AdendaTests(APITestCase):
     """
