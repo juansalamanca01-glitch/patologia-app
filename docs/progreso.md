@@ -80,7 +80,8 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | D-13 | Ampliación: finalizar y la vista previa del PDF guardan primero los cambios pendientes (si no son válidos, no siguen y muestran qué falta); "Salir" pasa por `/salir`, así que cerrar sesión con cambios sin guardar también avisa. Encontrado al hacer el punto 3 y aprobado por el usuario | `a9b648d` |
 | — | Acomodo del aviso "Tienes cambios sin guardar": los tres botones caben dentro del recuadro (pasan a otra línea o se apilan en pantallas angostas) y no sobra espacio debajo. Solo CSS; los bordes y la tipografía quedan para el Bloque B | commit "fix: botones del aviso de cambios sin guardar" |
 | — | Prueba manual del Bloque A hecha por el usuario: todo salió bien. Se une `ajustes-prueba-manual` a `main` y el Bloque B sigue en la rama `bloque-b-estetica` | `4a9284d` |
-| — | Bloque B, punto 4: el PDF va todo en negro (el rojo solo en el aviso de adendas y en la marca de agua), con los títulos en negrita y una línea fina negra bajo el encabezado | commit "style: PDF en negro" |
+| — | Fase 1 del plan (Bloque B, punto 4): el PDF va todo en negro (el rojo solo en el aviso de adendas y en la marca de agua), con los títulos en negrita y una línea fina negra bajo el encabezado. El usuario lo confirmó el 2026-10-08 | `8021597` |
+| — | Plan de calidad, seguridad y diseño (`docs/plan-calidad-y-diseno.md`), aprobado el 2026-10-08 | commit "docs: plan de calidad y diseño aprobado" |
 
 ## Pendientes
 
@@ -100,12 +101,15 @@ Observaciones del usuario en la prueba manual del 2026-10-05.
 **Bloque B (estética), en la rama `bloque-b-estetica`:**
 
 4. ~~PDF: todo en negro (sin azul), títulos en negrita y sin la línea azul debajo del título.~~ **Hecho** el 2026-10-08: negro en todo, rojo solo en el aviso de adendas y la marca de agua, línea fina negra en el encabezado.
-5. Rediseño general: sin bordes redondeados, tipografía más sobria, aspecto profesional y clínico.
+5. Rediseño general: sin bordes redondeados, tipografía más sobria, aspecto profesional y clínico. **Pasa a las fases 5, 6 y 7 de `docs/plan-calidad-y-diseno.md`.**
 
 ## Siguiente paso
 
-1. **Bloque B, punto 5: rediseño de la interfaz**, en la rama `bloque-b-estetica`: sin bordes redondeados, tipografía más sobria y aspecto profesional y clínico. Usar la skill `frontend-design`, que está en `~/.claude/skills/frontend-design/` del computador del usuario, fuera del repositorio, por decisión suya del 2026-10-08. Si no aparece en la lista de skills, abrir una conversación nueva. **Primero proponer el estilo y esperar confirmación.**
-   - Opcional: que el usuario revise un PDF en el navegador para confirmar el punto 4.
+1. **El trabajo sigue el plan de `docs/plan-calidad-y-diseno.md`** (8 fases y una tarea previa), aprobado por el usuario el 2026-10-08. Las fases 5 y 6 se cierran solo cuando las aprueban el usuario, el equipo y el profesor.
+   - **Fase 1 (PDF en negro): terminada** el 2026-10-08. El usuario confirmó el PDF y `bloque-b-estetica` se unió a `main`.
+   - **Ahora: tarea previa**, `patologo2` en `seed_data` (`patologo2345`, `RM-PRUEBA-0002`), en la rama `seed-patologo2`. Hoy `seed_data` no lo crea: se creó a mano para la prueba manual del 2026-10-05.
+   - Después: fase 2 (Prettier, ESLint, Ruff), 3 (auditoría OWASP), 4 (correcciones, abierta), 5 (guía de diseño con `frontend-design`, que está en `~/.claude/skills/` del usuario), 6 (pantalla del informe), 7 (resto de pantallas = Bloque B, punto 5) y 8 (cierre).
+   - Al terminar cada fase, se actualiza esta sección.
 2. **Para arrancar:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 3. **Opcional (I-9c):** React Router 6 → 7 para cerrar las 2 vulnerabilidades moderadas que quedan. Hoy no afectan a la app (ver CHANGELOG, I-9a). Es un cambio de versión principal.
 4. **Ideas de la Hoja de Ruta del README:** plantillas microscópicas e IHQ, catálogo CIE-10 y CIE-O, imágenes en los informes, encabezado del PDF configurable, firma digital, integración HL7/FHIR, registro de accesos y contenedores Docker.
