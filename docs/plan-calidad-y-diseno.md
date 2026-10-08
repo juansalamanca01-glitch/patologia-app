@@ -238,7 +238,7 @@ Las categorías de la edición 2025:
 - **Avisos nuevos de `npm audit` (2026-10-08), que no existían en I-9:**
   - **Crítico:** `shell-quote` 1.9.0, que usa `concurrently` 10.0.5 en la raíz (solo para `npm run dev`).
   - **Alto:** `source-map-js` 1.2.1, que usa Vite a través de PostCSS en el frontend (solo en desarrollo).
-  - Por decisión del usuario (2026-10-08), se corrigen **antes** de la tarea previa 2, con `npm audit fix`, en la rama `npm-audit-fix`. El informe solo registra cómo quedaron.
+  - **Corregidos el 2026-10-08** con `npm audit fix` (rama `npm-audit-fix`): `concurrently` 10.0.6 con `shell-quote` 1.12.0, y `source-map-js` 1.2.2. El informe solo registra cómo quedaron.
 - **`requirements.txt` con rangos de versiones** (`Django>=4.2,<5.0`…) y sin archivo de bloqueo (A03).
 - **Edición de informes finalizados en `/admin/`** (A01/A08).
   - Hoy `InformeAdmin` deja cambiar el contenido, los diagnósticos y hasta el `estado` de un informe finalizado, sin dejar rastro.

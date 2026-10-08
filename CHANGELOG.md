@@ -5,6 +5,21 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-08
 
+### `npm audit fix`: avisos crítico y alto de las herramientas de desarrollo
+
+**Qué se cambió** (rama `npm-audit-fix`): se ejecutó `npm audit fix`, sin `--force`, en la raíz y en `frontend/`. Solo cambiaron los `package-lock.json`; ningún `package.json` cambió.
+- **Raíz:** `concurrently` 10.0.5 → 10.0.6, que trae `shell-quote` 1.9.0 → 1.12.0. Cierra el aviso **crítico** [GHSA-pqg4-j6r4-53mv](https://github.com/advisories/GHSA-pqg4-j6r4-53mv) (inyección de comandos en `quote()`). `npm audit` en la raíz: de 2 críticas a **0**.
+- **Frontend:** `source-map-js` 1.2.1 → 1.2.2, que usa Vite a través de PostCSS. Cierra el aviso **alto** [GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q) (bloqueo del proceso con mapas de código manipulados). `npm audit` en el frontend: de 3 (1 alta, 2 moderadas) a **2 moderadas**.
+- Además, npm quitó una marca `"peer": true` de los metadatos de una dependencia de desarrollo en `frontend/package-lock.json`. No cambia ninguna versión.
+- **Siguen las 2 moderadas de `react-router`** (I-9c). Solo se cierran con React Router 7. Se evalúan en la fase 3 del plan, con el análisis de I-9a revisado.
+- **Comprobación:**
+  - pasan todas las pruebas: 8 de la raíz, 251 del backend y 134 del frontend;
+  - `npm run build` compila;
+  - `concurrently` lanza y termina dos procesos de prueba;
+  - no hay prueba nueva, porque es una actualización de dependencias sin cambio de comportamiento.
+
+**Por qué:** el inventario de pendientes del 2026-10-08 encontró estos dos avisos nuevos, que no existían en I-9. Los dos estaban en herramientas de desarrollo (`npm run dev` y Vite) y no llegaban a la aplicación publicada. El usuario pidió corregirlos ya, antes de la tarea previa 2 del plan, porque el arreglo no cambia de versión principal.
+
 ### Inventario de pendientes, decisión D-14 y documentación corregida
 
 **Qué se cambió** (solo documentación, rama `docs-pendientes`):

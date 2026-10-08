@@ -13,7 +13,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 - **Proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`.
 - **Plan vigente:** `docs/plan-calidad-y-diseno.md`, aprobado el 2026-10-08. Cada fase va en su propia rama desde `main`.
-- **Rama de trabajo:** `docs-pendientes`, creada el 2026-10-08 desde `main` para el inventario de pendientes (solo documentación).
+- **Rama de trabajo:** `npm-audit-fix`, creada el 2026-10-08 desde `main`. La siguiente será `encabezado-configurable` (tarea previa 2).
 - **Estado:**
   - Están terminados y en `main`:
     - la auditoría inicial (salvo I-9c);
@@ -90,14 +90,14 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Fase 1 del plan (Bloque B, punto 4): el PDF va todo en negro (el rojo solo en el aviso de adendas y en la marca de agua), con los títulos en negrita y una línea fina negra bajo el encabezado. El usuario lo confirmó el 2026-10-08 | `8021597` |
 | — | Plan de calidad, seguridad y diseño (`docs/plan-calidad-y-diseno.md`), aprobado el 2026-10-08 | `43a40e7` |
 | — | Tarea previa del plan: `seed_data` crea `patologo2` (`patologo2345`, `RM-PRUEBA-0002`) para probar D-2; si ya existe, no lo cambia | `7ea0125` |
-| — | Inventario de pendientes (sección "Pendientes"), tarea previa 2 en el plan, decisión D-14 (un finalizado tampoco se modifica en `/admin/`; se implementa en la fase 4) y corrección de las contradicciones entre documentos | commit "docs: D-14 y contradicciones corregidas" |
+| — | Inventario de pendientes (sección "Pendientes"), tarea previa 2 en el plan, decisión D-14 (un finalizado tampoco se modifica en `/admin/`; se implementa en la fase 4) y corrección de las contradicciones entre documentos | `dd38439` |
+| — | `npm audit fix`: `shell-quote` (crítico, raíz) y `source-map-js` (alto, frontend), los dos de herramientas de desarrollo. Quedan solo las 2 moderadas de `react-router` (I-9c, fase 3) | commit "fix: npm audit fix" |
 
 ## Siguiente paso
 
-1. **Ahora: `npm audit fix`** de los avisos crítico (`shell-quote`) y alto (`source-map-js`), en la rama `npm-audit-fix` desde `main`, con todas las pruebas en verde. Lo pidió el usuario el 2026-10-08, antes de la tarea previa 2.
-2. **Después: tarea previa 2** del plan (encabezado del PDF configurable), en la rama `encabezado-configurable`. Primero se explica y se espera confirmación.
-3. **Luego, las fases 2 a 8** del plan, en orden. Al terminar cada fase se actualizan esta sección y "Pendientes".
-4. **Para arrancar la aplicación:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
+1. **Ahora: tarea previa 2** del plan (encabezado del PDF configurable), en la rama `encabezado-configurable`. Primero se explica y se espera confirmación.
+2. **Luego, las fases 2 a 8** del plan, en orden. Al terminar cada fase se actualizan esta sección y "Pendientes".
+3. **Para arrancar la aplicación:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 
 Para unir una rama a `main` (con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado):
 1. Comprobar que todas las pruebas pasan.
@@ -118,8 +118,6 @@ Inventario del 2026-10-08: todo lo pendiente, sin terminar o anotado para despu�
 | 2 | **Fase 2:** Prettier, ESLint y Ruff | Plan; auditoría inicial, sección 1 ("no hay linter") |
 | 3 | **Fase 3:** auditoría OWASP. Evalúa además estos puntos ya conocidos: | Plan |
 |   | • I-9c: 2 vulnerabilidades moderadas de `react-router` 6 (se cierran con React Router 7). Hay que revisar de nuevo el análisis de I-9a, porque desde D-13 la app usa `createBrowserRouter` | Auditoría inicial, I-9; `CHANGELOG.md`, I-9a |
-|   | • **Nuevo:** `shell-quote` 1.9.0, **crítico**, en la raíz, a través de `concurrently`. **Se corrige antes**, en la rama `npm-audit-fix` (decisión del usuario del 2026-10-08) | `npm audit` del 2026-10-08 |
-|   | • **Nuevo:** `source-map-js` 1.2.1, **alto**, en las herramientas del frontend, a través de Vite y PostCSS. **Se corrige antes**, en la misma rama | `npm audit` del 2026-10-08 |
 |   | • Dependencias de Python sin versiones fijas | `backend/requirements.txt` |
 |   | • `/admin/` permite editar informes finalizados. **Ya decidido (D-14):** solo se registra en el informe | D-3 frente a D-9 y el README |
 |   | • Conflicto entre pestañas o equipos: gana el último guardado (propuesta: comparar `fecha_actualizacion` y responder 409) | D-13; anotado por el usuario el 2026-10-05 |
@@ -153,7 +151,7 @@ Inventario del 2026-10-08: todo lo pendiente, sin terminar o anotado para despu�
   Esta lista es del 2026-10-08. Antes de hacer el cambio, se vuelve a buscar con `git grep -i "patholab\|patolab"`.
 - **Ya decidido el 2026-10-08:**
   - informes finalizados de solo lectura en `/admin/` (D-14, fase 4);
-  - corregir ya los avisos de `npm audit` (rama `npm-audit-fix`).
+  - corregir ya los avisos de `npm audit`. **Hecho** el mismo día.
 
 ### 3. Para producción (al publicar la aplicación)
 

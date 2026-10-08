@@ -181,7 +181,7 @@ Cada punto explica **qué pasa**, **dónde está**, **por qué importa** y **có
 
 ### I-9. Dependencias del frontend con vulnerabilidades conocidas
 
-> **Estado: parte (a) corregida el 2026-10-03** (rama `seguridad-critica`): producción pasa de 6 vulnerabilidades (2 altas) a 2 moderadas de `react-router`, que no afectan a cómo PathoLab usa la librería. Parte (b) corregida el mismo día: Vite 6.4 y Vitest 5, sin vulnerabilidades en las herramientas de desarrollo. Pendiente: (c) opcional, React Router 7. Ver `CHANGELOG.md` y `docs/progreso.md`.
+> **Estado: parte (a) corregida el 2026-10-03** (rama `seguridad-critica`): producción pasa de 6 vulnerabilidades (2 altas) a 2 moderadas de `react-router`, que no afectan a cómo PathoLab usa la librería. Parte (b) corregida el mismo día: Vite 6.4 y Vitest 5, sin vulnerabilidades en las herramientas de desarrollo. Pendiente: (c) opcional, React Router 7. Ver `CHANGELOG.md` y `docs/progreso.md`. **2026-10-08:** dos avisos nuevos de herramientas de desarrollo (`shell-quote`, crítico, en la raíz; `source-map-js`, alto, en el frontend) se corrigieron con `npm audit fix`. Siguen solo las 2 moderadas de `react-router` (I-9c), que se evalúan en la fase 3 de `docs/plan-calidad-y-diseno.md`.
 
 - **Qué pasa:** `npm audit` reporta **6 vulnerabilidades (2 altas y 4 moderadas)** en `axios`, `form-data`, `follow-redirects` y `react-router` / `@remix-run/router`.
 - **Cómo arreglarlo:** ejecutar `npm audit fix`. Las versiones corregidas están dentro de las mismas versiones principales (axios 1.20, react-router-dom 6.30.6), así que no debería romper nada. Después hay que probar la app.
