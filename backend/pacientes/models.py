@@ -17,6 +17,7 @@ class TipoDocumento(models.TextChoices):
 
 class Sexo(models.TextChoices):
     """Etiqueta "Sexo", como en el formato real del informe (P-3)."""
+
     FEMENINO = 'femenino', 'Femenino'
     MASCULINO = 'masculino', 'Masculino'
     INDETERMINADO = 'indeterminado', 'Indeterminado'
@@ -76,8 +77,9 @@ class Paciente(models.Model):
     fecha_nacimiento = models.DateField(verbose_name='Fecha de nacimiento')
     sexo = models.CharField(max_length=13, choices=Sexo.choices)
     # EPS actual del paciente. El informe guarda aparte la del momento del estudio (Informe.eps).
-    eps = models.ForeignKey(EPS, on_delete=models.PROTECT, null=True, blank=True,
-                            related_name='pacientes', verbose_name='EPS')
+    eps = models.ForeignKey(
+        EPS, on_delete=models.PROTECT, null=True, blank=True, related_name='pacientes', verbose_name='EPS'
+    )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 

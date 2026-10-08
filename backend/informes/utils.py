@@ -1,6 +1,7 @@
 """
 Generación de la descripción macroscópica y exportación del informe a PDF.
 """
+
 import io
 from functools import partial
 from xml.sax.saxutils import escape
@@ -12,7 +13,14 @@ from reportlab.lib.units import cm
 from reportlab.lib.colors import HexColor, black
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable, KeepTogether, CondPageBreak,
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle,
+    HRFlowable,
+    KeepTogether,
+    CondPageBreak,
 )
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 
@@ -36,7 +44,7 @@ def generar_descripcion_macroscopica(patologia, datos: dict) -> str:
     patología y de los datos que llenó el patólogo en el formulario.
     """
     nombre_patologia = patologia.nombre
-    partes = [f"Se recibe espécimen para estudio de {nombre_patologia}."]
+    partes = [f'Se recibe espécimen para estudio de {nombre_patologia}.']
 
     # Frase en lenguaje natural para los campos más comunes
     mapeo = {
@@ -72,9 +80,7 @@ def generar_descripcion_macroscopica(patologia, datos: dict) -> str:
             label = campo.replace('_', ' ').capitalize()
             partes.append(f'{label}: {valor}.')
 
-    partes.append(
-        'Se procesa el material y se remite para estudio histopatológico.'
-    )
+    partes.append('Se procesa el material y se remite para estudio histopatológico.')
 
     return ' '.join(partes)
 
@@ -135,39 +141,95 @@ class CanvasNumerado(canvas.Canvas):
 
 def _estilos():
     estilos = getSampleStyleSheet()
-    estilos.add(ParagraphStyle(
-        'Laboratorio', parent=estilos['Normal'], fontName='Helvetica-Bold', fontSize=13,
-        textColor=NEGRO, alignment=TA_CENTER, leading=16,
-    ))
-    estilos.add(ParagraphStyle(
-        'Ciudad', parent=estilos['Normal'], fontSize=9, textColor=NEGRO, alignment=TA_CENTER,
-    ))
+    estilos.add(
+        ParagraphStyle(
+            'Laboratorio',
+            parent=estilos['Normal'],
+            fontName='Helvetica-Bold',
+            fontSize=13,
+            textColor=NEGRO,
+            alignment=TA_CENTER,
+            leading=16,
+        )
+    )
+    estilos.add(
+        ParagraphStyle(
+            'Ciudad',
+            parent=estilos['Normal'],
+            fontSize=9,
+            textColor=NEGRO,
+            alignment=TA_CENTER,
+        )
+    )
     estilos.add(ParagraphStyle('Celda', parent=estilos['Normal'], fontSize=9, leading=12, textColor=NEGRO))
-    estilos.add(ParagraphStyle(
-        'TituloInforme', parent=estilos['Title'], fontName='Helvetica-Bold', fontSize=15, textColor=NEGRO,
-        spaceBefore=14, spaceAfter=4,
-    ))
+    estilos.add(
+        ParagraphStyle(
+            'TituloInforme',
+            parent=estilos['Title'],
+            fontName='Helvetica-Bold',
+            fontSize=15,
+            textColor=NEGRO,
+            spaceBefore=14,
+            spaceAfter=4,
+        )
+    )
     estilos.add(ParagraphStyle('TipoEstudio', parent=estilos['Normal'], fontSize=11, alignment=TA_CENTER))
-    estilos.add(ParagraphStyle(
-        'Muestra', parent=estilos['Normal'], fontSize=8.5, textColor=NEGRO, alignment=TA_CENTER,
-    ))
-    estilos.add(ParagraphStyle(
-        'Subtitulo', parent=estilos['Heading2'], fontName='Helvetica-Bold', fontSize=11.5, textColor=NEGRO,
-        spaceBefore=12, spaceAfter=4,
-    ))
-    estilos.add(ParagraphStyle(
-        'CuerpoTexto', parent=estilos['BodyText'], fontSize=10, alignment=TA_JUSTIFY, leading=14,
-    ))
+    estilos.add(
+        ParagraphStyle(
+            'Muestra',
+            parent=estilos['Normal'],
+            fontSize=8.5,
+            textColor=NEGRO,
+            alignment=TA_CENTER,
+        )
+    )
+    estilos.add(
+        ParagraphStyle(
+            'Subtitulo',
+            parent=estilos['Heading2'],
+            fontName='Helvetica-Bold',
+            fontSize=11.5,
+            textColor=NEGRO,
+            spaceBefore=12,
+            spaceAfter=4,
+        )
+    )
+    estilos.add(
+        ParagraphStyle(
+            'CuerpoTexto',
+            parent=estilos['BodyText'],
+            fontSize=10,
+            alignment=TA_JUSTIFY,
+            leading=14,
+        )
+    )
     estilos.add(ParagraphStyle('Firma', parent=estilos['Normal'], fontSize=10, leading=13, alignment=TA_CENTER))
-    estilos.add(ParagraphStyle(
-        'AvisoAdendas', parent=estilos['Normal'], fontName='Helvetica-Bold', fontSize=10,
-        textColor=ROJO, alignment=TA_CENTER, borderColor=ROJO, borderWidth=0.75, borderPadding=5,
-        spaceBefore=8, spaceAfter=6,
-    ))
-    estilos.add(ParagraphStyle(
-        'TituloAdenda', parent=estilos['Normal'], fontName='Helvetica-Bold', fontSize=10.5,
-        textColor=NEGRO, spaceBefore=18, spaceAfter=4,
-    ))
+    estilos.add(
+        ParagraphStyle(
+            'AvisoAdendas',
+            parent=estilos['Normal'],
+            fontName='Helvetica-Bold',
+            fontSize=10,
+            textColor=ROJO,
+            alignment=TA_CENTER,
+            borderColor=ROJO,
+            borderWidth=0.75,
+            borderPadding=5,
+            spaceBefore=8,
+            spaceAfter=6,
+        )
+    )
+    estilos.add(
+        ParagraphStyle(
+            'TituloAdenda',
+            parent=estilos['Normal'],
+            fontName='Helvetica-Bold',
+            fontSize=10.5,
+            textColor=NEGRO,
+            spaceBefore=18,
+            spaceAfter=4,
+        )
+    )
     return estilos
 
 
@@ -182,7 +244,7 @@ def _encabezado(laboratorio, estilos):
         Paragraph(texto_seguro(laboratorio['direccion']), estilos['Ciudad']),
     ]
     if laboratorio['telefono']:
-        bloque.append(Paragraph(f"Teléfono: {texto_seguro(laboratorio['telefono'])}", estilos['Ciudad']))
+        bloque.append(Paragraph(f'Teléfono: {texto_seguro(laboratorio["telefono"])}', estilos['Ciudad']))
     return bloque + [
         Spacer(1, 6),
         HRFlowable(width='100%', thickness=0.75, color=NEGRO),
@@ -208,14 +270,17 @@ def _tabla_datos(informe, datos, estilos, ancho):
         return Paragraph(f'<b>{etiqueta}:</b> {texto_seguro(valor) if valor else SIN_DATO}', estilos['Celda'])
 
     filas = [
-        [celda('Paciente', paciente and paciente['nombre_completo']),
-         celda('Identificación', paciente and f"{paciente['tipo_documento']} {paciente['numero_documento']}")],
-        [celda('Edad', informe.edad_paciente(paciente)),
-         celda('Sexo', paciente and Sexo(paciente['sexo']).label)],
+        [
+            celda('Paciente', paciente and paciente['nombre_completo']),
+            celda('Identificación', paciente and f'{paciente["tipo_documento"]} {paciente["numero_documento"]}'),
+        ],
+        [celda('Edad', informe.edad_paciente(paciente)), celda('Sexo', paciente and Sexo(paciente['sexo']).label)],
         [celda('Médico tratante', informe.medico_tratante), celda('EPS', datos['eps_nombre'])],
         [celda('Servicio', datos['servicio_nombre']), celda('N.º de petición', informe.numero_peticion)],
-        [celda('Fecha de ingreso', informe.fecha_ingreso and informe.fecha_ingreso.strftime('%d/%m/%Y')),
-         celda('Fecha de informe', _fecha_de_informe(informe))],
+        [
+            celda('Fecha de ingreso', informe.fecha_ingreso and informe.fecha_ingreso.strftime('%d/%m/%Y')),
+            celda('Fecha de informe', _fecha_de_informe(informe)),
+        ],
     ]
     # Estas filas ocupan todo el ancho.
     if informe.numero_orden_externa:
@@ -223,16 +288,18 @@ def _tabla_datos(informe, datos, estilos, ancho):
     filas.append([celda('Estudios solicitados', informe.estudios_solicitados), ''])
 
     tabla = Table(filas, colWidths=[ancho / 2, ancho / 2])
-    tabla.setStyle(TableStyle(
-        [
-            ('BOX', (0, 0), (-1, -1), 0.75, NEGRO),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, NEGRO),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('TOPPADDING', (0, 0), (-1, -1), 4),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-        ]
-        + [('SPAN', (0, fila), (1, fila)) for fila in range(5, len(filas))]
-    ))
+    tabla.setStyle(
+        TableStyle(
+            [
+                ('BOX', (0, 0), (-1, -1), 0.75, NEGRO),
+                ('INNERGRID', (0, 0), (-1, -1), 0.25, NEGRO),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ]
+            + [('SPAN', (0, fila), (1, fila)) for fila in range(5, len(filas))]
+        )
+    )
     return [tabla]
 
 
@@ -272,7 +339,7 @@ def _lineas_firma(firma, estilos):
     if firma['especialidad']:
         bloque.append(Paragraph(texto_seguro(firma['especialidad']), estilos['Firma']))
     if firma['registro_medico']:
-        bloque.append(Paragraph(f"Registro médico N.º {texto_seguro(firma['registro_medico'])}", estilos['Firma']))
+        bloque.append(Paragraph(f'Registro médico N.º {texto_seguro(firma["registro_medico"])}', estilos['Firma']))
     return bloque
 
 
@@ -297,14 +364,18 @@ def _adendas(adendas, estilos):
         fecha = timezone.localtime(adenda.fecha).strftime('%d/%m/%Y %H:%M')
         # La adenda va entera en una página si cabe, para que su firma no quede sola,
         # y el título de la sección no queda separado de la primera.
-        elementos.append(KeepTogether([
-            *(titulo if posicion == 0 else []),
-            Paragraph(f'Adenda N.º {adenda.numero} — {fecha}', estilos['TituloAdenda']),
-            Paragraph(f'<b>Motivo:</b> {texto_seguro(adenda.motivo)}', estilos['CuerpoTexto']),
-            Spacer(1, 4),
-            Paragraph(texto_seguro(adenda.texto), estilos['CuerpoTexto']),
-            *_lineas_firma(adenda.firma, estilos),
-        ]))
+        elementos.append(
+            KeepTogether(
+                [
+                    *(titulo if posicion == 0 else []),
+                    Paragraph(f'Adenda N.º {adenda.numero} — {fecha}', estilos['TituloAdenda']),
+                    Paragraph(f'<b>Motivo:</b> {texto_seguro(adenda.motivo)}', estilos['CuerpoTexto']),
+                    Spacer(1, 4),
+                    Paragraph(texto_seguro(adenda.texto), estilos['CuerpoTexto']),
+                    *_lineas_firma(adenda.firma, estilos),
+                ]
+            )
+        )
     return elementos
 
 
@@ -343,11 +414,15 @@ def generar_pdf_informe(informe) -> io.BytesIO:
 
     diagnosticos = list(informe.diagnosticos.all())
     if diagnosticos:
-        elementos += _seccion('DIAGNÓSTICOS', [
-            f'{d.orden}. {texto_seguro(d.descripcion)}'
-            + (f' (CIE-10: {texto_seguro(d.codigo_cie10)})' if d.codigo_cie10 else '')
-            for d in diagnosticos
-        ], estilos)
+        elementos += _seccion(
+            'DIAGNÓSTICOS',
+            [
+                f'{d.orden}. {texto_seguro(d.descripcion)}'
+                + (f' (CIE-10: {texto_seguro(d.codigo_cie10)})' if d.codigo_cie10 else '')
+                for d in diagnosticos
+            ],
+            estilos,
+        )
 
     if informe.comentarios:
         elementos += _seccion('COMENTARIOS', [texto_seguro(informe.comentarios)], estilos)
@@ -366,8 +441,13 @@ def generar_pdf_informe(informe) -> io.BytesIO:
         antes = f'{AVISO_BORRADOR} · {antes}'
     # Un borrador es solo una vista previa (D-12): marca de agua en cada página.
     marca_agua = None if informe.esta_finalizado else 'BORRADOR'
-    doc.build(elementos, canvasmaker=partial(
-        CanvasNumerado, pie=(antes, f' · Generado el {generado}'), marca_agua=marca_agua,
-    ))
+    doc.build(
+        elementos,
+        canvasmaker=partial(
+            CanvasNumerado,
+            pie=(antes, f' · Generado el {generado}'),
+            marca_agua=marca_agua,
+        ),
+    )
     buffer.seek(0)
     return buffer

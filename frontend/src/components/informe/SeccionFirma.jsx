@@ -4,8 +4,11 @@
 
 // Fecha y hora de Bogotá; también la usan las adendas (SeccionAdendas).
 export const formatoFechaHora = new Intl.DateTimeFormat('es-CO', {
-  day: '2-digit', month: '2-digit', year: 'numeric',
-  hour: '2-digit', minute: '2-digit',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
   timeZone: 'America/Bogota',
 });
 
@@ -21,22 +24,24 @@ export function LineasFirma({ firma }) {
 }
 
 export default function SeccionFirma({ firma, estado, fechaInforme }) {
-  if (!firma) return null;  // informe nuevo, todavía sin guardar
+  if (!firma) return null; // informe nuevo, todavía sin guardar
   const finalizado = estado === 'finalizado';
 
   return (
     <div className="card">
-      <div className="card-header"><h2>Firma</h2></div>
+      <div className="card-header">
+        <h2>Firma</h2>
+      </div>
       <div className="card-body">
-        {!finalizado && (
-          firma.registro_medico ? (
+        {!finalizado &&
+          (firma.registro_medico ? (
             <p className="text-muted">Al finalizar, el informe llevará la firma del patólogo autor:</p>
           ) : (
             <div className="alert alert-warning">
-              El patólogo autor no tiene registro médico; un administrador debe registrarlo antes de finalizar el informe.
+              El patólogo autor no tiene registro médico; un administrador debe registrarlo antes de finalizar el
+              informe.
             </div>
-          )
-        )}
+          ))}
         <LineasFirma firma={firma} />
         {finalizado && fechaInforme && (
           <p className="text-muted">Fecha de informe: {formatoFechaHora.format(new Date(fechaInforme))}</p>

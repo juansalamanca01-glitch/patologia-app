@@ -13,7 +13,8 @@ from accounts.permissions import EsPatologoOAdmin, EsAutorOAdminOSoloLectura
 from .models import TemaForo, Publicacion, ImagenPublicacion, Comentario
 from .serializers import (
     TemaForoSerializer,
-    PublicacionSerializer, PublicacionListSerializer,
+    PublicacionSerializer,
+    PublicacionListSerializer,
     ImagenPublicacionSerializer,
     ComentarioSerializer,
 )
@@ -23,6 +24,7 @@ MAX_IMAGENES_POR_PUBLICACION = 6
 
 class TemaForoViewSet(viewsets.ModelViewSet):
     """Temas del foro. Todos leen; crear, editar o borrar requiere patólogo o admin."""
+
     # El total de publicaciones se cuenta en la misma consulta (auditoría M-4).
     # Con annotate(Count), Django ignora Meta.ordering: el orden se indica aquí.
     queryset = TemaForo.objects.annotate(num_publicaciones=Count('publicaciones')).order_by('nombre')
@@ -37,6 +39,7 @@ class PublicacionViewSet(viewsets.ModelViewSet):
     Publicaciones del foro (notas de investigación, observaciones, casos).
     Admite imágenes adjuntas y comentarios.
     """
+
     queryset = Publicacion.objects.select_related('autor', 'tema').prefetch_related('imagenes', 'comentarios__autor')
     permission_classes = [EsAutorOAdminOSoloLectura]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
@@ -59,10 +62,15 @@ class PublicacionViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             # El listado solo necesita los totales y la primera imagen, no los
             # comentarios completos (auditoría M-4).
-            qs = Publicacion.objects.select_related('autor', 'tema').prefetch_related('imagenes').annotate(
-                num_comentarios=Count('comentarios', distinct=True),
-                num_imagenes=Count('imagenes', distinct=True),
-            ).order_by('-fijado', '-fecha_creacion')  # annotate ignora Meta.ordering
+            qs = (
+                Publicacion.objects.select_related('autor', 'tema')
+                .prefetch_related('imagenes')
+                .annotate(
+                    num_comentarios=Count('comentarios', distinct=True),
+                    num_imagenes=Count('imagenes', distinct=True),
+                )
+                .order_by('-fijado', '-fecha_creacion')
+            )  # annotate ignora Meta.ordering
         tema_id = self.request.query_params.get('tema')
         if tema_id:
             qs = qs.filter(tema_id=tema_id)
@@ -112,8 +120,7 @@ class PublicacionViewSet(viewsets.ModelViewSet):
 
         with transaction.atomic():
             creadas = [
-                ImagenPublicacion.objects.create(publicacion=publicacion, imagen=archivo)
-                for archivo in archivos
+                ImagenPublicacion.objects.create(publicacion=publicacion, imagen=archivo) for archivo in archivos
             ]
 
         serializer = ImagenPublicacionSerializer(creadas, many=True, context={'request': request})
@@ -122,6 +129,7 @@ class PublicacionViewSet(viewsets.ModelViewSet):
 
 class ImagenPublicacionViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
     """Permite borrar una imagen de una publicación (solo su autor o un admin)."""
+
     queryset = ImagenPublicacion.objects.select_related('publicacion')
     serializer_class = ImagenPublicacionSerializer
 
@@ -129,6 +137,7 @@ class ImagenPublicacionViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet
         user = self.request.user
         if user.rol != 'admin' and instance.publicacion.autor_id != user.id:
             from rest_framework.exceptions import PermissionDenied
+
             raise PermissionDenied('Solo el autor de la publicación puede eliminar sus imágenes.')
         instance.imagen.delete(save=False)
         instance.delete()
@@ -136,6 +145,7 @@ class ImagenPublicacionViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet
 
 class ComentarioViewSet(viewsets.ModelViewSet):
     """Comentarios en las publicaciones del foro."""
+
     queryset = Comentario.objects.select_related('autor', 'publicacion')
     serializer_class = ComentarioSerializer
     permission_classes = [EsAutorOAdminOSoloLectura]

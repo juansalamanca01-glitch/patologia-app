@@ -54,7 +54,9 @@ export default function PacientesPage() {
     }
   };
 
-  useEffect(() => { buscar('', 1); }, []);
+  useEffect(() => {
+    buscar('', 1);
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -75,7 +77,12 @@ export default function PacientesPage() {
       const { data } = await client.get(`/pacientes/${paciente.id}/informes/`, { params: LISTA_COMPLETA });
       setHistorial({ paciente, informes: resultados(data), cargando: false, error: '' });
     } catch {
-      setHistorial({ paciente, informes: [], cargando: false, error: 'No se pudieron cargar los informes del paciente.' });
+      setHistorial({
+        paciente,
+        informes: [],
+        cargando: false,
+        error: 'No se pudieron cargar los informes del paciente.',
+      });
     }
   };
 
@@ -103,7 +110,9 @@ export default function PacientesPage() {
         </div>
         {canWrite && (
           <div className="header-actions">
-            <button className="btn btn-primary" onClick={() => setEditando(null)}>+ Paciente</button>
+            <button className="btn btn-primary" onClick={() => setEditando(null)}>
+              + Paciente
+            </button>
           </div>
         )}
       </div>
@@ -125,16 +134,22 @@ export default function PacientesPage() {
                 />
               </div>
             </div>
-            <button type="submit" className="btn btn-primary" disabled={loading}>Buscar</button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              Buscar
+            </button>
           </form>
         </div>
       </div>
 
       <div className="card">
-        <div className="card-header"><h2>Pacientes ({total})</h2></div>
+        <div className="card-header">
+          <h2>Pacientes ({total})</h2>
+        </div>
         <div className="card-body">
           {loading ? (
-            <div className="loading-center"><span className="spinner"></span></div>
+            <div className="loading-center">
+              <span className="spinner"></span>
+            </div>
           ) : pacientes.length === 0 ? (
             <div className="empty-state">
               <p>{consulta ? 'No se encontraron pacientes con esa búsqueda.' : 'Aún no hay pacientes registrados.'}</p>
@@ -144,22 +159,37 @@ export default function PacientesPage() {
               <table>
                 <thead>
                   <tr>
-                    <th>Documento</th><th>Paciente</th><th>Edad</th><th>Sexo</th><th>EPS</th><th>Acciones</th>
+                    <th>Documento</th>
+                    <th>Paciente</th>
+                    <th>Edad</th>
+                    <th>Sexo</th>
+                    <th>EPS</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pacientes.map((p) => (
                     <tr key={p.id}>
-                      <td>{p.tipo_documento} {p.numero_documento}</td>
-                      <td><strong>{p.nombres} {p.apellidos}</strong></td>
+                      <td>
+                        {p.tipo_documento} {p.numero_documento}
+                      </td>
+                      <td>
+                        <strong>
+                          {p.nombres} {p.apellidos}
+                        </strong>
+                      </td>
                       <td>{p.edad}</td>
                       <td>{etiquetaDe(opciones.sexos, p.sexo)}</td>
                       <td>{p.eps_nombre || <span className="text-muted">Sin EPS</span>}</td>
                       <td>
                         <div className="table-actions">
-                          <button className="btn btn-outline btn-xs" onClick={() => verHistorial(p)}>Informes</button>
+                          <button className="btn btn-outline btn-xs" onClick={() => verHistorial(p)}>
+                            Informes
+                          </button>
                           {canWrite && (
-                            <button className="btn btn-outline btn-xs" onClick={() => setEditando(p)}>Editar</button>
+                            <button className="btn btn-outline btn-xs" onClick={() => setEditando(p)}>
+                              Editar
+                            </button>
                           )}
                           {isAdmin && (
                             <button className="btn btn-danger-outline btn-xs" onClick={() => setConfirmDelete(p)}>
@@ -177,11 +207,21 @@ export default function PacientesPage() {
 
           {!loading && pacientes.length > 0 && (
             <div className="paginacion">
-              <button className="btn btn-outline btn-sm" onClick={() => buscar(consulta, pagina - 1)} disabled={!hayAnterior}>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => buscar(consulta, pagina - 1)}
+                disabled={!hayAnterior}
+              >
                 ← Anterior
               </button>
-              <span className="text-muted">Mostrando {desde}–{hasta} de {total}</span>
-              <button className="btn btn-outline btn-sm" onClick={() => buscar(consulta, pagina + 1)} disabled={!haySiguiente}>
+              <span className="text-muted">
+                Mostrando {desde}–{hasta} de {total}
+              </span>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => buscar(consulta, pagina + 1)}
+                disabled={!haySiguiente}
+              >
                 Siguiente →
               </button>
             </div>
@@ -198,34 +238,52 @@ export default function PacientesPage() {
       {historial && (
         <div className="modal-overlay" onClick={() => setHistorial(null)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <h2>Informes de {historial.paciente.nombres} {historial.paciente.apellidos}</h2>
+            <h2>
+              Informes de {historial.paciente.nombres} {historial.paciente.apellidos}
+            </h2>
             {historial.error && <div className="alert alert-error">{historial.error}</div>}
             {historial.cargando ? (
-              <div className="loading-center"><span className="spinner"></span></div>
+              <div className="loading-center">
+                <span className="spinner"></span>
+              </div>
             ) : !historial.error && historial.informes.length === 0 ? (
               <p className="text-muted">Este paciente no tiene informes.</p>
-            ) : historial.informes.length > 0 && (
-              <div className="table-responsive">
-                <table>
-                  <thead>
-                    <tr><th>N.º de petición</th><th>Tipo de estudio</th><th>Patología</th><th>Fecha</th><th>Estado</th></tr>
-                  </thead>
-                  <tbody>
-                    {historial.informes.map((inf) => (
-                      <tr key={inf.id}>
-                        <td><Link to={`/informes/${inf.id}`}>{inf.numero_peticion}</Link></td>
-                        <td>{etiquetaDe(opciones.tipos_estudio, inf.tipo_estudio)}</td>
-                        <td>{inf.patologia_nombre}</td>
-                        <td>{inf.fecha}</td>
-                        <td><EstadoBadge estado={inf.estado} /></td>
+            ) : (
+              historial.informes.length > 0 && (
+                <div className="table-responsive">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>N.º de petición</th>
+                        <th>Tipo de estudio</th>
+                        <th>Patología</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {historial.informes.map((inf) => (
+                        <tr key={inf.id}>
+                          <td>
+                            <Link to={`/informes/${inf.id}`}>{inf.numero_peticion}</Link>
+                          </td>
+                          <td>{etiquetaDe(opciones.tipos_estudio, inf.tipo_estudio)}</td>
+                          <td>{inf.patologia_nombre}</td>
+                          <td>{inf.fecha}</td>
+                          <td>
+                            <EstadoBadge estado={inf.estado} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
             )}
             <div className="form-actions">
-              <button className="btn btn-outline" onClick={() => setHistorial(null)}>Cerrar</button>
+              <button className="btn btn-outline" onClick={() => setHistorial(null)}>
+                Cerrar
+              </button>
             </div>
           </div>
         </div>
@@ -240,8 +298,12 @@ export default function PacientesPage() {
               Se eliminará a {confirmDelete.nombres} {confirmDelete.apellidos}. Esta acción no se puede deshacer.
             </p>
             <div className="form-actions">
-              <button className="btn btn-outline" onClick={() => setConfirmDelete(null)}>Cancelar</button>
-              <button className="btn btn-danger" onClick={eliminar}>Eliminar</button>
+              <button className="btn btn-outline" onClick={() => setConfirmDelete(null)}>
+                Cancelar
+              </button>
+              <button className="btn btn-danger" onClick={eliminar}>
+                Eliminar
+              </button>
             </div>
           </div>
         </div>

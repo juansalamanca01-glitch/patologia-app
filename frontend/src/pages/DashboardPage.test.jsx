@@ -14,14 +14,23 @@ vi.mock('../context/AuthContext', () => ({
 }));
 
 const BORRADOR = {
-  id: 5, numero_peticion: 'P-2026-00001', patologia_nombre: 'Piel', fecha: '2026-10-04', estado: 'borrador', autor: 1,
-  paciente: 1, paciente_nombre: 'Paciente Ficticio Uno', paciente_documento: 'CC PRUEBA0001',
+  id: 5,
+  numero_peticion: 'P-2026-00001',
+  patologia_nombre: 'Piel',
+  fecha: '2026-10-04',
+  estado: 'borrador',
+  autor: 1,
+  paciente: 1,
+  paciente_nombre: 'Paciente Ficticio Uno',
+  paciente_documento: 'CC PRUEBA0001',
 };
 
 function simularApi() {
-  client.get.mockImplementation((url) => Promise.resolve({
-    data: url === '/informes/estadisticas/' ? { total: 1, borradores: 1, finalizados: 0 } : { results: [BORRADOR] },
-  }));
+  client.get.mockImplementation((url) =>
+    Promise.resolve({
+      data: url === '/informes/estadisticas/' ? { total: 1, borradores: 1, finalizados: 0 } : { results: [BORRADOR] },
+    }),
+  );
 }
 
 // Hallazgo M-9 de docs/auditoria-inicial.md: los errores solo se escribían en la
@@ -33,14 +42,24 @@ describe('DashboardPage: errores visibles', () => {
 
   it('muestra un mensaje si no se puede cargar el panel', async () => {
     client.get.mockRejectedValue(new Error('Network Error'));
-    render(<MemoryRouter><DashboardPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText(/No se pudo cargar el panel/i)).toBeInTheDocument();
   });
 
   it('muestra el motivo si no se puede eliminar un borrador', async () => {
     simularApi();
-    client.delete.mockRejectedValue({ response: { data: { detail: 'El informe está finalizado y no se puede modificar.' } } });
-    render(<MemoryRouter><DashboardPage /></MemoryRouter>);
+    client.delete.mockRejectedValue({
+      response: { data: { detail: 'El informe está finalizado y no se puede modificar.' } },
+    });
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>,
+    );
     fireEvent.click(await screen.findByTitle('Eliminar borrador'));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
     expect(await screen.findByText('El informe está finalizado y no se puede modificar.')).toBeInTheDocument();
@@ -55,7 +74,11 @@ describe('DashboardPage: número de petición', () => {
 
   it('la tabla de informes recientes muestra el número de petición', async () => {
     simularApi();
-    render(<MemoryRouter><DashboardPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText('P-2026-00001')).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /petición/i })).toBeInTheDocument();
   });
@@ -69,7 +92,11 @@ describe('DashboardPage: paciente', () => {
 
   it('la tabla de informes recientes muestra el paciente', async () => {
     simularApi();
-    render(<MemoryRouter><DashboardPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>,
+    );
     expect(await screen.findByText('Paciente Ficticio Uno')).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Paciente' })).toBeInTheDocument();
   });

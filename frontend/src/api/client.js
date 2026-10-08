@@ -45,7 +45,7 @@ client.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // Los listados de la API vienen paginados ({count, next, previous, results}).

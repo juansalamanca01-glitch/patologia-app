@@ -9,10 +9,13 @@ vi.mock('../context/AuthContext', () => ({
 }));
 
 function abrir() {
-  const router = createMemoryRouter([
-    { path: '/salir', element: <CerrarSesionPage /> },
-    { path: '/login', element: <h1>Inicio de sesión</h1> },
-  ], { initialEntries: ['/salir'] });
+  const router = createMemoryRouter(
+    [
+      { path: '/salir', element: <CerrarSesionPage /> },
+      { path: '/login', element: <h1>Inicio de sesión</h1> },
+    ],
+    { initialEntries: ['/salir'] },
+  );
   render(<RouterProvider router={router} />);
 }
 

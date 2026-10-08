@@ -19,11 +19,18 @@ describe('CatalogosPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     auth = { canWrite: true };
-    client.get.mockImplementation((url) => Promise.resolve(pagina(
-      url === '/pacientes/eps/'
-        ? [{ id: 3, nombre: 'Particular', activa: true }, { id: 4, nombre: 'EPS Liquidada', activa: false }]
-        : [{ id: 8, nombre: 'Urgencias', activo: true }],
-    )));
+    client.get.mockImplementation((url) =>
+      Promise.resolve(
+        pagina(
+          url === '/pacientes/eps/'
+            ? [
+                { id: 3, nombre: 'Particular', activa: true },
+                { id: 4, nombre: 'EPS Liquidada', activa: false },
+              ]
+            : [{ id: 8, nombre: 'Urgencias', activo: true }],
+        ),
+      ),
+    );
     client.post.mockResolvedValue({ data: {} });
     client.patch.mockResolvedValue({ data: {} });
     client.delete.mockResolvedValue({ data: {} });
@@ -67,14 +74,20 @@ describe('CatalogosPage', () => {
     render(<CatalogosPage />);
     const servicios = await seccion('Servicios');
     fireEvent.click(await within(servicios).findByRole('button', { name: 'Renombrar Urgencias' }));
-    fireEvent.change(within(servicios).getByLabelText('Nombre de Urgencias'), { target: { value: 'Urgencias adultos' } });
+    fireEvent.change(within(servicios).getByLabelText('Nombre de Urgencias'), {
+      target: { value: 'Urgencias adultos' },
+    });
     fireEvent.click(within(servicios).getByRole('button', { name: 'Guardar' }));
     await vi.waitFor(() => expect(client.patch).toHaveBeenCalledWith('/servicios/8/', { nombre: 'Urgencias adultos' }));
   });
 
   it('muestra el motivo si el backend no deja borrar (en uso)', async () => {
     client.delete.mockRejectedValue({
-      response: { data: { detail: 'No se puede eliminar: este servicio tiene 2 informe(s) asociado(s). Desactívelo en su lugar.' } },
+      response: {
+        data: {
+          detail: 'No se puede eliminar: este servicio tiene 2 informe(s) asociado(s). Desactívelo en su lugar.',
+        },
+      },
     });
     render(<CatalogosPage />);
     const servicios = await seccion('Servicios');

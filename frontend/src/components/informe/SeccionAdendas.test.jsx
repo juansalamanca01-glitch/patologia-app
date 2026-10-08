@@ -9,16 +9,32 @@ vi.mock('../../api/client', async (importOriginal) => ({
 }));
 
 // Solo datos ficticios (docs/propuesta-informe-v2.md, sección 8).
-const FIRMA = { nombre: 'Dra. Ficticia Firma', especialidad: 'Patología Quirúrgica', registro_medico: 'RM-PRUEBA-0001' };
+const FIRMA = {
+  nombre: 'Dra. Ficticia Firma',
+  especialidad: 'Patología Quirúrgica',
+  registro_medico: 'RM-PRUEBA-0001',
+};
 const ADENDA = {
-  id: 1, numero: 1, motivo: 'Corrección del diagnóstico', texto: 'Se aclara el diagnóstico.',
-  autor: 1, fecha: '2026-10-05T14:15:00Z', firma: FIRMA,
+  id: 1,
+  numero: 1,
+  motivo: 'Corrección del diagnóstico',
+  texto: 'Se aclara el diagnóstico.',
+  autor: 1,
+  fecha: '2026-10-05T14:15:00Z',
+  firma: FIRMA,
 };
 
 function dibujar(props = {}) {
   const onAgregada = vi.fn();
   render(
-    <SeccionAdendas informeId={5} estado="finalizado" adendas={[ADENDA]} puedeAgregar onAgregada={onAgregada} {...props} />,
+    <SeccionAdendas
+      informeId={5}
+      estado="finalizado"
+      adendas={[ADENDA]}
+      puedeAgregar
+      onAgregada={onAgregada}
+      {...props}
+    />,
   );
   return onAgregada;
 }
@@ -72,7 +88,8 @@ describe('SeccionAdendas (informe v2, etapa 8)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Sí, guardar adenda/i }));
     expect(await screen.findByText('Adenda agregada correctamente.')).toBeInTheDocument();
     expect(client.post).toHaveBeenCalledWith('/informes/5/adendas/', {
-      motivo: 'Resultado de inmunohistoquímica', texto: 'CK5/6 positivo.',
+      motivo: 'Resultado de inmunohistoquímica',
+      texto: 'CK5/6 positivo.',
     });
     expect(onAgregada).toHaveBeenCalledWith(nueva);
     // El formulario se cierra.
@@ -97,7 +114,10 @@ describe('SeccionAdendas (informe v2, etapa 8)', () => {
 
   it('muestra el error del backend (por ejemplo, sin registro médico)', async () => {
     client.post.mockRejectedValue({
-      response: { status: 400, data: { detail: 'Para firmar una adenda necesita registro médico; un administrador debe registrarlo.' } },
+      response: {
+        status: 400,
+        data: { detail: 'Para firmar una adenda necesita registro médico; un administrador debe registrarlo.' },
+      },
     });
     const onAgregada = dibujar();
     llenarYGuardar();

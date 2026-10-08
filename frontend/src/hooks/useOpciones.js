@@ -25,13 +25,24 @@ export default function useOpciones() {
   useEffect(() => {
     let montado = true;
     if (!peticion) {
-      peticion = client.get('/opciones/').then(({ data }) => { recibidas = data; return data; });
-      peticion.catch(() => { peticion = null; });
+      peticion = client.get('/opciones/').then(({ data }) => {
+        recibidas = data;
+        return data;
+      });
+      peticion.catch(() => {
+        peticion = null;
+      });
     }
     peticion
-      .then((data) => { if (montado) setOpciones({ ...SIN_OPCIONES, ...data }); })
-      .catch(() => { if (montado) setError('No se pudieron cargar las listas de opciones.'); });
-    return () => { montado = false; };
+      .then((data) => {
+        if (montado) setOpciones({ ...SIN_OPCIONES, ...data });
+      })
+      .catch(() => {
+        if (montado) setError('No se pudieron cargar las listas de opciones.');
+      });
+    return () => {
+      montado = false;
+    };
   }, []);
 
   return { opciones, error };

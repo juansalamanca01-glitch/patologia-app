@@ -14,6 +14,7 @@ class DiagnosticoInline(admin.TabularInline):
 
 class AdendaInline(admin.StackedInline):
     """Solo consulta: las adendas no se agregan, cambian ni borran desde /admin/ (decisión D-9)."""
+
     model = Adenda
     extra = 0
     fields = ['numero', 'fecha', 'autor', 'motivo', 'texto', 'firma']
@@ -56,8 +57,12 @@ class InformeAdmin(admin.ModelAdmin):
     list_display = ['numero_peticion', 'paciente', 'tipo_estudio', 'patologia', 'autor', 'fecha', 'estado']
     list_filter = ['estado', 'tipo_estudio', 'patologia', 'fecha']
     search_fields = [
-        'numero_peticion', 'numero_orden_externa', 'tipo_muestra',
-        'paciente__numero_documento', 'paciente__nombres', 'paciente__apellidos',
+        'numero_peticion',
+        'numero_orden_externa',
+        'tipo_muestra',
+        'paciente__numero_documento',
+        'paciente__nombres',
+        'paciente__apellidos',
     ]
     list_select_related = ['paciente', 'patologia', 'autor']
     # Listas con búsqueda en lugar de un menú con todos los pacientes.
@@ -65,8 +70,12 @@ class InformeAdmin(admin.ModelAdmin):
     # numero_peticion (D-7), fecha_informe y datos_finalizacion (D-10) no son editables:
     # se muestran pero no se pueden cambiar.
     readonly_fields = [
-        'numero_peticion', 'texto_generado', 'fecha_informe', 'datos_finalizacion',
-        'fecha_creacion', 'fecha_actualizacion',
+        'numero_peticion',
+        'texto_generado',
+        'fecha_informe',
+        'datos_finalizacion',
+        'fecha_creacion',
+        'fecha_actualizacion',
     ]
     inlines = [DiagnosticoInline, AdendaInline]
 
@@ -74,6 +83,7 @@ class InformeAdmin(admin.ModelAdmin):
 @admin.register(ConsecutivoPeticion)
 class ConsecutivoPeticionAdmin(admin.ModelAdmin):
     """Solo consulta: cambiar el contador a mano podría repetir números de petición."""
+
     list_display = ['anio', 'ultimo']
 
     def has_add_permission(self, request):

@@ -25,15 +25,25 @@ class PacienteSerializer(serializers.ModelSerializer):
     Paciente (docs/propuesta-informe-v2.md, 3.1). `edad` se calcula a la fecha de
     hoy; el informe la calculará a su fecha de ingreso (etapa 4).
     """
+
     eps_nombre = serializers.CharField(source='eps.nombre', read_only=True, default=None)
     edad = serializers.CharField(read_only=True)
 
     class Meta:
         model = Paciente
         fields = [
-            'id', 'tipo_documento', 'numero_documento', 'nombres', 'apellidos',
-            'fecha_nacimiento', 'edad', 'sexo', 'eps', 'eps_nombre',
-            'fecha_creacion', 'fecha_actualizacion',
+            'id',
+            'tipo_documento',
+            'numero_documento',
+            'nombres',
+            'apellidos',
+            'fecha_nacimiento',
+            'edad',
+            'sexo',
+            'eps',
+            'eps_nombre',
+            'fecha_creacion',
+            'fecha_actualizacion',
         ]
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
         # El documento repetido se valida en validate(), con el número ya normalizado

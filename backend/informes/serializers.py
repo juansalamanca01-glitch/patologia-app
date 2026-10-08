@@ -32,8 +32,13 @@ class CategoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categoria
         fields = [
-            'id', 'nombre', 'descripcion', 'color', 'activa',
-            'total_patologias', 'fecha_creacion',
+            'id',
+            'nombre',
+            'descripcion',
+            'color',
+            'activa',
+            'total_patologias',
+            'fecha_creacion',
         ]
         read_only_fields = ['id', 'fecha_creacion']
 
@@ -48,8 +53,15 @@ class PlantillaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Plantilla
         fields = [
-            'id', 'patologia', 'campo_nombre', 'campo_label',
-            'tipo_campo', 'obligatorio', 'opciones', 'orden', 'valor_defecto',
+            'id',
+            'patologia',
+            'campo_nombre',
+            'campo_label',
+            'tipo_campo',
+            'obligatorio',
+            'opciones',
+            'orden',
+            'valor_defecto',
         ]
         read_only_fields = ['id']
 
@@ -61,15 +73,23 @@ class PatologiaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patologia
         fields = [
-            'id', 'nombre', 'categoria', 'categoria_nombre', 'descripcion',
-            'protocolo_medico', 'activa', 'plantillas',
-            'fecha_creacion', 'fecha_actualizacion',
+            'id',
+            'nombre',
+            'categoria',
+            'categoria_nombre',
+            'descripcion',
+            'protocolo_medico',
+            'activa',
+            'plantillas',
+            'fecha_creacion',
+            'fecha_actualizacion',
         ]
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
 
 
 class PatologiaListSerializer(serializers.ModelSerializer):
     """Versión resumida para listas y menús desplegables."""
+
     categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True, default=None)
 
     class Meta:
@@ -149,18 +169,46 @@ class InformeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Informe
         fields = [
-            'id', 'numero_peticion', 'numero_orden_externa',
-            'paciente', 'paciente_datos', 'medico_tratante', 'fecha_ingreso',
-            'eps', 'eps_nombre', 'servicio', 'servicio_nombre', 'estudios_solicitados', 'tipo_estudio',
-            'patologia', 'patologia_nombre',
-            'autor', 'autor_nombre', 'fecha', 'tipo_muestra',
-            'datos_ingresados', 'texto_generado', 'descripcion_microscopica', 'diagnosticos', 'comentarios',
-            'estado', 'fecha_informe', 'firma', 'adendas', 'fecha_creacion', 'fecha_actualizacion',
+            'id',
+            'numero_peticion',
+            'numero_orden_externa',
+            'paciente',
+            'paciente_datos',
+            'medico_tratante',
+            'fecha_ingreso',
+            'eps',
+            'eps_nombre',
+            'servicio',
+            'servicio_nombre',
+            'estudios_solicitados',
+            'tipo_estudio',
+            'patologia',
+            'patologia_nombre',
+            'autor',
+            'autor_nombre',
+            'fecha',
+            'tipo_muestra',
+            'datos_ingresados',
+            'texto_generado',
+            'descripcion_microscopica',
+            'diagnosticos',
+            'comentarios',
+            'estado',
+            'fecha_informe',
+            'firma',
+            'adendas',
+            'fecha_creacion',
+            'fecha_actualizacion',
         ]
         # numero_peticion lo asigna el sistema y no se puede cambiar (decisión D-7).
         read_only_fields = [
-            'id', 'numero_peticion', 'autor', 'texto_generado', 'fecha',
-            'fecha_creacion', 'fecha_actualizacion',
+            'id',
+            'numero_peticion',
+            'autor',
+            'texto_generado',
+            'fecha',
+            'fecha_creacion',
+            'fecha_actualizacion',
         ]
 
     def get_paciente_datos(self, informe):
@@ -188,7 +236,9 @@ class InformeSerializer(serializers.ModelSerializer):
 
     def validate_servicio(self, valor):
         return _rechazar_si_desactivado(
-            valor, getattr(self.instance, 'servicio_id', None), 'Este servicio está desactivado.',
+            valor,
+            getattr(self.instance, 'servicio_id', None),
+            'Este servicio está desactivado.',
         )
 
     def validate_diagnosticos(self, valor):
@@ -221,8 +271,7 @@ class InformeSerializer(serializers.ModelSerializer):
         """Reemplaza los diagnósticos del informe; el orden es el de la lista (1, 2, 3...)."""
         informe.diagnosticos.all().delete()
         Diagnostico.objects.bulk_create(
-            Diagnostico(informe=informe, orden=orden, **datos)
-            for orden, datos in enumerate(diagnosticos, start=1)
+            Diagnostico(informe=informe, orden=orden, **datos) for orden, datos in enumerate(diagnosticos, start=1)
         )
 
     def _validar_paciente_y_fecha_ingreso(self, data):
@@ -264,13 +313,14 @@ class InformeSerializer(serializers.ModelSerializer):
                 if esta_vacio(datos.get(campo.campo_nombre))
             ]
             if faltantes:
-                raise serializers.ValidationError({
-                    'datos_ingresados': f'Faltan campos obligatorios: {", ".join(faltantes)}'
-                })
+                raise serializers.ValidationError(
+                    {'datos_ingresados': f'Faltan campos obligatorios: {", ".join(faltantes)}'}
+                )
 
 
 class InformeListSerializer(serializers.ModelSerializer):
     """Versión resumida para el listado de informes."""
+
     patologia_nombre = serializers.CharField(source='patologia.nombre', read_only=True)
     autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
     # None en los informes de antes de la etapa 4, que no tienen paciente.
@@ -280,7 +330,18 @@ class InformeListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Informe
         fields = [
-            'id', 'numero_peticion', 'numero_orden_externa', 'paciente', 'paciente_nombre', 'paciente_documento',
-            'tipo_estudio', 'patologia_nombre', 'autor', 'autor_nombre',
-            'fecha', 'tipo_muestra', 'estado', 'fecha_creacion',
+            'id',
+            'numero_peticion',
+            'numero_orden_externa',
+            'paciente',
+            'paciente_nombre',
+            'paciente_documento',
+            'tipo_estudio',
+            'patologia_nombre',
+            'autor',
+            'autor_nombre',
+            'fecha',
+            'tipo_muestra',
+            'estado',
+            'fecha_creacion',
         ]

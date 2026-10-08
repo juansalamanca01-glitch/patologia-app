@@ -20,8 +20,14 @@ describe('Enlaces legales sin sesión', () => {
   it('el login muestra el pie con la política de privacidad y los términos', () => {
     abrir('/login');
     expect(screen.getByRole('button', { name: /Iniciar Sesión/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Política de Privacidad' })).toHaveAttribute('href', '/politica-privacidad');
-    expect(screen.getByRole('link', { name: 'Términos y Condiciones' })).toHaveAttribute('href', '/terminos-condiciones');
+    expect(screen.getByRole('link', { name: 'Política de Privacidad' })).toHaveAttribute(
+      'href',
+      '/politica-privacidad',
+    );
+    expect(screen.getByRole('link', { name: 'Términos y Condiciones' })).toHaveAttribute(
+      'href',
+      '/terminos-condiciones',
+    );
   });
 
   it('desde el login se abre la política de privacidad', () => {

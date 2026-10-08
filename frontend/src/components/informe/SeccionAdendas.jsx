@@ -71,7 +71,14 @@ export default function SeccionAdendas({ informeId, estado, adendas = [], puedeA
       <div className="card-header">
         <h2>Adendas</h2>
         {puedeAgregar && !abierto && (
-          <button type="button" className="btn btn-outline btn-sm" onClick={() => { setAbierto(true); setExito(''); }}>
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={() => {
+              setAbierto(true);
+              setExito('');
+            }}
+          >
             + Agregar adenda
           </button>
         )}
@@ -81,8 +88,12 @@ export default function SeccionAdendas({ informeId, estado, adendas = [], puedeA
 
         {adendas.map((adenda) => (
           <div className="adenda" key={adenda.id}>
-            <h3>Adenda N.º {adenda.numero} — {formatoFechaHora.format(new Date(adenda.fecha))}</h3>
-            <p><strong>Motivo:</strong> <span>{adenda.motivo}</span></p>
+            <h3>
+              Adenda N.º {adenda.numero} — {formatoFechaHora.format(new Date(adenda.fecha))}
+            </h3>
+            <p>
+              <strong>Motivo:</strong> <span>{adenda.motivo}</span>
+            </p>
             <p className="adenda-texto">{adenda.texto}</p>
             <LineasFirma firma={adenda.firma} />
           </div>
@@ -92,7 +103,9 @@ export default function SeccionAdendas({ informeId, estado, adendas = [], puedeA
           <form className="adenda-formulario" onSubmit={revisar} noValidate>
             {errores.general && <div className="alert alert-error">{errores.general}</div>}
             <div className={`form-group ${errores.motivo ? 'has-error' : ''}`}>
-              <label htmlFor="adendaMotivo">Motivo <span className="required">*</span></label>
+              <label htmlFor="adendaMotivo">
+                Motivo <span className="required">*</span>
+              </label>
               <input
                 id="adendaMotivo"
                 type="text"
@@ -105,7 +118,9 @@ export default function SeccionAdendas({ informeId, estado, adendas = [], puedeA
               {errores.motivo && <span className="field-error">{errores.motivo}</span>}
             </div>
             <div className={`form-group ${errores.texto ? 'has-error' : ''}`}>
-              <label htmlFor="adendaTexto">Texto <span className="required">*</span></label>
+              <label htmlFor="adendaTexto">
+                Texto <span className="required">*</span>
+              </label>
               <textarea
                 id="adendaTexto"
                 rows={4}
@@ -118,15 +133,23 @@ export default function SeccionAdendas({ informeId, estado, adendas = [], puedeA
 
             {confirmar ? (
               <div className="alert alert-warning">
-                <p>Las adendas no se pueden modificar ni borrar. Llevarán su firma y la fecha de hoy. ¿Guardar la adenda?</p>
+                <p>
+                  Las adendas no se pueden modificar ni borrar. Llevarán su firma y la fecha de hoy. ¿Guardar la adenda?
+                </p>
                 <div className="form-actions">
-                  <button type="button" className="btn btn-outline" onClick={() => setConfirmar(false)}>Volver</button>
-                  <button type="button" className="btn btn-primary" onClick={guardar}>Sí, guardar adenda</button>
+                  <button type="button" className="btn btn-outline" onClick={() => setConfirmar(false)}>
+                    Volver
+                  </button>
+                  <button type="button" className="btn btn-primary" onClick={guardar}>
+                    Sí, guardar adenda
+                  </button>
                 </div>
               </div>
             ) : (
               <div className="form-actions">
-                <button type="button" className="btn btn-outline" onClick={cerrar} disabled={guardando}>Cancelar</button>
+                <button type="button" className="btn btn-outline" onClick={cerrar} disabled={guardando}>
+                  Cancelar
+                </button>
                 <button type="submit" className="btn btn-primary" disabled={guardando}>
                   {guardando ? <span className="spinner"></span> : 'Guardar adenda'}
                 </button>

@@ -11,6 +11,7 @@ from .serializers import EPSSerializer, PacienteSerializer
 
 class EPSViewSet(viewsets.ModelViewSet):
     """Catálogo de EPS. Todos leen; patólogo o admin lo administran (decisión D-11)."""
+
     queryset = EPS.objects.all()
     serializer_class = EPSSerializer
     permission_classes = [EsPatologoOAdmin]
@@ -30,8 +31,10 @@ class EPSViewSet(viewsets.ModelViewSet):
             # Puede estar en uso por pacientes (su EPS actual) o por informes (la del estudio).
             pacientes, informes = eps.pacientes.count(), eps.informes.count()
             return Response(
-                {'detail': f'No se puede eliminar: esta EPS tiene {pacientes} paciente(s) y '
-                           f'{informes} informe(s) asociado(s). Desactívela en su lugar.'},
+                {
+                    'detail': f'No se puede eliminar: esta EPS tiene {pacientes} paciente(s) y '
+                    f'{informes} informe(s) asociado(s). Desactívela en su lugar.'
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -43,6 +46,7 @@ class PacienteViewSet(viewsets.ModelViewSet):
     ?q= busca por documento, nombres y apellidos: cada palabra debe aparecer en
     alguno de los tres, así que "ficticio uno" encuentra a "Paciente Ficticio Uno".
     """
+
     queryset = Paciente.objects.select_related('eps')
     serializer_class = PacienteSerializer
     permission_classes = [EsPatologoOAdminYSoloAdminBorra]

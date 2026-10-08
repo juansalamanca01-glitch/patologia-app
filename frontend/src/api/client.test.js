@@ -45,7 +45,9 @@ describe('client.js: renovación automática del token', () => {
     const client = await cargarCliente();
     localStorage.setItem('access_token', 'access-vencido');
     localStorage.setItem('refresh_token', 'refresh-viejo');
-    const renovar = vi.spyOn(axios, 'post').mockResolvedValue({ data: { access: 'access-nuevo', refresh: 'refresh-nuevo' } });
+    const renovar = vi
+      .spyOn(axios, 'post')
+      .mockResolvedValue({ data: { access: 'access-nuevo', refresh: 'refresh-nuevo' } });
     let intentos = 0;
     client.defaults.adapter = (config) => {
       intentos += 1;

@@ -24,7 +24,11 @@ const solicitudVacia = () => ({
 // D-13: un borrador existente se autoguarda este tiempo después del último cambio.
 export const ESPERA_AUTOGUARDADO_MS = 5000;
 
-const formatoHora = new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' });
+const formatoHora = new Intl.DateTimeFormat('es-CO', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'America/Bogota',
+});
 
 // Convierte la respuesta de error de la API en los errores del formulario.
 function erroresDeRespuesta(err) {
@@ -78,9 +82,7 @@ export default function InformePage() {
 
   // Un informe nuevo lo puede crear cualquier patólogo o admin; uno existente solo
   // lo puede editar o finalizar su autor o un admin (decisión D-2).
-  const puedeEditar = isEditing
-    ? canWrite && Boolean(informe) && (isAdmin || informe.autor === user?.id)
-    : canWrite;
+  const puedeEditar = isEditing ? canWrite && Boolean(informe) && (isAdmin || informe.autor === user?.id) : canWrite;
   const soloLectura = informe?.estado === 'finalizado' || !puedeEditar;
   const hayCambiosSinGuardar = !soloLectura && version !== versionGuardada;
   // Solo un borrador que ya existe se autoguarda: uno nuevo gastaría un número de petición (D-7).
@@ -97,11 +99,13 @@ export default function InformePage() {
   // Salir de la pantalla con cambios sin guardar pide confirmar (D-13), también al cerrar
   // sesión ("Salir" pasa por /salir). No se frena la salida hacia /login: solo ocurre
   // cuando la sesión ya terminó (por ejemplo, porque venció).
-  const blocker = useBlocker(useCallback(({ currentLocation, nextLocation }) => (
-    sucioRef.current
-      && currentLocation.pathname !== nextLocation.pathname
-      && nextLocation.pathname !== '/login'
-  ), []));
+  const blocker = useBlocker(
+    useCallback(
+      ({ currentLocation, nextLocation }) =>
+        sucioRef.current && currentLocation.pathname !== nextLocation.pathname && nextLocation.pathname !== '/login',
+      [],
+    ),
+  );
 
   // Cerrar la pestaña o recargar con cambios sin guardar: aviso del navegador.
   useEffect(() => {
@@ -122,9 +126,12 @@ export default function InformePage() {
     // Al crear un informe solo se ofrecen las patologías activas (decisión D-4). Al editar se
     // piden todas, para que se vea la patología de un informe viejo aunque esté desactivada.
     const params = isEditing ? LISTA_COMPLETA : { ...LISTA_COMPLETA, activa: 'true' };
-    client.get('/patologias/', { params })
+    client
+      .get('/patologias/', { params })
       .then(({ data }) => setPatologias(resultados(data)))
-      .catch(() => setErrors((prev) => ({ ...prev, general: 'No se pudieron cargar las patologías. Recarga la página.' })));
+      .catch(() =>
+        setErrors((prev) => ({ ...prev, general: 'No se pudieron cargar las patologías. Recarga la página.' })),
+      );
   }, []);
 
   // EPS y servicios activos (D-4). La EPS o el servicio de un informe guardado se
@@ -133,54 +140,71 @@ export default function InformePage() {
     Promise.all([
       client.get('/pacientes/eps/', { params: { ...LISTA_COMPLETA, activa: 'true' } }),
       client.get('/servicios/', { params: { ...LISTA_COMPLETA, activo: 'true' } }),
-    ]).then(([eps, servicios]) => {
-      setEpsActivas(resultados(eps.data));
-      setServiciosActivos(resultados(servicios.data));
-    }).catch(() => setErrors((prev) => ({ ...prev, general: 'No se pudieron cargar las EPS y los servicios. Recarga la página.' })));
+    ])
+      .then(([eps, servicios]) => {
+        setEpsActivas(resultados(eps.data));
+        setServiciosActivos(resultados(servicios.data));
+      })
+      .catch(() =>
+        setErrors((prev) => ({
+          ...prev,
+          general: 'No se pudieron cargar las EPS y los servicios. Recarga la página.',
+        })),
+      );
   }, []);
 
   // Carga el informe si se está editando uno existente
   useEffect(() => {
     if (isEditing) {
       setLoading(true);
-      client.get(`/informes/${id}/`).then(({ data }) => {
-        setInforme(data);
-        setPaciente(data.paciente_datos);
-        setSolicitud({
-          medico_tratante: data.medico_tratante || '',
-          fecha_ingreso: data.fecha_ingreso || '',
-          eps: data.eps ?? '',
-          servicio: data.servicio ?? '',
-          numero_orden_externa: data.numero_orden_externa || '',
-          estudios_solicitados: data.estudios_solicitados || '',
-        });
-        setTipoEstudio(data.tipo_estudio || 'histologia');
-        setTipoMuestra(data.tipo_muestra || '');
-        setMicroscopica(data.descripcion_microscopica || '');
-        setDiagnosticos(conClaves(data.diagnosticos));
-        setComentarios(data.comentarios || '');
-        setFormData(data.datos_ingresados || {});
-        setSelectedPatologia(data.patologia);
-      }).catch(() => navigate('/')).finally(() => setLoading(false));
+      client
+        .get(`/informes/${id}/`)
+        .then(({ data }) => {
+          setInforme(data);
+          setPaciente(data.paciente_datos);
+          setSolicitud({
+            medico_tratante: data.medico_tratante || '',
+            fecha_ingreso: data.fecha_ingreso || '',
+            eps: data.eps ?? '',
+            servicio: data.servicio ?? '',
+            numero_orden_externa: data.numero_orden_externa || '',
+            estudios_solicitados: data.estudios_solicitados || '',
+          });
+          setTipoEstudio(data.tipo_estudio || 'histologia');
+          setTipoMuestra(data.tipo_muestra || '');
+          setMicroscopica(data.descripcion_microscopica || '');
+          setDiagnosticos(conClaves(data.diagnosticos));
+          setComentarios(data.comentarios || '');
+          setFormData(data.datos_ingresados || {});
+          setSelectedPatologia(data.patologia);
+        })
+        .catch(() => navigate('/'))
+        .finally(() => setLoading(false));
     }
   }, [id]);
 
   // Carga los campos de la plantilla al cambiar de patología
   useEffect(() => {
     if (selectedPatologia) {
-      client.get(`/patologias/${selectedPatologia}/`).then(({ data }) => {
-        setPlantillas(data.plantillas || []);
-        // Valores por defecto de los campos
-        if (!isEditing) {
-          const defaults = {};
-          (data.plantillas || []).forEach((p) => {
-            if (p.valor_defecto) defaults[p.campo_nombre] = p.valor_defecto;
-          });
-          setFormData((prev) => ({ ...defaults, ...prev }));
-        }
-      }).catch(() => {
-        setErrors((prev) => ({ ...prev, general: 'No se pudieron cargar los campos de la patología. Recarga la página.' }));
-      });
+      client
+        .get(`/patologias/${selectedPatologia}/`)
+        .then(({ data }) => {
+          setPlantillas(data.plantillas || []);
+          // Valores por defecto de los campos
+          if (!isEditing) {
+            const defaults = {};
+            (data.plantillas || []).forEach((p) => {
+              if (p.valor_defecto) defaults[p.campo_nombre] = p.valor_defecto;
+            });
+            setFormData((prev) => ({ ...defaults, ...prev }));
+          }
+        })
+        .catch(() => {
+          setErrors((prev) => ({
+            ...prev,
+            general: 'No se pudieron cargar los campos de la patología. Recarga la página.',
+          }));
+        });
     } else {
       setPlantillas([]);
     }
@@ -216,17 +240,19 @@ export default function InformePage() {
     if (!paciente) newErrors.paciente = 'Seleccione un paciente.';
     if (!selectedPatologia) newErrors.patologia = 'Seleccione una patología.';
 
-    plantillas.filter(p => p.obligatorio).forEach((p) => {
-      const val = formData[p.campo_nombre];
-      if (!val || (typeof val === 'string' && !val.trim())) {
-        newErrors[p.campo_nombre] = `${p.campo_label || p.campo_nombre} es obligatorio.`;
-      }
-    });
+    plantillas
+      .filter((p) => p.obligatorio)
+      .forEach((p) => {
+        const val = formData[p.campo_nombre];
+        if (!val || (typeof val === 'string' && !val.trim())) {
+          newErrors[p.campo_nombre] = `${p.campo_label || p.campo_nombre} es obligatorio.`;
+        }
+      });
 
     // Errores por fila, con la misma forma que los del backend.
-    const erroresDiagnosticos = diagnosticos.map((d) => (
-      d.descripcion.trim() ? {} : { descripcion: 'Escriba la descripción del diagnóstico.' }
-    ));
+    const erroresDiagnosticos = diagnosticos.map((d) =>
+      d.descripcion.trim() ? {} : { descripcion: 'Escriba la descripción del diagnóstico.' },
+    );
     if (erroresDiagnosticos.some((e) => e.descripcion)) newErrors.diagnosticos = erroresDiagnosticos;
     return newErrors;
   };
@@ -460,7 +486,9 @@ export default function InformePage() {
           >
             <option value="">— Seleccione —</option>
             {(opciones || []).map((opt) => (
-              <option key={opt} value={opt}>{opt}</option>
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
             ))}
           </select>
         )}
@@ -492,16 +520,19 @@ export default function InformePage() {
     );
   };
 
-  if (loading) return <div className="loading-center"><span className="spinner"></span></div>;
+  if (loading)
+    return (
+      <div className="loading-center">
+        <span className="spinner"></span>
+      </div>
+    );
 
   return (
     <div className="informe-page">
       <div className="page-header">
         <div>
           <h1>{isEditing ? `Informe ${informe?.numero_peticion || ''}` : 'Nuevo Informe'}</h1>
-          {informe && (
-            <EstadoBadge estado={informe.estado} />
-          )}
+          {informe && <EstadoBadge estado={informe.estado} />}
           <IndicadorGuardado sinGuardar={hayCambiosSinGuardar} autoguardado={autoguardado} />
         </div>
         <div className="header-actions">
@@ -510,15 +541,16 @@ export default function InformePage() {
               {puedeVerPdf && (
                 <button className="btn btn-outline" onClick={downloadPDF}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                    <polyline points="7,10 12,15 17,10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                    <polyline points="7,10 12,15 17,10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
                   {borrador ? 'Vista previa (borrador)' : 'Exportar PDF'}
                 </button>
               )}
-              {puedeEditar && informe?.estado === 'borrador' && (
-                confirmFinalizar ? (
+              {puedeEditar &&
+                informe?.estado === 'borrador' &&
+                (confirmFinalizar ? (
                   <>
                     <button className="btn btn-success" onClick={handleFinalizar}>
                       Si, Confirmar
@@ -531,8 +563,7 @@ export default function InformePage() {
                   <button className="btn btn-success" onClick={handleFinalizar}>
                     Finalizar Informe
                   </button>
-                )
-              )}
+                ))}
             </>
           )}
         </div>
@@ -541,12 +572,16 @@ export default function InformePage() {
       {successMsg && <div className="alert alert-success">{successMsg}</div>}
       {(errors.general || errors.detail) && <div className="alert alert-error">{errors.general || errors.detail}</div>}
       {/* Campos obligatorios de la plantilla que rechazó el backend: antes no se mostraban. */}
-      {typeof errors.datos_ingresados === 'string' && <div className="alert alert-error">{errors.datos_ingresados}</div>}
+      {typeof errors.datos_ingresados === 'string' && (
+        <div className="alert alert-error">{errors.datos_ingresados}</div>
+      )}
       {errors.requisitos && (
         <div className="alert alert-error alert-lista">
           <p>No se puede finalizar el informe:</p>
           <ul>
-            {errors.requisitos.map((requisito) => <li key={requisito}>{requisito}</li>)}
+            {errors.requisitos.map((requisito) => (
+              <li key={requisito}>{requisito}</li>
+            ))}
           </ul>
         </div>
       )}
@@ -564,13 +599,20 @@ export default function InformePage() {
           valores={solicitud}
           onCambiar={cambiarSolicitud}
           epsOpciones={conOpcionActual(epsActivas, solicitud.eps, informe?.eps_nombre)}
-          serviciosOpciones={conOpcionActual(serviciosActivos, solicitud.servicio, informe?.servicio_nombre, 'desactivado')}
+          serviciosOpciones={conOpcionActual(
+            serviciosActivos,
+            solicitud.servicio,
+            informe?.servicio_nombre,
+            'desactivado',
+          )}
           disabled={soloLectura}
           errores={errors}
         />
 
         <div className="card">
-          <div className="card-header"><h2>Estudio</h2></div>
+          <div className="card-header">
+            <h2>Estudio</h2>
+          </div>
           <div className="card-body">
             <div className="form-row">
               <div className={`form-group ${errors.tipo_estudio ? 'has-error' : ''}`}>
@@ -578,18 +620,25 @@ export default function InformePage() {
                 <select
                   id="tipoEstudio"
                   value={tipoEstudio}
-                  onChange={(e) => { marcarCambio(); setTipoEstudio(e.target.value); }}
+                  onChange={(e) => {
+                    marcarCambio();
+                    setTipoEstudio(e.target.value);
+                  }}
                   disabled={soloLectura}
                 >
                   {opciones.tipos_estudio.map((o) => (
-                    <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
+                    <option key={o.valor} value={o.valor}>
+                      {o.etiqueta}
+                    </option>
                   ))}
                 </select>
                 {errors.tipo_estudio && <span className="field-error">{errors.tipo_estudio}</span>}
               </div>
 
               <div className={`form-group ${errors.patologia ? 'has-error' : ''}`}>
-                <label htmlFor="patologia">Tipo de Patología <span className="required">*</span></label>
+                <label htmlFor="patologia">
+                  Tipo de Patología <span className="required">*</span>
+                </label>
                 <select
                   id="patologia"
                   value={selectedPatologia || ''}
@@ -598,13 +647,15 @@ export default function InformePage() {
                     marcarCambio();
                     setSelectedPatologia(val);
                     if (!isEditing) setFormData({});
-                    setErrors(p => ({...p, patologia: null}));
+                    setErrors((p) => ({ ...p, patologia: null }));
                   }}
                   disabled={isEditing || !puedeEditar}
                 >
                   <option value="">— Seleccione patología —</option>
                   {patologias.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nombre}</option>
+                    <option key={p.id} value={p.id}>
+                      {p.nombre}
+                    </option>
                   ))}
                 </select>
                 {errors.patologia && <span className="field-error">{errors.patologia}</span>}
@@ -616,7 +667,10 @@ export default function InformePage() {
                   id="tipoMuestra"
                   type="text"
                   value={tipoMuestra}
-                  onChange={(e) => { marcarCambio(); setTipoMuestra(e.target.value); }}
+                  onChange={(e) => {
+                    marcarCambio();
+                    setTipoMuestra(e.target.value);
+                  }}
                   placeholder="Ej: Biopsia escisional"
                   disabled={soloLectura}
                 />
@@ -629,19 +683,15 @@ export default function InformePage() {
             (campos dinámicos y texto generado), microscópica, diagnósticos y comentarios */}
         {(plantillas.length > 0 || informe?.texto_generado) && (
           <div className="card">
-            <div className="card-header"><h2>Descripción macroscópica</h2></div>
+            <div className="card-header">
+              <h2>Descripción macroscópica</h2>
+            </div>
             <div className="card-body">
-              {plantillas.length > 0 && (
-                <div className="dynamic-fields">
-                  {plantillas.map(renderField)}
-                </div>
-              )}
+              {plantillas.length > 0 && <div className="dynamic-fields">{plantillas.map(renderField)}</div>}
               {informe?.texto_generado && (
                 <>
                   <h3 className="texto-generado-titulo">Texto generado</h3>
-                  <div className="generated-text">
-                    {informe.texto_generado}
-                  </div>
+                  <div className="generated-text">{informe.texto_generado}</div>
                 </>
               )}
             </div>
@@ -649,19 +699,26 @@ export default function InformePage() {
         )}
 
         <div className="card">
-          <div className="card-header"><h2>Descripción microscópica</h2></div>
+          <div className="card-header">
+            <h2>Descripción microscópica</h2>
+          </div>
           <div className="card-body">
             <div className={`form-group ${errors.descripcion_microscopica ? 'has-error' : ''}`}>
               <textarea
                 id="descripcionMicroscopica"
                 aria-label="Descripción microscópica"
                 value={microscopica}
-                onChange={(e) => { marcarCambio(); setMicroscopica(e.target.value); }}
+                onChange={(e) => {
+                  marcarCambio();
+                  setMicroscopica(e.target.value);
+                }}
                 rows={5}
                 placeholder="Hallazgos al microscopio..."
                 disabled={soloLectura}
               />
-              {errors.descripcion_microscopica && <span className="field-error">{errors.descripcion_microscopica}</span>}
+              {errors.descripcion_microscopica && (
+                <span className="field-error">{errors.descripcion_microscopica}</span>
+              )}
             </div>
           </div>
         </div>
@@ -678,14 +735,19 @@ export default function InformePage() {
         />
 
         <div className="card">
-          <div className="card-header"><h2>Comentarios</h2></div>
+          <div className="card-header">
+            <h2>Comentarios</h2>
+          </div>
           <div className="card-body">
             <div className={`form-group ${errors.comentarios ? 'has-error' : ''}`}>
               <textarea
                 id="comentarios"
                 aria-label="Comentarios"
                 value={comentarios}
-                onChange={(e) => { marcarCambio(); setComentarios(e.target.value); }}
+                onChange={(e) => {
+                  marcarCambio();
+                  setComentarios(e.target.value);
+                }}
                 rows={3}
                 placeholder="Comentarios para el médico tratante..."
                 disabled={soloLectura}
@@ -718,7 +780,12 @@ export default function InformePage() {
               <button type="button" className="btn btn-outline" onClick={() => blocker.reset()} disabled={saving}>
                 Seguir editando
               </button>
-              <button type="button" className="btn btn-danger-outline" onClick={() => blocker.proceed()} disabled={saving}>
+              <button
+                type="button"
+                className="btn btn-danger-outline"
+                onClick={() => blocker.proceed()}
+                disabled={saving}
+              >
                 Salir sin guardar
               </button>
               <button type="button" className="btn btn-primary" onClick={guardarYSalir} disabled={saving}>
@@ -747,10 +814,13 @@ export default function InformePage() {
 function IndicadorGuardado({ sinGuardar, autoguardado }) {
   let texto = null;
   if (autoguardado?.tipo === 'guardando') texto = 'Guardando…';
-  else if (sinGuardar && autoguardado?.tipo === 'invalido') texto = 'Cambios sin guardar: hay datos obligatorios o incompletos';
-  else if (sinGuardar && autoguardado?.tipo === 'error') texto = 'Cambios sin guardar: no se pudo guardar automáticamente';
+  else if (sinGuardar && autoguardado?.tipo === 'invalido')
+    texto = 'Cambios sin guardar: hay datos obligatorios o incompletos';
+  else if (sinGuardar && autoguardado?.tipo === 'error')
+    texto = 'Cambios sin guardar: no se pudo guardar automáticamente';
   else if (sinGuardar) texto = 'Cambios sin guardar';
-  else if (autoguardado?.tipo === 'guardado') texto = `Guardado automáticamente a las ${formatoHora.format(autoguardado.hora)}`;
+  else if (autoguardado?.tipo === 'guardado')
+    texto = `Guardado automáticamente a las ${formatoHora.format(autoguardado.hora)}`;
   return (
     <span className={`indicador-guardado ${sinGuardar ? 'sin-guardar' : ''}`} role="status" aria-live="polite">
       {texto}

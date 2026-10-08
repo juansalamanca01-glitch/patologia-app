@@ -22,8 +22,13 @@ const INFORME = {
   // Solo datos ficticios (docs/propuesta-informe-v2.md, sección 8).
   paciente: 1,
   paciente_datos: {
-    id: 1, nombre_completo: 'Paciente Ficticio Uno', tipo_documento: 'CC', numero_documento: 'PRUEBA0001',
-    fecha_nacimiento: '1980-10-05', sexo: 'femenino', edad: '45 años',
+    id: 1,
+    nombre_completo: 'Paciente Ficticio Uno',
+    tipo_documento: 'CC',
+    numero_documento: 'PRUEBA0001',
+    fecha_nacimiento: '1980-10-05',
+    sexo: 'femenino',
+    edad: '45 años',
   },
   medico_tratante: 'Médico Ficticio',
   fecha_ingreso: '2026-10-01',
@@ -59,9 +64,16 @@ const OPCIONES = {
 };
 
 const PACIENTE = {
-  id: 1, tipo_documento: 'CC', numero_documento: 'PRUEBA0001', nombres: 'Paciente Ficticio',
-  apellidos: 'Uno', fecha_nacimiento: '1980-10-05', edad: '45 años', sexo: 'femenino',
-  eps: 3, eps_nombre: 'Particular',
+  id: 1,
+  tipo_documento: 'CC',
+  numero_documento: 'PRUEBA0001',
+  nombres: 'Paciente Ficticio',
+  apellidos: 'Uno',
+  fecha_nacimiento: '1980-10-05',
+  edad: '45 años',
+  sexo: 'femenino',
+  eps: 3,
+  eps_nombre: 'Particular',
 };
 
 // Simula las respuestas de la API según la URL pedida.
@@ -69,10 +81,13 @@ function simularApi() {
   client.get.mockImplementation((url) => {
     if (url === '/opciones/') return Promise.resolve({ data: OPCIONES });
     // EPS y servicios activos: "EPS Liquidada" (la del informe guardado) ya no está activa.
-    if (url === '/pacientes/eps/') return Promise.resolve({ data: { results: [{ id: 3, nombre: 'Particular', activa: true }] } });
-    if (url === '/servicios/') return Promise.resolve({ data: { results: [{ id: 8, nombre: 'Urgencias', activo: true }] } });
+    if (url === '/pacientes/eps/')
+      return Promise.resolve({ data: { results: [{ id: 3, nombre: 'Particular', activa: true }] } });
+    if (url === '/servicios/')
+      return Promise.resolve({ data: { results: [{ id: 8, nombre: 'Urgencias', activo: true }] } });
     if (url === '/pacientes/') return Promise.resolve({ data: { results: [PACIENTE] } });
-    if (url === '/patologias/') return Promise.resolve({ data: { results: [{ id: 1, nombre: 'Piel', activa: true }] } });
+    if (url === '/patologias/')
+      return Promise.resolve({ data: { results: [{ id: 1, nombre: 'Piel', activa: true }] } });
     if (url === '/informes/5/') return Promise.resolve({ data: INFORME });
     if (url === '/patologias/1/') return Promise.resolve({ data: { plantillas: [] } });
     if (url === '/informes/5/pdf/') return Promise.resolve({ data: new Blob(['%PDF'], { type: 'application/pdf' }) });
@@ -83,18 +98,19 @@ function simularApi() {
 // InformePage usa useBlocker (D-13), que necesita un router de datos. "/" hace de
 // pantalla de inicio, para comprobar a dónde lleva salir del informe.
 function crearRouter(ruta) {
-  return createMemoryRouter([
-    { path: '/', element: <h1>Pantalla de inicio</h1> },
-    { path: '/informes/nuevo', element: <InformePage /> },
-    { path: '/informes/:id', element: <InformePage /> },
-    { path: '/salir', element: <h1>Cerrando sesión</h1> },
-  ], { initialEntries: [ruta] });
+  return createMemoryRouter(
+    [
+      { path: '/', element: <h1>Pantalla de inicio</h1> },
+      { path: '/informes/nuevo', element: <InformePage /> },
+      { path: '/informes/:id', element: <InformePage /> },
+      { path: '/salir', element: <h1>Cerrando sesión</h1> },
+    ],
+    { initialEntries: [ruta] },
+  );
 }
 
 function renderInforme() {
-  return render(
-    <RouterProvider router={crearRouter('/informes/5')} />,
-  );
+  return render(<RouterProvider router={crearRouter('/informes/5')} />);
 }
 
 // Hallazgo I-5 de docs/auditoria-inicial.md: el PDF se descargaba armando una
@@ -131,9 +147,9 @@ describe('InformePage: exportar PDF', () => {
   // Decisión D-12: el PDF de un borrador es una vista previa solo para su autor o un admin.
   function conInforme(informe) {
     const simulado = client.get.getMockImplementation();
-    client.get.mockImplementation((url, ...resto) => (
-      url === '/informes/5/' ? Promise.resolve({ data: informe }) : simulado(url, ...resto)
-    ));
+    client.get.mockImplementation((url, ...resto) =>
+      url === '/informes/5/' ? Promise.resolve({ data: informe }) : simulado(url, ...resto),
+    );
   }
 
   it('un informe finalizado se exporta con su nombre, sin "borrador"', async () => {
@@ -165,9 +181,7 @@ describe('InformePage: selector de patologías', () => {
   });
 
   it('al crear un informe pide todas las patologías activas', async () => {
-    render(
-      <RouterProvider router={crearRouter('/informes/nuevo')} />,
-    );
+    render(<RouterProvider router={crearRouter('/informes/nuevo')} />);
     await vi.waitFor(() => {
       expect(client.get).toHaveBeenCalledWith('/patologias/', { params: { page_size: 1000, activa: 'true' } });
     });
@@ -190,18 +204,16 @@ describe('InformePage: errores visibles', () => {
 
   it('avisa si no se pueden cargar las patologías', async () => {
     client.get.mockRejectedValue(new Error('Network Error'));
-    render(
-      <RouterProvider router={crearRouter('/informes/nuevo')} />,
-    );
+    render(<RouterProvider router={crearRouter('/informes/nuevo')} />);
     expect(await screen.findByText(/No se pudieron cargar las patologías/i)).toBeInTheDocument();
   });
 
   it('avisa si no se pueden cargar los campos de la patología', async () => {
     simularApi();
     const simulacion = client.get.getMockImplementation();
-    client.get.mockImplementation((url, ...resto) => (
-      url === '/patologias/1/' ? Promise.reject(new Error('Network Error')) : simulacion(url, ...resto)
-    ));
+    client.get.mockImplementation((url, ...resto) =>
+      url === '/patologias/1/' ? Promise.reject(new Error('Network Error')) : simulacion(url, ...resto),
+    );
     renderInforme();
     expect(await screen.findByText(/No se pudieron cargar los campos de la patología/i)).toBeInTheDocument();
   });
@@ -224,9 +236,7 @@ describe('InformePage: número de petición', () => {
   });
 
   function renderNuevo() {
-    return render(
-      <RouterProvider router={crearRouter('/informes/nuevo')} />,
-    );
+    return render(<RouterProvider router={crearRouter('/informes/nuevo')} />);
   }
 
   it('un informe nuevo no pide número de caso', async () => {
@@ -268,9 +278,7 @@ describe('InformePage: paciente y datos de la solicitud', () => {
   });
 
   function renderNuevo() {
-    return render(
-      <RouterProvider router={crearRouter('/informes/nuevo')} />,
-    );
+    return render(<RouterProvider router={crearRouter('/informes/nuevo')} />);
   }
 
   it('muestra las tarjetas en el orden del informe real', async () => {
@@ -313,8 +321,14 @@ describe('InformePage: paciente y datos de la solicitud', () => {
 
     await vi.waitFor(() => expect(client.post).toHaveBeenCalled());
     expect(client.post.mock.calls[0][1]).toMatchObject({
-      paciente: 1, medico_tratante: 'Médico Ficticio', fecha_ingreso: '2026-10-01', eps: 3, servicio: 8,
-      estudios_solicitados: 'Biopsia de piel', tipo_estudio: 'citologia_no_ginecologica', patologia: 1,
+      paciente: 1,
+      medico_tratante: 'Médico Ficticio',
+      fecha_ingreso: '2026-10-01',
+      eps: 3,
+      servicio: 8,
+      estudios_solicitados: 'Biopsia de piel',
+      tipo_estudio: 'citologia_no_ginecologica',
+      patologia: 1,
     });
   });
 
@@ -343,9 +357,7 @@ describe('InformePage: contenido del informe', () => {
   });
 
   function renderNuevo() {
-    return render(
-      <RouterProvider router={crearRouter('/informes/nuevo')} />,
-    );
+    return render(<RouterProvider router={crearRouter('/informes/nuevo')} />);
   }
 
   it('muestra las tarjetas del contenido en el orden del informe real', async () => {
@@ -353,8 +365,12 @@ describe('InformePage: contenido del informe', () => {
     await screen.findByRole('option', { name: 'Piel' });
     const titulos = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
     expect(titulos).toEqual([
-      'Paciente', 'Datos de la solicitud', 'Estudio',
-      'Descripción microscópica', 'Diagnósticos', 'Comentarios',
+      'Paciente',
+      'Datos de la solicitud',
+      'Estudio',
+      'Descripción microscópica',
+      'Diagnósticos',
+      'Comentarios',
     ]);
     expect(screen.queryByText(/Notas/i)).toBeNull();
   });
@@ -468,10 +484,17 @@ describe('InformePage: adendas (etapa 8)', () => {
     ...INFORME,
     estado: 'finalizado',
     fecha_informe: '2026-10-04T20:30:00Z',
-    adendas: [{
-      id: 1, numero: 1, motivo: 'Corrección del diagnóstico', texto: 'Se aclara el diagnóstico.',
-      autor: 1, fecha: '2026-10-05T14:15:00Z', firma: INFORME.firma,
-    }],
+    adendas: [
+      {
+        id: 1,
+        numero: 1,
+        motivo: 'Corrección del diagnóstico',
+        texto: 'Se aclara el diagnóstico.',
+        autor: 1,
+        fecha: '2026-10-05T14:15:00Z',
+        firma: INFORME.firma,
+      },
+    ],
   };
 
   beforeEach(() => {
@@ -479,9 +502,9 @@ describe('InformePage: adendas (etapa 8)', () => {
     reiniciarOpciones();
     simularApi();
     const simulado = client.get.getMockImplementation();
-    client.get.mockImplementation((url, ...resto) => (
-      url === '/informes/5/' ? Promise.resolve({ data: FINALIZADO }) : simulado(url, ...resto)
-    ));
+    client.get.mockImplementation((url, ...resto) =>
+      url === '/informes/5/' ? Promise.resolve({ data: FINALIZADO }) : simulado(url, ...resto),
+    );
   });
 
   it('un informe finalizado termina con la tarjeta Adendas, después de la Firma', async () => {
@@ -493,7 +516,13 @@ describe('InformePage: adendas (etapa 8)', () => {
 
   it('una adenda nueva se agrega a la lista sin recargar el informe', async () => {
     client.post.mockResolvedValue({
-      data: { ...FINALIZADO.adendas[0], id: 2, numero: 2, motivo: 'Resultado de inmunohistoquímica', texto: 'CK5/6 positivo.' },
+      data: {
+        ...FINALIZADO.adendas[0],
+        id: 2,
+        numero: 2,
+        motivo: 'Resultado de inmunohistoquímica',
+        texto: 'CK5/6 positivo.',
+      },
     });
     renderInforme();
     fireEvent.click(await screen.findByRole('button', { name: /Agregar adenda/i }));
@@ -508,9 +537,11 @@ describe('InformePage: adendas (etapa 8)', () => {
   });
 
   it('un borrador no muestra la tarjeta Adendas', async () => {
-    client.get.mockImplementation((url) => (
-      url === '/informes/5/' ? Promise.resolve({ data: INFORME }) : Promise.resolve({ data: { results: [], plantillas: [], ...(url === '/opciones/' ? OPCIONES : {}) } })
-    ));
+    client.get.mockImplementation((url) =>
+      url === '/informes/5/'
+        ? Promise.resolve({ data: INFORME })
+        : Promise.resolve({ data: { results: [], plantillas: [], ...(url === '/opciones/' ? OPCIONES : {}) } }),
+    );
     renderInforme();
     await screen.findByText('Dra. Ficticia Firma');
     expect(screen.queryByRole('heading', { name: 'Adendas' })).not.toBeInTheDocument();
@@ -554,7 +585,7 @@ describe('InformePage: no perder lo escrito (D-13)', () => {
     await vi.advanceTimersByTimeAsync(3000);
     fireEvent.change(screen.getByLabelText('Comentarios'), { target: { value: 'Segundo cambio' } });
     await vi.advanceTimersByTimeAsync(3000);
-    expect(client.put).not.toHaveBeenCalled();  // el segundo cambio reinició la espera
+    expect(client.put).not.toHaveBeenCalled(); // el segundo cambio reinició la espera
 
     await vi.advanceTimersByTimeAsync(2000);
     expect(client.put).toHaveBeenCalledTimes(1);
@@ -628,7 +659,10 @@ describe('InformePage: no perder lo escrito (D-13)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Guardar y salir' }));
     expect(await screen.findByRole('heading', { name: 'Pantalla de inicio' })).toBeInTheDocument();
-    expect(client.put).toHaveBeenCalledWith('/informes/5/', expect.objectContaining({ comentarios: 'Guardado al salir' }));
+    expect(client.put).toHaveBeenCalledWith(
+      '/informes/5/',
+      expect.objectContaining({ comentarios: 'Guardado al salir' }),
+    );
   });
 
   it('"Guardar y salir" no sale si falla la validación y muestra qué falta', async () => {
@@ -643,7 +677,9 @@ describe('InformePage: no perder lo escrito (D-13)', () => {
   });
 
   it('"Guardar y salir" no sale si el servidor rechaza los datos', async () => {
-    client.put.mockRejectedValue({ response: { status: 400, data: { datos_ingresados: ['Faltan campos obligatorios: Localización'] } } });
+    client.put.mockRejectedValue({
+      response: { status: 400, data: { datos_ingresados: ['Faltan campos obligatorios: Localización'] } },
+    });
     renderInforme();
     await escribirComentario('Cambio');
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
@@ -699,11 +735,11 @@ describe('InformePage: finalizar, vista previa y cerrar sesión con cambios sin 
     URL.revokeObjectURL = vi.fn();
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     client.put.mockImplementation((url, datos) => Promise.resolve({ data: { ...INFORME, ...datos } }));
-    client.post.mockImplementation((url) => (
+    client.post.mockImplementation((url) =>
       url === '/informes/5/finalizar/'
         ? Promise.resolve({ data: { ...INFORME, estado: 'finalizado', fecha_informe: '2026-10-05T15:00:00Z' } })
-        : Promise.reject(new Error(`POST no simulado: ${url}`))
-    ));
+        : Promise.reject(new Error(`POST no simulado: ${url}`)),
+    );
   });
 
   async function cambiarComentario(texto) {
@@ -733,7 +769,10 @@ describe('InformePage: finalizar, vista previa y cerrar sesión con cambios sin 
     await cambiarComentario('Escrito justo antes de finalizar');
     finalizar();
     expect(await screen.findByText('Informe finalizado correctamente.')).toBeInTheDocument();
-    expect(client.put).toHaveBeenCalledWith('/informes/5/', expect.objectContaining({ comentarios: 'Escrito justo antes de finalizar' }));
+    expect(client.put).toHaveBeenCalledWith(
+      '/informes/5/',
+      expect.objectContaining({ comentarios: 'Escrito justo antes de finalizar' }),
+    );
     expect(client.put.mock.invocationCallOrder[0]).toBeLessThan(client.post.mock.invocationCallOrder[0]);
   });
 
@@ -747,7 +786,9 @@ describe('InformePage: finalizar, vista previa y cerrar sesión con cambios sin 
   });
 
   it('si el servidor rechaza los cambios, no finaliza', async () => {
-    client.put.mockRejectedValue({ response: { status: 400, data: { datos_ingresados: ['Faltan campos obligatorios: Localización'] } } });
+    client.put.mockRejectedValue({
+      response: { status: 400, data: { datos_ingresados: ['Faltan campos obligatorios: Localización'] } },
+    });
     renderInforme();
     await cambiarComentario('Cambio');
     finalizar();
@@ -762,7 +803,10 @@ describe('InformePage: finalizar, vista previa y cerrar sesión con cambios sin 
     await cambiarComentario('Para la vista previa');
     fireEvent.click(screen.getByRole('button', { name: /Vista previa \(borrador\)/i }));
     await vi.waitFor(() => expect(llamadaPdf()).toBeGreaterThan(-1));
-    expect(client.put).toHaveBeenCalledWith('/informes/5/', expect.objectContaining({ comentarios: 'Para la vista previa' }));
+    expect(client.put).toHaveBeenCalledWith(
+      '/informes/5/',
+      expect.objectContaining({ comentarios: 'Para la vista previa' }),
+    );
     expect(client.put.mock.invocationCallOrder[0]).toBeLessThan(client.get.mock.invocationCallOrder[llamadaPdf()]);
   });
 
@@ -781,7 +825,9 @@ describe('InformePage: finalizar, vista previa y cerrar sesión con cambios sin 
     const router = crearRouter('/informes/5');
     render(<RouterProvider router={router} />);
     await cambiarComentario('Sin guardar');
-    act(() => { router.navigate('/salir'); });
+    act(() => {
+      router.navigate('/salir');
+    });
     expect(await screen.findByRole('dialog', { name: /cambios sin guardar/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Salir sin guardar' }));
     expect(await screen.findByRole('heading', { name: 'Cerrando sesión' })).toBeInTheDocument();
@@ -791,9 +837,14 @@ describe('InformePage: finalizar, vista previa y cerrar sesión con cambios sin 
     const router = crearRouter('/informes/5');
     render(<RouterProvider router={router} />);
     await cambiarComentario('Guardado al cerrar sesión');
-    act(() => { router.navigate('/salir'); });
+    act(() => {
+      router.navigate('/salir');
+    });
     fireEvent.click(await screen.findByRole('button', { name: 'Guardar y salir' }));
     expect(await screen.findByRole('heading', { name: 'Cerrando sesión' })).toBeInTheDocument();
-    expect(client.put).toHaveBeenCalledWith('/informes/5/', expect.objectContaining({ comentarios: 'Guardado al cerrar sesión' }));
+    expect(client.put).toHaveBeenCalledWith(
+      '/informes/5/',
+      expect.objectContaining({ comentarios: 'Guardado al cerrar sesión' }),
+    );
   });
 });

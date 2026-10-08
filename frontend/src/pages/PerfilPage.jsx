@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import client from '../api/client';
 import { ROL_LABELS } from '../constants';
 
-
 export default function PerfilPage() {
   const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,13 +20,16 @@ export default function PerfilPage() {
   const cargarPerfil = () => {
     setLoading(true);
     setErrorCarga('');
-    client.get('/auth/perfil/')
+    client
+      .get('/auth/perfil/')
       .then(({ data }) => setPerfil(data))
       .catch(() => setErrorCarga('No se pudo cargar tu perfil. Intenta de nuevo.'))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { cargarPerfil(); }, []);
+  useEffect(() => {
+    cargarPerfil();
+  }, []);
 
   const guardarPerfil = async (e) => {
     e.preventDefault();
@@ -75,21 +77,28 @@ export default function PerfilPage() {
     } catch (err) {
       setPasswordError(
         err.response?.data?.old_password?.[0] ||
-        err.response?.data?.new_password?.[0] ||
-        'No se pudo cambiar la contraseña.'
+          err.response?.data?.new_password?.[0] ||
+          'No se pudo cambiar la contraseña.',
       );
     } finally {
       setCambiandoPassword(false);
     }
   };
 
-  if (loading) return <div className="loading-center"><span className="spinner"></span></div>;
+  if (loading)
+    return (
+      <div className="loading-center">
+        <span className="spinner"></span>
+      </div>
+    );
 
   if (!perfil) {
     return (
       <div className="perfil-page">
         <div className="alert alert-error">{errorCarga || 'No se pudo cargar tu perfil. Intenta de nuevo.'}</div>
-        <button className="btn btn-primary" onClick={cargarPerfil}>Reintentar</button>
+        <button className="btn btn-primary" onClick={cargarPerfil}>
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -99,12 +108,16 @@ export default function PerfilPage() {
       <div className="page-header">
         <div>
           <h1>Mi cuenta</h1>
-          <p className="text-muted">{ROL_LABELS[perfil?.rol] || perfil?.rol} · @{perfil?.username}</p>
+          <p className="text-muted">
+            {ROL_LABELS[perfil?.rol] || perfil?.rol} · @{perfil?.username}
+          </p>
         </div>
       </div>
 
       <div className="card">
-        <div className="card-header"><h2>Información personal</h2></div>
+        <div className="card-header">
+          <h2>Información personal</h2>
+        </div>
         <div className="card-body">
           {mensaje && <div className="alert alert-success">{mensaje}</div>}
           {error && <div className="alert alert-error">{error}</div>}
@@ -165,7 +178,9 @@ export default function PerfilPage() {
       </div>
 
       <div className="card">
-        <div className="card-header"><h2>Cambiar contraseña</h2></div>
+        <div className="card-header">
+          <h2>Cambiar contraseña</h2>
+        </div>
         <div className="card-body">
           {passwordMsg && <div className="alert alert-success">{passwordMsg}</div>}
           {passwordError && <div className="alert alert-error">{passwordError}</div>}

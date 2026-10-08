@@ -61,10 +61,14 @@ class ValidacionContrasenasTests(APITestCase):
 
     def setUp(self):
         self.usuario = Usuario.objects.create_user(
-            username='patologo_claves', password=self.CLAVE_ACTUAL, rol=Usuario.Rol.PATOLOGO,
+            username='patologo_claves',
+            password=self.CLAVE_ACTUAL,
+            rol=Usuario.Rol.PATOLOGO,
         )
         self.admin = Usuario.objects.create_user(
-            username='admin_claves', password=self.CLAVE_ACTUAL, rol=Usuario.Rol.ADMIN,
+            username='admin_claves',
+            password=self.CLAVE_ACTUAL,
+            rol=Usuario.Rol.ADMIN,
         )
 
     def cambiar_clave(self, nueva):
@@ -77,10 +81,17 @@ class ValidacionContrasenasTests(APITestCase):
 
     def registrar(self, clave):
         self.client.force_authenticate(self.admin)
-        return self.client.post('/api/auth/registro/', {
-            'username': 'nuevo_patologo', 'email': 'nuevo@patologia.local',
-            'password': clave, 'password_confirm': clave, 'rol': 'patologo',
-        }, format='json')
+        return self.client.post(
+            '/api/auth/registro/',
+            {
+                'username': 'nuevo_patologo',
+                'email': 'nuevo@patologia.local',
+                'password': clave,
+                'password_confirm': clave,
+                'rol': 'patologo',
+            },
+            format='json',
+        )
 
     # ── Cambio de contraseña ───────────────────────────────────────
 
@@ -129,11 +140,15 @@ class CierreDeSesionTests(APITestCase):
 
     def setUp(self):
         self.usuario = Usuario.objects.create_user(
-            username='sesiones', password=self.CLAVE, rol=Usuario.Rol.PATOLOGO,
+            username='sesiones',
+            password=self.CLAVE,
+            rol=Usuario.Rol.PATOLOGO,
         )
 
     def login(self):
-        respuesta = self.client.post('/api/auth/login/', {'username': 'sesiones', 'password': self.CLAVE}, format='json')
+        respuesta = self.client.post(
+            '/api/auth/login/', {'username': 'sesiones', 'password': self.CLAVE}, format='json'
+        )
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         return respuesta.data
 
@@ -164,10 +179,11 @@ class CierreDeSesionTests(APITestCase):
     def test_cambiar_contrasena_invalida_las_sesiones_anteriores(self):
         sesion_1 = self.login()
         sesion_2 = self.login()  # por ejemplo, otro computador
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {sesion_1['access']}")
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {sesion_1["access"]}')
         respuesta = self.client.post(
             '/api/auth/cambiar-password/',
-            {'old_password': self.CLAVE, 'new_password': 'Histologia-Segura-2026'}, format='json',
+            {'old_password': self.CLAVE, 'new_password': 'Histologia-Segura-2026'},
+            format='json',
         )
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         self.client.credentials()
@@ -187,11 +203,15 @@ class RegistroMedicoTests(APITestCase):
 
     def setUp(self):
         self.patologo = Usuario.objects.create_user(
-            username='patologo_registro', password=self.CLAVE, rol=Usuario.Rol.PATOLOGO,
+            username='patologo_registro',
+            password=self.CLAVE,
+            rol=Usuario.Rol.PATOLOGO,
             registro_medico='RM-PRUEBA-0001',
         )
         self.admin = Usuario.objects.create_user(
-            username='admin_registro', password=self.CLAVE, rol=Usuario.Rol.ADMIN,
+            username='admin_registro',
+            password=self.CLAVE,
+            rol=Usuario.Rol.ADMIN,
         )
 
     def test_el_perfil_muestra_el_registro_medico(self):
@@ -207,17 +227,26 @@ class RegistroMedicoTests(APITestCase):
 
     def test_el_login_devuelve_el_registro_medico(self):
         respuesta = self.client.post(
-            '/api/auth/login/', {'username': 'patologo_registro', 'password': self.CLAVE}, format='json',
+            '/api/auth/login/',
+            {'username': 'patologo_registro', 'password': self.CLAVE},
+            format='json',
         )
         self.assertEqual(respuesta.data['user']['registro_medico'], 'RM-PRUEBA-0001')
 
     def test_el_admin_asigna_el_registro_medico_al_crear_el_usuario(self):
         self.client.force_authenticate(self.admin)
-        respuesta = self.client.post('/api/auth/registro/', {
-            'username': 'patologo_nuevo', 'email': 'nuevo@patologia.local',
-            'password': self.CLAVE, 'password_confirm': self.CLAVE,
-            'rol': 'patologo', 'registro_medico': 'RM-PRUEBA-0002',
-        }, format='json')
+        respuesta = self.client.post(
+            '/api/auth/registro/',
+            {
+                'username': 'patologo_nuevo',
+                'email': 'nuevo@patologia.local',
+                'password': self.CLAVE,
+                'password_confirm': self.CLAVE,
+                'rol': 'patologo',
+                'registro_medico': 'RM-PRUEBA-0002',
+            },
+            format='json',
+        )
         self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
         self.assertEqual(Usuario.objects.get(username='patologo_nuevo').registro_medico, 'RM-PRUEBA-0002')
 
@@ -225,6 +254,7 @@ class RegistroMedicoTests(APITestCase):
         # También si patologo1 ya existía sin registro (bases creadas antes de la etapa 6).
         from io import StringIO
         from django.core.management import call_command
+
         Usuario.objects.create_user(username='patologo1', password=self.CLAVE, rol=Usuario.Rol.PATOLOGO)
         call_command('seed_data', stdout=StringIO())
         self.assertEqual(Usuario.objects.get(username='patologo1').registro_medico, 'RM-PRUEBA-0001')
@@ -232,8 +262,12 @@ class RegistroMedicoTests(APITestCase):
     def test_seed_data_no_cambia_un_registro_medico_ya_asignado(self):
         from io import StringIO
         from django.core.management import call_command
+
         Usuario.objects.create_user(
-            username='patologo1', password=self.CLAVE, rol=Usuario.Rol.PATOLOGO, registro_medico='RM-PRUEBA-0777',
+            username='patologo1',
+            password=self.CLAVE,
+            rol=Usuario.Rol.PATOLOGO,
+            registro_medico='RM-PRUEBA-0777',
         )
         call_command('seed_data', stdout=StringIO())
         self.assertEqual(Usuario.objects.get(username='patologo1').registro_medico, 'RM-PRUEBA-0777')
@@ -243,6 +277,7 @@ class RegistroMedicoTests(APITestCase):
     def test_seed_data_crea_patologo2_con_su_registro_medico(self):
         from io import StringIO
         from django.core.management import call_command
+
         call_command('seed_data', stdout=StringIO())
         patologo2 = Usuario.objects.get(username='patologo2')
         self.assertEqual(patologo2.rol, Usuario.Rol.PATOLOGO)
@@ -252,6 +287,7 @@ class RegistroMedicoTests(APITestCase):
     def test_seed_data_no_duplica_a_patologo2(self):
         from io import StringIO
         from django.core.management import call_command
+
         call_command('seed_data', stdout=StringIO())
         call_command('seed_data', stdout=StringIO())
         self.assertEqual(Usuario.objects.filter(username='patologo2').count(), 1)
@@ -260,8 +296,12 @@ class RegistroMedicoTests(APITestCase):
         # Como el que se creó a mano para la prueba manual del 2026-10-05.
         from io import StringIO
         from django.core.management import call_command
+
         Usuario.objects.create_user(
-            username='patologo2', password=self.CLAVE, rol=Usuario.Rol.PATOLOGO, registro_medico='RM-PRUEBA-0888',
+            username='patologo2',
+            password=self.CLAVE,
+            rol=Usuario.Rol.PATOLOGO,
+            registro_medico='RM-PRUEBA-0888',
         )
         call_command('seed_data', stdout=StringIO())
         patologo2 = Usuario.objects.get(username='patologo2')
@@ -279,18 +319,23 @@ class AdminUsuariosTests(TestCase):
 
     def setUp(self):
         self.superusuario = Usuario.objects.create_superuser(
-            username='super_admin_usuarios', password='ClaveSegura-2026', rol=Usuario.Rol.ADMIN,
+            username='super_admin_usuarios',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.ADMIN,
         )
         self.client.force_login(self.superusuario)
 
     def test_crear_un_usuario_en_admin_cifra_la_contrasena(self):
-        respuesta = self.client.post('/admin/accounts/usuario/add/', {
-            'username': 'patologo_desde_admin',
-            'password1': 'ClaveSegura-2026',
-            'password2': 'ClaveSegura-2026',
-            'rol': Usuario.Rol.PATOLOGO,
-            'registro_medico': 'RM-PRUEBA-0003',
-        })
+        respuesta = self.client.post(
+            '/admin/accounts/usuario/add/',
+            {
+                'username': 'patologo_desde_admin',
+                'password1': 'ClaveSegura-2026',
+                'password2': 'ClaveSegura-2026',
+                'rol': Usuario.Rol.PATOLOGO,
+                'registro_medico': 'RM-PRUEBA-0003',
+            },
+        )
         self.assertEqual(respuesta.status_code, 302)  # redirige: el usuario se creó
         usuario = Usuario.objects.get(username='patologo_desde_admin')
         self.assertTrue(usuario.password.startswith('pbkdf2_sha256$'))
@@ -300,9 +345,14 @@ class AdminUsuariosTests(TestCase):
 
     def test_el_usuario_creado_en_admin_puede_iniciar_sesion(self):
         self.test_crear_un_usuario_en_admin_cifra_la_contrasena()
-        respuesta = self.client.post('/api/auth/login/', {
-            'username': 'patologo_desde_admin', 'password': 'ClaveSegura-2026',
-        }, content_type='application/json')
+        respuesta = self.client.post(
+            '/api/auth/login/',
+            {
+                'username': 'patologo_desde_admin',
+                'password': 'ClaveSegura-2026',
+            },
+            content_type='application/json',
+        )
         self.assertEqual(respuesta.status_code, 200)
 
     def test_la_ficha_del_usuario_no_muestra_la_contrasena_editable_y_si_los_campos_propios(self):

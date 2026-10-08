@@ -24,8 +24,16 @@ class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = [
-            'id', 'username', 'email', 'nombre_completo',
-            'rol', 'telefono', 'especialidad', 'registro_medico', 'activo', 'fecha_creacion',
+            'id',
+            'username',
+            'email',
+            'nombre_completo',
+            'rol',
+            'telefono',
+            'especialidad',
+            'registro_medico',
+            'activo',
+            'fecha_creacion',
         ]
         # username, rol y activo son de solo lectura para que nadie pueda
         # cambiárselos a sí mismo desde /api/auth/perfil/ (auditoría C-1). El registro
@@ -42,8 +50,15 @@ class RegistroSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = [
-            'username', 'email', 'password', 'password_confirm',
-            'nombre_completo', 'rol', 'telefono', 'especialidad', 'registro_medico',
+            'username',
+            'email',
+            'password',
+            'password_confirm',
+            'nombre_completo',
+            'rol',
+            'telefono',
+            'especialidad',
+            'registro_medico',
         ]
 
     def validate(self, data):
@@ -72,6 +87,7 @@ class RegistroSerializer(serializers.ModelSerializer):
 
 class CambiarPasswordSerializer(serializers.Serializer):
     """Change password serializer."""
+
     old_password = serializers.CharField()
     new_password = serializers.CharField(min_length=8)
 

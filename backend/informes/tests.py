@@ -17,9 +17,12 @@ from .models import Categoria, Diagnostico, Informe, Patologia, Plantilla, Servi
 def paciente_ficticio(numero='PRUEBA0001', **extra):
     """Paciente con datos ficticios (docs/propuesta-informe-v2.md, sección 8)."""
     datos = {
-        'tipo_documento': 'CC', 'numero_documento': numero,
-        'nombres': 'Paciente Ficticio', 'apellidos': 'Uno',
-        'fecha_nacimiento': date(1980, 10, 5), 'sexo': 'femenino',
+        'tipo_documento': 'CC',
+        'numero_documento': numero,
+        'nombres': 'Paciente Ficticio',
+        'apellidos': 'Uno',
+        'fecha_nacimiento': date(1980, 10, 5),
+        'sexo': 'femenino',
         **extra,
     }
     return Paciente.objects.create(**datos)
@@ -34,16 +37,24 @@ class PermisosInformeTests(APITestCase):
 
     def setUp(self):
         self.autor = Usuario.objects.create_user(
-            username='patologo_autor', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='patologo_autor',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
         )
         self.otro_patologo = Usuario.objects.create_user(
-            username='patologo_otro', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='patologo_otro',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
         )
         self.admin = Usuario.objects.create_user(
-            username='admin_prueba', password='ClaveSegura-2026', rol=Usuario.Rol.ADMIN,
+            username='admin_prueba',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.ADMIN,
         )
         self.auditor = Usuario.objects.create_user(
-            username='auditor_prueba', password='ClaveSegura-2026', rol=Usuario.Rol.AUDITOR,
+            username='auditor_prueba',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.AUDITOR,
         )
         # Lo que exige finalizar (D-8): el autor tiene registro médico y el informe,
         # paciente, diagnóstico y descripción microscópica.
@@ -175,7 +186,9 @@ class BorrarPatologiaTests(APITestCase):
 
     def setUp(self):
         self.patologo = Usuario.objects.create_user(
-            username='patologo_prueba', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='patologo_prueba',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
         )
         self.client.force_authenticate(self.patologo)
         self.patologia = Patologia.objects.create(nombre='Patología con informes')
@@ -203,7 +216,9 @@ class PdfConTextoDelUsuarioTests(APITestCase):
 
     def setUp(self):
         self.patologo = Usuario.objects.create_user(
-            username='patologo_pdf', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='patologo_pdf',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
         )
         self.client.force_authenticate(self.patologo)
         self.informe = Informe.objects.create(
@@ -225,6 +240,7 @@ class PdfConTextoDelUsuarioTests(APITestCase):
 
     def test_el_marcado_del_usuario_no_se_interpreta(self):
         from reportlab.platypus import Paragraph
+
         with mock.patch('informes.utils.Paragraph', wraps=Paragraph) as espia:
             self.descargar_pdf()
         textos = ' '.join(str(llamada.args[0]) for llamada in espia.call_args_list)
@@ -236,6 +252,7 @@ class PdfConTextoDelUsuarioTests(APITestCase):
 
     def test_los_saltos_de_linea_de_los_comentarios_se_respetan(self):
         from reportlab.platypus import Paragraph
+
         self.informe.comentarios = 'Primera línea\r\nSegunda línea\nTercera < línea'
         self.informe.save()
         with mock.patch('informes.utils.Paragraph', wraps=Paragraph) as espia:
@@ -257,7 +274,9 @@ class EstadisticasYPaginacionTests(APITestCase):
 
     def setUp(self):
         self.patologo = Usuario.objects.create_user(
-            username='patologo_stats', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='patologo_stats',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
         )
         patologia = Patologia.objects.create(nombre='Patología estadísticas')
         for i in range(25):
@@ -275,7 +294,9 @@ class EstadisticasYPaginacionTests(APITestCase):
 
     def test_auditor_puede_ver_estadisticas(self):
         auditor = Usuario.objects.create_user(
-            username='auditor_stats', password='ClaveSegura-2026', rol=Usuario.Rol.AUDITOR,
+            username='auditor_stats',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.AUDITOR,
         )
         self.client.force_authenticate(auditor)
         self.assertEqual(self.client.get('/api/informes/estadisticas/').status_code, status.HTTP_200_OK)
@@ -310,7 +331,9 @@ class DescargaPdfTests(APITestCase):
 
     def setUp(self):
         self.patologo = Usuario.objects.create_user(
-            username='patologo_descarga', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='patologo_descarga',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
         )
         self.informe = Informe.objects.create(
             patologia=Patologia.objects.create(nombre='Patología descarga'),
@@ -333,7 +356,9 @@ class DescargaPdfTests(APITestCase):
         # Un borrador es solo vista previa de su autor o de un admin (decisión D-12).
         Informe.objects.filter(id=self.informe.id).update(estado=Informe.Estado.FINALIZADO)
         auditor = Usuario.objects.create_user(
-            username='auditor_descarga', password='ClaveSegura-2026', rol=Usuario.Rol.AUDITOR,
+            username='auditor_descarga',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.AUDITOR,
         )
         self.client.force_authenticate(auditor)
         self.assertEqual(self.client.get(self.url).status_code, status.HTTP_200_OK)
@@ -343,6 +368,7 @@ class DescargaPdfTests(APITestCase):
 
     def test_ya_no_existe_la_descarga_con_token_en_la_url(self):
         from rest_framework_simplejwt.tokens import AccessToken
+
         token = str(AccessToken.for_user(self.patologo))
         respuesta = self.client.get(f'/api/descargar-pdf/{self.informe.id}/informe.pdf', {'token': token})
         self.assertEqual(respuesta.status_code, status.HTTP_404_NOT_FOUND)
@@ -365,16 +391,29 @@ class CamposObligatoriosTests(APITestCase):
 
     def setUp(self):
         self.patologo = Usuario.objects.create_user(
-            username='patologo_obligatorios', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='patologo_obligatorios',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
         )
         self.client.force_authenticate(self.patologo)
         self.patologia = Patologia.objects.create(nombre='Patología con obligatorios')
-        Plantilla.objects.create(patologia=self.patologia, campo_nombre='localizacion',
-                                 campo_label='Localización', tipo_campo='texto', obligatorio=True)
-        Plantilla.objects.create(patologia=self.patologia, campo_nombre='num_ganglios',
-                                 campo_label='Número de ganglios', tipo_campo='numero', obligatorio=True)
-        Plantilla.objects.create(patologia=self.patologia, campo_nombre='color',
-                                 campo_label='Color', tipo_campo='texto', obligatorio=False)
+        Plantilla.objects.create(
+            patologia=self.patologia,
+            campo_nombre='localizacion',
+            campo_label='Localización',
+            tipo_campo='texto',
+            obligatorio=True,
+        )
+        Plantilla.objects.create(
+            patologia=self.patologia,
+            campo_nombre='num_ganglios',
+            campo_label='Número de ganglios',
+            tipo_campo='numero',
+            obligatorio=True,
+        )
+        Plantilla.objects.create(
+            patologia=self.patologia, campo_nombre='color', campo_label='Color', tipo_campo='texto', obligatorio=False
+        )
         self.datos_completos = {'localizacion': 'Axila izquierda', 'num_ganglios': 3}
         self.paciente = paciente_ficticio()
 
@@ -415,7 +454,9 @@ class CamposObligatoriosTests(APITestCase):
     def test_patch_que_vacia_un_obligatorio_se_rechaza(self):
         informe_id = self.crear(datos_ingresados=self.datos_completos).data['id']
         respuesta = self.client.patch(
-            f'/api/informes/{informe_id}/', {'datos_ingresados': {'num_ganglios': 3}}, format='json',
+            f'/api/informes/{informe_id}/',
+            {'datos_ingresados': {'num_ganglios': 3}},
+            format='json',
         )
         self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -428,11 +469,15 @@ class NombreVisibleAutorTests(APITestCase):
 
     def setUp(self):
         self.con_nombre = Usuario.objects.create_user(
-            username='dr_mendez', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='dr_mendez',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
             nombre_completo='Dr. Carlos Méndez',
         )
         self.sin_nombre = Usuario.objects.create_user(
-            username='patologo_sin_nombre', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='patologo_sin_nombre',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
         )
         patologia = Patologia.objects.create(nombre='Patología nombres')
         for autor in (self.con_nombre, self.sin_nombre):
@@ -448,9 +493,12 @@ class NombreVisibleAutorTests(APITestCase):
 
     def test_foro_muestra_nombre_completo_o_username(self):
         from foro.models import Comentario, Publicacion
+
         publicacion = Publicacion.objects.create(autor=self.sin_nombre, titulo='Caso', contenido='Texto')
         Comentario.objects.create(publicacion=publicacion, autor=self.con_nombre, contenido='Hola')
-        self.assertEqual(self.client.get('/api/foro/publicaciones/').data['results'][0]['autor_nombre'], 'patologo_sin_nombre')
+        self.assertEqual(
+            self.client.get('/api/foro/publicaciones/').data['results'][0]['autor_nombre'], 'patologo_sin_nombre'
+        )
         detalle = self.client.get(f'/api/foro/publicaciones/{publicacion.id}/').data
         self.assertEqual(detalle['autor_nombre'], 'patologo_sin_nombre')
         self.assertEqual(detalle['comentarios'][0]['autor_nombre'], 'Dr. Carlos Méndez')
@@ -465,6 +513,7 @@ class ConsultasPorListadoTests(APITestCase):
 
     def setUp(self):
         from foro.models import Comentario, ImagenPublicacion, Publicacion, TemaForo
+
         self.modelos = (Comentario, ImagenPublicacion, Publicacion, TemaForo)
         self.usuario = Usuario.objects.create_user(username='consultas', password='x', rol=Usuario.Rol.ADMIN)
         self.client.force_authenticate(self.usuario)
@@ -482,6 +531,7 @@ class ConsultasPorListadoTests(APITestCase):
     def contar_consultas(self, url):
         from django.db import connection
         from django.test.utils import CaptureQueriesContext
+
         with CaptureQueriesContext(connection) as consultas:
             self.assertEqual(self.client.get(url).status_code, status.HTTP_200_OK)
         return len(consultas)
@@ -529,6 +579,7 @@ class ConsultasPorListadoTests(APITestCase):
         # Se crean en el mismo instante: se hace "Normal" un día más antigua para que no empaten.
         from datetime import timedelta
         from django.utils import timezone
+
         Publicacion.objects.filter(id=normal.id).update(fecha_creacion=timezone.now() - timedelta(days=1))
         nombres = lambda url, campo: [f[campo] for f in self.client.get(url).data['results']]
         self.assertEqual(nombres('/api/categorias/', 'nombre'), ['Alfa', 'Media', 'Zeta'])
@@ -561,6 +612,7 @@ class TamanoDePaginaTests(APITestCase):
     def test_page_size_tiene_un_maximo(self):
         from django.conf import settings
         from django.utils.module_loading import import_string
+
         paginacion = import_string(settings.REST_FRAMEWORK['DEFAULT_PAGINATION_CLASS'])
         self.assertEqual(paginacion.max_page_size, 1000)
 
@@ -604,7 +656,9 @@ class NumeroPeticionTests(APITestCase):
 
     def setUp(self):
         self.patologo = Usuario.objects.create_user(
-            username='patologo_np', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='patologo_np',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
         )
         self.patologia = Patologia.objects.create(nombre='Patología número de petición')
         self.paciente = paciente_ficticio()
@@ -643,7 +697,9 @@ class NumeroPeticionTests(APITestCase):
         self.assertEqual(respuesta.data['numero_peticion'], self.numero(1))
         id_informe = respuesta.data['id']
         cambio = self.client.patch(
-            f'/api/informes/{id_informe}/', {'numero_peticion': 'P-1999-00001'}, format='json',
+            f'/api/informes/{id_informe}/',
+            {'numero_peticion': 'P-1999-00001'},
+            format='json',
         )
         self.assertEqual(cambio.status_code, status.HTTP_200_OK)
         self.assertEqual(Informe.objects.get(id=id_informe).numero_peticion, self.numero(1))
@@ -657,7 +713,7 @@ class NumeroPeticionTests(APITestCase):
 
     def test_borrar_un_borrador_no_reutiliza_su_numero(self):
         primero = self.crear()
-        self.client.delete(f"/api/informes/{primero.data['id']}/")
+        self.client.delete(f'/api/informes/{primero.data["id"]}/')
         self.assertEqual(self.crear().data['numero_peticion'], self.numero(2))
 
     def test_los_informes_creados_sin_la_api_tambien_se_numeran(self):
@@ -691,12 +747,14 @@ class NumeroPeticionTests(APITestCase):
 
     def test_el_pdf_lleva_el_numero_de_peticion(self):
         from reportlab.platypus import Table
+
         id_informe = self.crear().data['id']
         with mock.patch('informes.utils.Table', wraps=Table) as espia:
             respuesta = self.client.get(f'/api/informes/{id_informe}/pdf/')
         # Es un borrador: el nombre lleva el sufijo _borrador (decisión D-12).
         self.assertEqual(
-            respuesta['Content-Disposition'], f'attachment; filename="informe_{self.numero(1)}_borrador.pdf"',
+            respuesta['Content-Disposition'],
+            f'attachment; filename="informe_{self.numero(1)}_borrador.pdf"',
         )
         celdas = str([llamada.args[0] for llamada in espia.call_args_list])
         self.assertIn(self.numero(1), celdas)
@@ -713,7 +771,9 @@ class NumeroPeticionConcurrenciaTests(TransactionTestCase):
 
     def test_informes_creados_a_la_vez_reciben_numeros_distintos(self):
         patologo = Usuario.objects.create_user(
-            username='patologo_concurrencia', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='patologo_concurrencia',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
         )
         patologia = Patologia.objects.create(nombre='Patología concurrencia')
         paciente = paciente_ficticio()
@@ -788,15 +848,19 @@ class MigracionNumeroPeticionTests(TransactionTestCase):
         executor.migrate(executor.loader.graph.leaf_nodes())
 
         numeros = {caso: Informe.objects.get(id=id_informe).numero_peticion for caso, id_informe in ids.items()}
-        self.assertEqual(numeros, {
-            'NOCHEVIEJA': 'P-2025-00001',
-            'FEBRERO': 'P-2026-00001',
-            'MARZO': 'P-2026-00002',
-        })
+        self.assertEqual(
+            numeros,
+            {
+                'NOCHEVIEJA': 'P-2025-00001',
+                'FEBRERO': 'P-2026-00001',
+                'MARZO': 'P-2026-00002',
+            },
+        )
         # El siguiente informe de 2026 continúa la numeración.
         with mock.patch('django.utils.timezone.localdate', return_value=date(2026, 10, 4)):
             nuevo = Informe.objects.create(
-                patologia=Patologia.objects.get(id=patologia.id), autor=Usuario.objects.get(id=autor.id),
+                patologia=Patologia.objects.get(id=patologia.id),
+                autor=Usuario.objects.get(id=autor.id),
             )
         self.assertEqual(nuevo.numero_peticion, 'P-2026-00003')
 
@@ -822,11 +886,14 @@ class OpcionesTests(APITestCase):
 
     def test_sexos(self):
         # Etiqueta "Sexo" con estas tres opciones (P-3).
-        self.assertEqual(self.opciones()['sexos'], [
-            {'valor': 'femenino', 'etiqueta': 'Femenino'},
-            {'valor': 'masculino', 'etiqueta': 'Masculino'},
-            {'valor': 'indeterminado', 'etiqueta': 'Indeterminado'},
-        ])
+        self.assertEqual(
+            self.opciones()['sexos'],
+            [
+                {'valor': 'femenino', 'etiqueta': 'Femenino'},
+                {'valor': 'masculino', 'etiqueta': 'Masculino'},
+                {'valor': 'indeterminado', 'etiqueta': 'Indeterminado'},
+            ],
+        )
 
     def test_tipos_documento(self):
         tipos = self.opciones()['tipos_documento']
@@ -835,14 +902,17 @@ class OpcionesTests(APITestCase):
 
     def test_tipos_estudio(self):
         tipos = self.opciones()['tipos_estudio']
-        self.assertEqual([t['etiqueta'] for t in tipos], [
-            'Histología',
-            'Citología no ginecológica',
-            'Citología cérvico-vaginal',
-            'Inmunohistoquímica',
-            'Estudio intraoperatorio por congelación',
-            'Revisión de láminas (segunda opinión)',
-        ])
+        self.assertEqual(
+            [t['etiqueta'] for t in tipos],
+            [
+                'Histología',
+                'Citología no ginecológica',
+                'Citología cérvico-vaginal',
+                'Inmunohistoquímica',
+                'Estudio intraoperatorio por congelación',
+                'Revisión de láminas (segunda opinión)',
+            ],
+        )
         self.assertEqual(tipos[0]['valor'], 'histologia')
 
     def test_requiere_sesion(self):
@@ -903,13 +973,24 @@ class CatalogoServiciosTests(APITestCase):
     def test_seed_data_carga_los_servicios(self):
         from io import StringIO
         from django.core.management import call_command
+
         call_command('seed_data', stdout=StringIO())
         call_command('seed_data', stdout=StringIO())  # dos veces: no duplica
         self.client.force_authenticate(self.auditor)
-        self.assertEqual(sorted(self.nombres()), sorted([
-            'Consulta externa', 'Urgencias', 'Hospitalización', 'Cirugía',
-            'Unidad de cuidados intensivos', 'Ginecología', 'Dermatología',
-        ]))
+        self.assertEqual(
+            sorted(self.nombres()),
+            sorted(
+                [
+                    'Consulta externa',
+                    'Urgencias',
+                    'Hospitalización',
+                    'Cirugía',
+                    'Unidad de cuidados intensivos',
+                    'Ginecología',
+                    'Dermatología',
+                ]
+            ),
+        )
 
 
 class DatosSolicitudTests(APITestCase):
@@ -924,7 +1005,9 @@ class DatosSolicitudTests(APITestCase):
 
     def setUp(self):
         self.patologo = Usuario.objects.create_user(
-            username='patologo_solicitud', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='patologo_solicitud',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
         )
         self.client.force_authenticate(self.patologo)
         self.patologia = Patologia.objects.create(nombre='Patología solicitud')
@@ -967,26 +1050,32 @@ class DatosSolicitudTests(APITestCase):
         informe_id = self.crear(fecha_ingreso='2026-10-04').data['id']
         with mock.patch('django.utils.timezone.localdate', return_value=date(2030, 1, 1)):
             datos = self.client.get(f'{self.URL}{informe_id}/').data['paciente_datos']
-        self.assertEqual(datos, {
-            'id': self.paciente.id,
-            'nombre_completo': 'Paciente Ficticio Uno',
-            'tipo_documento': 'CC',
-            'numero_documento': 'PRUEBA0001',
-            'fecha_nacimiento': '1980-10-05',
-            'sexo': 'femenino',
-            'edad': '45 años',
-        })
+        self.assertEqual(
+            datos,
+            {
+                'id': self.paciente.id,
+                'nombre_completo': 'Paciente Ficticio Uno',
+                'tipo_documento': 'CC',
+                'numero_documento': 'PRUEBA0001',
+                'fecha_nacimiento': '1980-10-05',
+                'sexo': 'femenino',
+                'edad': '45 años',
+            },
+        )
 
     # --- Datos de la solicitud ---
 
     def test_guarda_los_datos_de_la_solicitud(self):
         respuesta = self.crear(
-            medico_tratante='Médico Ficticio', fecha_ingreso='2026-10-01', eps=self.eps.id,
-            servicio=self.servicio.id, estudios_solicitados='Biopsia de piel',
+            medico_tratante='Médico Ficticio',
+            fecha_ingreso='2026-10-01',
+            eps=self.eps.id,
+            servicio=self.servicio.id,
+            estudios_solicitados='Biopsia de piel',
             tipo_estudio='citologia_no_ginecologica',
         )
         self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
-        datos = self.client.get(f"{self.URL}{respuesta.data['id']}/").data
+        datos = self.client.get(f'{self.URL}{respuesta.data["id"]}/').data
         self.assertEqual(datos['medico_tratante'], 'Médico Ficticio')
         self.assertEqual(datos['fecha_ingreso'], '2026-10-01')
         self.assertEqual((datos['eps'], datos['eps_nombre']), (self.eps.id, 'EPS Ficticia'))
@@ -1060,8 +1149,12 @@ class DatosSolicitudTests(APITestCase):
         EPS.objects.filter(pk=self.eps.pk).update(activa=False)
         Servicio.objects.filter(pk=self.servicio.pk).update(activo=False)
         cuerpo = {
-            'patologia': self.patologia.id, 'paciente': self.paciente.id, 'datos_ingresados': {},
-            'eps': self.eps.id, 'servicio': self.servicio.id, 'medico_tratante': 'Corregido',
+            'patologia': self.patologia.id,
+            'paciente': self.paciente.id,
+            'datos_ingresados': {},
+            'eps': self.eps.id,
+            'servicio': self.servicio.id,
+            'medico_tratante': 'Corregido',
         }
         respuesta = self.client.put(f'{self.URL}{informe_id}/', cuerpo, format='json')
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
@@ -1107,8 +1200,10 @@ class BorrarCatalogosEnUsoPorInformesTests(APITestCase):
         self.eps = EPS.objects.create(nombre='EPS en informe')
         self.servicio = Servicio.objects.create(nombre='Servicio en informe')
         Informe.objects.create(
-            patologia=Patologia.objects.create(nombre='Patología catálogos'), autor=self.admin,
-            eps=self.eps, servicio=self.servicio,
+            patologia=Patologia.objects.create(nombre='Patología catálogos'),
+            autor=self.admin,
+            eps=self.eps,
+            servicio=self.servicio,
         )
 
     def test_borrar_servicio_en_uso_responde_400(self):
@@ -1146,11 +1241,16 @@ class ConsultasListadoInformesTests(APITestCase):
             # Uno del paciente fijo (para su historial) y otro de un paciente nuevo.
             for paciente in (self.paciente, paciente_ficticio(f'PRUEBA{i:04d}', eps=eps)):
                 Informe.objects.create(
-                    patologia=self.patologia, autor=self.usuario, eps=eps, servicio=servicio, paciente=paciente,
+                    patologia=self.patologia,
+                    autor=self.usuario,
+                    eps=eps,
+                    servicio=servicio,
+                    paciente=paciente,
                 )
 
     def contar(self, url):
         from django.test.utils import CaptureQueriesContext
+
         with CaptureQueriesContext(connection) as consultas:
             self.assertEqual(self.client.get(url).status_code, status.HTTP_200_OK)
         return len(consultas)
@@ -1174,7 +1274,9 @@ class ContenidoInformeTests(APITestCase):
 
     def setUp(self):
         self.patologo = Usuario.objects.create_user(
-            username='patologo_contenido', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
+            username='patologo_contenido',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
         )
         self.client.force_authenticate(self.patologo)
         self.patologia = Patologia.objects.create(nombre='Patología contenido')
@@ -1189,8 +1291,7 @@ class ContenidoInformeTests(APITestCase):
 
     def diagnosticos(self, informe_id):
         return [
-            (d['descripcion'], d['codigo_cie10'])
-            for d in self.client.get(self.url(informe_id)).data['diagnosticos']
+            (d['descripcion'], d['codigo_cie10']) for d in self.client.get(self.url(informe_id)).data['diagnosticos']
         ]
 
     # --- Descripción microscópica y comentarios ---
@@ -1211,15 +1312,20 @@ class ContenidoInformeTests(APITestCase):
     # --- Diagnósticos ---
 
     def test_guarda_los_diagnosticos_en_el_orden_enviado(self):
-        respuesta = self.crear(diagnosticos=[
-            {'descripcion': 'Carcinoma basocelular nodular', 'codigo_cie10': 'C44.3'},
-            {'descripcion': 'Márgenes libres de lesión', 'codigo_cie10': ''},
-        ])
+        respuesta = self.crear(
+            diagnosticos=[
+                {'descripcion': 'Carcinoma basocelular nodular', 'codigo_cie10': 'C44.3'},
+                {'descripcion': 'Márgenes libres de lesión', 'codigo_cie10': ''},
+            ]
+        )
         self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
-        self.assertEqual(self.diagnosticos(respuesta.data['id']), [
-            ('Carcinoma basocelular nodular', 'C44.3'),
-            ('Márgenes libres de lesión', ''),
-        ])
+        self.assertEqual(
+            self.diagnosticos(respuesta.data['id']),
+            [
+                ('Carcinoma basocelular nodular', 'C44.3'),
+                ('Márgenes libres de lesión', ''),
+            ],
+        )
 
     def test_el_codigo_cie10_es_opcional(self):
         respuesta = self.crear(diagnosticos=[{'descripcion': 'Dermatitis crónica inespecífica'}])
@@ -1232,12 +1338,16 @@ class ContenidoInformeTests(APITestCase):
         self.assertEqual(respuesta.data['diagnosticos'], [])
 
     def test_put_reemplaza_la_lista_de_diagnosticos(self):
-        informe_id = self.crear(diagnosticos=[
-            {'descripcion': 'Primero', 'codigo_cie10': 'C44.3'},
-            {'descripcion': 'Segundo'},
-        ]).data['id']
+        informe_id = self.crear(
+            diagnosticos=[
+                {'descripcion': 'Primero', 'codigo_cie10': 'C44.3'},
+                {'descripcion': 'Segundo'},
+            ]
+        ).data['id']
         cuerpo = {
-            'patologia': self.patologia.id, 'paciente': self.paciente.id, 'datos_ingresados': {},
+            'patologia': self.patologia.id,
+            'paciente': self.paciente.id,
+            'datos_ingresados': {},
             'diagnosticos': [{'descripcion': 'Segundo'}, {'descripcion': 'Tercero', 'codigo_cie10': 'D22.5'}],
         }
         respuesta = self.client.put(self.url(informe_id), cuerpo, format='json')
@@ -1245,7 +1355,9 @@ class ContenidoInformeTests(APITestCase):
         self.assertEqual(self.diagnosticos(informe_id), [('Segundo', ''), ('Tercero', 'D22.5')])
 
     def test_patch_sin_diagnosticos_los_conserva(self):
-        informe_id = self.crear(diagnosticos=[{'descripcion': 'Nevus intradérmico', 'codigo_cie10': 'D22.5'}]).data['id']
+        informe_id = self.crear(diagnosticos=[{'descripcion': 'Nevus intradérmico', 'codigo_cie10': 'D22.5'}]).data[
+            'id'
+        ]
         respuesta = self.client.patch(self.url(informe_id), {'comentarios': 'Revisado'}, format='json')
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK, respuesta.data)
         self.assertEqual(self.diagnosticos(informe_id), [('Nevus intradérmico', 'D22.5')])
@@ -1257,15 +1369,18 @@ class ContenidoInformeTests(APITestCase):
         self.assertEqual(self.diagnosticos(informe_id), [])
 
     def test_el_codigo_cie10_se_normaliza(self):
-        respuesta = self.crear(diagnosticos=[
-            {'descripcion': 'Sin punto', 'codigo_cie10': 'c443'},
-            {'descripcion': 'Con espacios y minúsculas', 'codigo_cie10': ' d22.5 '},
-            {'descripcion': 'Solo categoría', 'codigo_cie10': 'C50'},
-            {'descripcion': 'Subcategoría de dos caracteres', 'codigo_cie10': 'M8090'},
-        ])
+        respuesta = self.crear(
+            diagnosticos=[
+                {'descripcion': 'Sin punto', 'codigo_cie10': 'c443'},
+                {'descripcion': 'Con espacios y minúsculas', 'codigo_cie10': ' d22.5 '},
+                {'descripcion': 'Solo categoría', 'codigo_cie10': 'C50'},
+                {'descripcion': 'Subcategoría de dos caracteres', 'codigo_cie10': 'M8090'},
+            ]
+        )
         self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
-        self.assertEqual([codigo for _, codigo in self.diagnosticos(respuesta.data['id'])],
-                         ['C44.3', 'D22.5', 'C50', 'M80.90'])
+        self.assertEqual(
+            [codigo for _, codigo in self.diagnosticos(respuesta.data['id'])], ['C44.3', 'D22.5', 'C50', 'M80.90']
+        )
 
     def test_rechaza_un_codigo_cie10_invalido(self):
         for codigo in ['44.3', 'CC4', 'C4', 'C44.123', 'C44-3', 'Ñ44']:
@@ -1293,7 +1408,9 @@ class ContenidoInformeTests(APITestCase):
     def test_un_error_no_borra_los_diagnosticos_anteriores(self):
         informe_id = self.crear(diagnosticos=[{'descripcion': 'Nevus intradérmico'}]).data['id']
         respuesta = self.client.patch(
-            self.url(informe_id), {'diagnosticos': [{'descripcion': 'Otro', 'codigo_cie10': 'XYZ'}]}, format='json',
+            self.url(informe_id),
+            {'diagnosticos': [{'descripcion': 'Otro', 'codigo_cie10': 'XYZ'}]},
+            format='json',
         )
         self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(self.diagnosticos(informe_id), [('Nevus intradérmico', '')])
@@ -1309,6 +1426,7 @@ class ContenidoInformeTests(APITestCase):
     def test_el_detalle_no_hace_una_consulta_por_diagnostico(self):
         # Auditoría M-4: las consultas del detalle no crecen con los diagnósticos.
         from django.test.utils import CaptureQueriesContext
+
         uno = self.crear(diagnosticos=[{'descripcion': 'Uno'}]).data['id']
         diez = self.crear(diagnosticos=[{'descripcion': f'D{i}'} for i in range(10)]).data['id']
 
@@ -1322,6 +1440,7 @@ class ContenidoInformeTests(APITestCase):
     def test_el_pdf_muestra_microscopica_diagnosticos_y_comentarios_escapados(self):
         # Auditoría I-3 en los campos nuevos: el texto del usuario sale literal.
         from reportlab.platypus import Paragraph
+
         informe_id = self.crear(
             descripcion_microscopica='Células <b>atípicas',
             comentarios='<font size=40>ENORME</font>',
@@ -1352,7 +1471,10 @@ class MigracionContenidoTests(TransactionTestCase):
         autor = modelos.get_model('accounts', 'Usuario').objects.create(username='autor_migracion_notas')
         patologia = modelos.get_model('informes', 'Patologia').objects.create(nombre='Patología notas')
         informe = modelos.get_model('informes', 'Informe').objects.create(
-            numero_peticion='P-2026-09999', patologia=patologia, autor=autor, notas='Nota que debe conservarse',
+            numero_peticion='P-2026-09999',
+            patologia=patologia,
+            autor=autor,
+            notas='Nota que debe conservarse',
         )
 
         executor = MigrationExecutor(connection)
@@ -1380,13 +1502,19 @@ class FinalizacionTests(APITestCase):
 
     def setUp(self):
         self.autor = Usuario.objects.create_user(
-            username='patologo_firma', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
-            nombre_completo='Dra. Ficticia Firma', especialidad='Patología Quirúrgica',
+            username='patologo_firma',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
+            nombre_completo='Dra. Ficticia Firma',
+            especialidad='Patología Quirúrgica',
             registro_medico='RM-PRUEBA-0001',
         )
         self.admin = Usuario.objects.create_user(
-            username='admin_firma', password='ClaveSegura-2026', rol=Usuario.Rol.ADMIN,
-            nombre_completo='Admin Ficticio', registro_medico='RM-PRUEBA-9999',
+            username='admin_firma',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.ADMIN,
+            nombre_completo='Admin Ficticio',
+            registro_medico='RM-PRUEBA-9999',
         )
         self.client.force_authenticate(self.autor)
         self.patologia = Patologia.objects.create(nombre='Patología firma')
@@ -1396,8 +1524,11 @@ class FinalizacionTests(APITestCase):
 
     def crear(self, **extra):
         cuerpo = {
-            'patologia': self.patologia.id, 'paciente': self.paciente.id, 'datos_ingresados': {},
-            'fecha_ingreso': '2026-10-01', 'servicio': self.servicio.id,
+            'patologia': self.patologia.id,
+            'paciente': self.paciente.id,
+            'datos_ingresados': {},
+            'fecha_ingreso': '2026-10-01',
+            'servicio': self.servicio.id,
             'descripcion_microscopica': 'Proliferación de células basaloides.',
             'diagnosticos': [{'descripcion': 'Carcinoma basocelular nodular', 'codigo_cie10': 'C44.3'}],
             **extra,
@@ -1440,7 +1571,9 @@ class FinalizacionTests(APITestCase):
 
     def test_no_finaliza_un_informe_antiguo_sin_paciente(self):
         antiguo = Informe.objects.create(
-            patologia=self.patologia, autor=self.autor, descripcion_microscopica='Hallazgos.',
+            patologia=self.patologia,
+            autor=self.autor,
+            descripcion_microscopica='Hallazgos.',
         )
         Diagnostico.objects.create(informe=antiguo, orden=1, descripcion='Diagnóstico')
         self.assertNoFinaliza(antiguo.id, self.SIN_PACIENTE)
@@ -1499,11 +1632,14 @@ class FinalizacionTests(APITestCase):
 
     def test_el_borrador_muestra_la_firma_actual_del_autor(self):
         informe_id = self.crear()
-        self.assertEqual(self.detalle(informe_id)['firma'], {
-            'nombre': 'Dra. Ficticia Firma',
-            'especialidad': 'Patología Quirúrgica',
-            'registro_medico': 'RM-PRUEBA-0001',
-        })
+        self.assertEqual(
+            self.detalle(informe_id)['firma'],
+            {
+                'nombre': 'Dra. Ficticia Firma',
+                'especialidad': 'Patología Quirúrgica',
+                'registro_medico': 'RM-PRUEBA-0001',
+            },
+        )
 
     def test_la_firma_es_la_del_autor_aunque_finalice_un_admin(self):
         informe_id = self.crear()
@@ -1521,13 +1657,19 @@ class FinalizacionTests(APITestCase):
         antes = self.detalle(informe_id)
 
         Paciente.objects.filter(id=self.paciente.id).update(
-            nombres='Otro Nombre', apellidos='Corregido', numero_documento='PRUEBA0099',
-            tipo_documento='TI', sexo='masculino', fecha_nacimiento=date(1990, 1, 1),
+            nombres='Otro Nombre',
+            apellidos='Corregido',
+            numero_documento='PRUEBA0099',
+            tipo_documento='TI',
+            sexo='masculino',
+            fecha_nacimiento=date(1990, 1, 1),
         )
         EPS.objects.filter(id=self.eps.id).update(nombre='EPS Renombrada')
         Servicio.objects.filter(id=self.servicio.id).update(nombre='Servicio Renombrado')
         Usuario.objects.filter(id=self.autor.id).update(
-            nombre_completo='Nombre Cambiado', especialidad='Otra', registro_medico='RM-PRUEBA-0002',
+            nombre_completo='Nombre Cambiado',
+            especialidad='Otra',
+            registro_medico='RM-PRUEBA-0002',
         )
 
         despues = self.detalle(informe_id)
@@ -1571,24 +1713,40 @@ class MigracionFinalizacionTests(TransactionTestCase):
         executor.migrate(self.ANTES)
         modelos = executor.loader.project_state(self.ANTES).apps
         autor = modelos.get_model('accounts', 'Usuario').objects.create(
-            username='autor_migracion_firma', nombre_completo='Dr. Ficticio Migración',
+            username='autor_migracion_firma',
+            nombre_completo='Dr. Ficticio Migración',
         )
         patologia = modelos.get_model('informes', 'Patologia').objects.create(nombre='Patología migración firma')
         eps = modelos.get_model('pacientes', 'EPS').objects.create(nombre='EPS Migración')
         paciente = modelos.get_model('pacientes', 'Paciente').objects.create(
-            tipo_documento='CC', numero_documento='PRUEBA0500', nombres='Paciente Ficticio', apellidos='Migración',
-            fecha_nacimiento=date(1970, 1, 1), sexo='femenino',
+            tipo_documento='CC',
+            numero_documento='PRUEBA0500',
+            nombres='Paciente Ficticio',
+            apellidos='Migración',
+            fecha_nacimiento=date(1970, 1, 1),
+            sexo='femenino',
         )
         InformeAntes = modelos.get_model('informes', 'Informe')
         finalizado = InformeAntes.objects.create(
-            numero_peticion='P-2026-09990', patologia=patologia, autor=autor, paciente=paciente, eps=eps,
-            fecha_ingreso=date(2026, 9, 1), estado='finalizado',
+            numero_peticion='P-2026-09990',
+            patologia=patologia,
+            autor=autor,
+            paciente=paciente,
+            eps=eps,
+            fecha_ingreso=date(2026, 9, 1),
+            estado='finalizado',
         )
         borrador = InformeAntes.objects.create(
-            numero_peticion='P-2026-09991', patologia=patologia, autor=autor, paciente=paciente,
+            numero_peticion='P-2026-09991',
+            patologia=patologia,
+            autor=autor,
+            paciente=paciente,
         )
         sin_paciente = InformeAntes.objects.create(
-            numero_peticion='P-2026-09992', patologia=patologia, autor=autor, estado='finalizado',
+            numero_peticion='P-2026-09992',
+            patologia=patologia,
+            autor=autor,
+            estado='finalizado',
         )
         actualizado = InformeAntes.objects.get(id=finalizado.id).fecha_actualizacion
 
@@ -1629,19 +1787,31 @@ class MigracionEncabezadoCongeladoTests(TransactionTestCase):
         autor = modelos.get_model('accounts', 'Usuario').objects.create(username='autor_migracion_encabezado')
         patologia = modelos.get_model('informes', 'Patologia').objects.create(nombre='Patología migración encabezado')
         Informe0011 = modelos.get_model('informes', 'Informe')
-        congelado = {'paciente': None, 'eps_nombre': None, 'servicio_nombre': None,
-                     'firma': {'nombre': 'Dr. Ficticio', 'especialidad': '', 'registro_medico': 'RM-PRUEBA-0009'}}
+        congelado = {
+            'paciente': None,
+            'eps_nombre': None,
+            'servicio_nombre': None,
+            'firma': {'nombre': 'Dr. Ficticio', 'especialidad': '', 'registro_medico': 'RM-PRUEBA-0009'},
+        }
         otro = {'nombre': 'Laboratorio Ficticio Ya Congelado', 'direccion': 'Calle 9', 'telefono': ''}
         ids = {
             'finalizado': Informe0011.objects.create(
-                numero_peticion='P-2026-09980', patologia=patologia, autor=autor, estado='finalizado',
+                numero_peticion='P-2026-09980',
+                patologia=patologia,
+                autor=autor,
+                estado='finalizado',
                 datos_finalizacion=congelado,
             ).id,
             'borrador': Informe0011.objects.create(
-                numero_peticion='P-2026-09981', patologia=patologia, autor=autor,
+                numero_peticion='P-2026-09981',
+                patologia=patologia,
+                autor=autor,
             ).id,
             'ya_congelado': Informe0011.objects.create(
-                numero_peticion='P-2026-09982', patologia=patologia, autor=autor, estado='finalizado',
+                numero_peticion='P-2026-09982',
+                patologia=patologia,
+                autor=autor,
+                estado='finalizado',
                 datos_finalizacion={**congelado, 'laboratorio': otro},
             ).id,
         }
@@ -1684,8 +1854,11 @@ class PdfInformeTests(APITestCase):
 
     def setUp(self):
         self.autor = Usuario.objects.create_user(
-            username='patologo_pdf_v2', password='ClaveSegura-2026', rol=Usuario.Rol.PATOLOGO,
-            nombre_completo='Dra. Ficticia Firma', especialidad='Patología Quirúrgica',
+            username='patologo_pdf_v2',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.PATOLOGO,
+            nombre_completo='Dra. Ficticia Firma',
+            especialidad='Patología Quirúrgica',
             registro_medico='RM-PRUEBA-0001',
         )
         self.client.force_authenticate(self.autor)
@@ -1696,10 +1869,13 @@ class PdfInformeTests(APITestCase):
 
     def crear(self, **extra):
         cuerpo = {
-            'patologia': self.patologia.id, 'paciente': self.paciente.id,
+            'patologia': self.patologia.id,
+            'paciente': self.paciente.id,
             'datos_ingresados': {'localizacion': 'dorso de la mano'},
-            'fecha_ingreso': '2026-10-01', 'servicio': self.servicio.id,
-            'medico_tratante': 'Médico Ficticio', 'estudios_solicitados': 'Biopsia de piel',
+            'fecha_ingreso': '2026-10-01',
+            'servicio': self.servicio.id,
+            'medico_tratante': 'Médico Ficticio',
+            'estudios_solicitados': 'Biopsia de piel',
             'tipo_muestra': 'Biopsia por raspado',
             'descripcion_microscopica': 'Proliferación de células basaloides.',
             'diagnosticos': [{'descripcion': 'Carcinoma basocelular nodular', 'codigo_cie10': 'C44.3'}],
@@ -1724,10 +1900,14 @@ class PdfInformeTests(APITestCase):
         """
         from reportlab.pdfgen.canvas import Canvas
         from reportlab.platypus import Paragraph, Table
-        with mock.patch('informes.utils.Paragraph', wraps=Paragraph) as parrafos, \
-                mock.patch('informes.utils.Table', wraps=Table) as tablas, \
-                mock.patch.object(Canvas, 'drawCentredString', autospec=True,
-                                  side_effect=Canvas.drawCentredString) as centrados:
+
+        with (
+            mock.patch('informes.utils.Paragraph', wraps=Paragraph) as parrafos,
+            mock.patch('informes.utils.Table', wraps=Table) as tablas,
+            mock.patch.object(
+                Canvas, 'drawCentredString', autospec=True, side_effect=Canvas.drawCentredString
+            ) as centrados,
+        ):
             respuesta = self.client.get(f'{self.URL}{informe_id}/pdf/')
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         self.assertEqual(respuesta['Content-Type'], 'application/pdf')
@@ -1749,15 +1929,18 @@ class PdfInformeTests(APITestCase):
     def test_tabla_de_datos_en_dos_columnas(self):
         informe_id = self.crear(numero_orden_externa='OE-PRUEBA-1')
         self.finalizar(informe_id)
-        self.assertEqual(self.generar(informe_id)['tablas'][0], [
-            ['<b>Paciente:</b> Paciente Ficticio Uno', '<b>Identificación:</b> CC PRUEBA0001'],
-            ['<b>Edad:</b> 45 años', '<b>Sexo:</b> Femenino'],
-            ['<b>Médico tratante:</b> Médico Ficticio', '<b>EPS:</b> EPS Ficticia'],
-            ['<b>Servicio:</b> Dermatología', f'<b>N.º de petición:</b> {self.numero(informe_id)}'],
-            ['<b>Fecha de ingreso:</b> 01/10/2026', '<b>Fecha de informe:</b> 04/10/2026 15:30'],
-            ['<b>Orden externa:</b> OE-PRUEBA-1', ''],
-            ['<b>Estudios solicitados:</b> Biopsia de piel', ''],
-        ])
+        self.assertEqual(
+            self.generar(informe_id)['tablas'][0],
+            [
+                ['<b>Paciente:</b> Paciente Ficticio Uno', '<b>Identificación:</b> CC PRUEBA0001'],
+                ['<b>Edad:</b> 45 años', '<b>Sexo:</b> Femenino'],
+                ['<b>Médico tratante:</b> Médico Ficticio', '<b>EPS:</b> EPS Ficticia'],
+                ['<b>Servicio:</b> Dermatología', f'<b>N.º de petición:</b> {self.numero(informe_id)}'],
+                ['<b>Fecha de ingreso:</b> 01/10/2026', '<b>Fecha de informe:</b> 04/10/2026 15:30'],
+                ['<b>Orden externa:</b> OE-PRUEBA-1', ''],
+                ['<b>Estudios solicitados:</b> Biopsia de piel', ''],
+            ],
+        )
 
     def test_sin_orden_externa_no_hay_fila_de_orden_externa(self):
         informe_id = self.crear()
@@ -1784,7 +1967,9 @@ class PdfInformeTests(APITestCase):
         # Auditoría I-3 en los campos nuevos del PDF.
         paciente = paciente_ficticio(numero='PRUEBA0002', apellidos='<b>Dos')
         informe_id = self.crear(
-            paciente=paciente.id, medico_tratante='<font size=40>Ficticio', estudios_solicitados='A & B',
+            paciente=paciente.id,
+            medico_tratante='<font size=40>Ficticio',
+            estudios_solicitados='A & B',
         )
         filas = self.generar(informe_id)['tablas'][0]
         self.assertEqual(filas[0][0], '<b>Paciente:</b> Paciente Ficticio &lt;b&gt;Dos')
@@ -1842,7 +2027,9 @@ class PdfInformeTests(APITestCase):
         # Respuesta P-9: sin datos de un laboratorio real. Son los valores por defecto
         # de settings.py cuando backend/.env no define LABORATORIO_* (tarea previa 2).
         textos = self.generar(self.crear())['textos']
-        self.assertEqual(textos[:2], ['PathoLab — Laboratorio de Patología (demostración)', 'Santiago de Cali, Colombia'])
+        self.assertEqual(
+            textos[:2], ['PathoLab — Laboratorio de Patología (demostración)', 'Santiago de Cali, Colombia']
+        )
         self.assertFalse(any('Teléfono' in texto for texto in textos))
 
     @override_settings(
@@ -1852,9 +2039,14 @@ class PdfInformeTests(APITestCase):
     )
     def test_el_encabezado_sale_de_la_configuracion_con_telefono_en_otra_linea(self):
         textos = self.generar(self.crear())['textos']
-        self.assertEqual(textos[:3], [
-            'Laboratorio Ficticio de Prueba', 'Calle Falsa 123, Ciudad Ficticia', 'Teléfono: 000 000 0000',
-        ])
+        self.assertEqual(
+            textos[:3],
+            [
+                'Laboratorio Ficticio de Prueba',
+                'Calle Falsa 123, Ciudad Ficticia',
+                'Teléfono: 000 000 0000',
+            ],
+        )
 
     @override_settings(LABORATORIO_NOMBRE='Laboratorio Ficticio de Prueba', LABORATORIO_TELEFONO='')
     def test_sin_telefono_no_hay_linea_de_telefono(self):
@@ -1864,11 +2056,13 @@ class PdfInformeTests(APITestCase):
 
     # Decisión D-15: el encabezado se congela al finalizar, como los datos de D-10.
     LABORATORIO_A = {
-        'LABORATORIO_NOMBRE': 'Laboratorio Ficticio A', 'LABORATORIO_DIRECCION': 'Calle A 1, Ciudad A',
+        'LABORATORIO_NOMBRE': 'Laboratorio Ficticio A',
+        'LABORATORIO_DIRECCION': 'Calle A 1, Ciudad A',
         'LABORATORIO_TELEFONO': '111 111 1111',
     }
     LABORATORIO_B = {
-        'LABORATORIO_NOMBRE': 'Laboratorio Ficticio B', 'LABORATORIO_DIRECCION': 'Calle B 2, Ciudad B',
+        'LABORATORIO_NOMBRE': 'Laboratorio Ficticio B',
+        'LABORATORIO_DIRECCION': 'Calle B 2, Ciudad B',
         'LABORATORIO_TELEFONO': '',
     }
 
@@ -1876,9 +2070,14 @@ class PdfInformeTests(APITestCase):
         with override_settings(**self.LABORATORIO_A):
             informe_id = self.crear()
             self.finalizar(informe_id)
-        self.assertEqual(Informe.objects.get(id=informe_id).datos_finalizacion['laboratorio'], {
-            'nombre': 'Laboratorio Ficticio A', 'direccion': 'Calle A 1, Ciudad A', 'telefono': '111 111 1111',
-        })
+        self.assertEqual(
+            Informe.objects.get(id=informe_id).datos_finalizacion['laboratorio'],
+            {
+                'nombre': 'Laboratorio Ficticio A',
+                'direccion': 'Calle A 1, Ciudad A',
+                'telefono': '111 111 1111',
+            },
+        )
 
     def test_un_finalizado_conserva_el_encabezado_aunque_cambie_la_configuracion(self):
         with override_settings(**self.LABORATORIO_A):
@@ -1908,22 +2107,29 @@ class PdfInformeTests(APITestCase):
         self.assertIn('ADENDAS', textos)
 
     @override_settings(
-        LABORATORIO_NOMBRE='<b>Lab</b> & Cía', LABORATORIO_DIRECCION='Calle <font size=40>1',
+        LABORATORIO_NOMBRE='<b>Lab</b> & Cía',
+        LABORATORIO_DIRECCION='Calle <font size=40>1',
         LABORATORIO_TELEFONO='<i>000</i>',
     )
     def test_el_encabezado_sale_escapado(self):
         # Auditoría I-3: ReportLab interpreta etiquetas; un & o un < del .env no debe
         # romper el PDF ni cambiar su formato.
         textos = self.generar(self.crear())['textos']
-        self.assertEqual(textos[:3], [
-            '&lt;b&gt;Lab&lt;/b&gt; &amp; Cía', 'Calle &lt;font size=40&gt;1', 'Teléfono: &lt;i&gt;000&lt;/i&gt;',
-        ])
+        self.assertEqual(
+            textos[:3],
+            [
+                '&lt;b&gt;Lab&lt;/b&gt; &amp; Cía',
+                'Calle &lt;font size=40&gt;1',
+                'Teléfono: &lt;i&gt;000&lt;/i&gt;',
+            ],
+        )
 
     # --- Pie de página ---
 
     def paginas_y_pies(self, informe_id):
         """Genera el PDF a una hora fija y devuelve el número de páginas y los pies."""
         import re
+
         ahora_utc = datetime(2026, 10, 4, 3, 30, tzinfo=dt_timezone.utc)  # en Bogotá: 3 de octubre, 22:30 (M-10)
         with mock.patch('django.utils.timezone.now', return_value=ahora_utc):
             pdf = self.generar(informe_id)
@@ -1934,21 +2140,27 @@ class PdfInformeTests(APITestCase):
         self.finalizar(informe_id)
         paginas, pies = self.paginas_y_pies(informe_id)
         self.assertGreaterEqual(paginas, 2)
-        self.assertEqual(pies, [
-            f'N.º de petición {self.numero(informe_id)} · Página {n} de {paginas} · Generado el 03/10/2026 22:30'
-            for n in range(1, paginas + 1)
-        ])
+        self.assertEqual(
+            pies,
+            [
+                f'N.º de petición {self.numero(informe_id)} · Página {n} de {paginas} · Generado el 03/10/2026 22:30'
+                for n in range(1, paginas + 1)
+            ],
+        )
 
     def test_en_un_borrador_el_pie_de_cada_pagina_dice_sin_validez(self):
         # Así una hoja suelta de un borrador no parece definitiva.
         informe_id = self.crear(descripcion_microscopica='Párrafo largo de prueba. ' * 1500)
         paginas, pies = self.paginas_y_pies(informe_id)
         self.assertGreaterEqual(paginas, 2)
-        self.assertEqual(pies, [
-            f'BORRADOR — SIN VALIDEZ · N.º de petición {self.numero(informe_id)} · Página {n} de {paginas}'
-            ' · Generado el 03/10/2026 22:30'
-            for n in range(1, paginas + 1)
-        ])
+        self.assertEqual(
+            pies,
+            [
+                f'BORRADOR — SIN VALIDEZ · N.º de petición {self.numero(informe_id)} · Página {n} de {paginas}'
+                ' · Generado el 03/10/2026 22:30'
+                for n in range(1, paginas + 1)
+            ],
+        )
 
     # --- Adendas (informe v2, etapa 8) ---
 
@@ -1964,8 +2176,10 @@ class PdfInformeTests(APITestCase):
         self.finalizar(informe_id)
         self.agregar_adenda(informe_id, timezone.make_aware(datetime(2026, 10, 5, 9, 15)))
         self.agregar_adenda(
-            informe_id, timezone.make_aware(datetime(2026, 10, 6, 11, 0)),
-            motivo='Resultado de inmunohistoquímica', texto='CK5/6 positivo.',
+            informe_id,
+            timezone.make_aware(datetime(2026, 10, 6, 11, 0)),
+            motivo='Resultado de inmunohistoquímica',
+            texto='CK5/6 positivo.',
         )
         textos = self.generar(informe_id)['textos']
         orden = [
@@ -2005,8 +2219,10 @@ class PdfInformeTests(APITestCase):
         informe_id = self.crear()
         self.finalizar(informe_id)
         self.agregar_adenda(
-            informe_id, timezone.make_aware(datetime(2026, 10, 5, 9, 15)),
-            motivo='<b>Motivo', texto='Línea 1 & <font size=40>\nLínea 2',
+            informe_id,
+            timezone.make_aware(datetime(2026, 10, 5, 9, 15)),
+            motivo='<b>Motivo',
+            texto='Línea 1 & <font size=40>\nLínea 2',
         )
         textos = self.generar(informe_id)['textos']
         self.assertIn('<b>Motivo:</b> &lt;b&gt;Motivo', textos)
@@ -2022,17 +2238,18 @@ class PdfInformeTests(APITestCase):
         from reportlab.lib.colors import toColor
         from reportlab.pdfgen.canvas import Canvas
         from reportlab.platypus import HRFlowable, Paragraph
-        with mock.patch.object(Canvas, 'setFillColor', autospec=True, side_effect=Canvas.setFillColor) as rellenos, \
-                mock.patch.object(Canvas, 'setStrokeColor', autospec=True,
-                                  side_effect=Canvas.setStrokeColor) as trazos, \
-                mock.patch('informes.utils.Paragraph', wraps=Paragraph) as parrafos, \
-                mock.patch('informes.utils.HRFlowable', wraps=HRFlowable) as lineas:
+
+        with (
+            mock.patch.object(Canvas, 'setFillColor', autospec=True, side_effect=Canvas.setFillColor) as rellenos,
+            mock.patch.object(Canvas, 'setStrokeColor', autospec=True, side_effect=Canvas.setStrokeColor) as trazos,
+            mock.patch('informes.utils.Paragraph', wraps=Paragraph) as parrafos,
+            mock.patch('informes.utils.HRFlowable', wraps=HRFlowable) as lineas,
+        ):
             respuesta = self.client.get(f'{self.URL}{informe_id}/pdf/')
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         return {
             'colores': {
-                toColor(llamada.args[1]).hexval()
-                for llamada in rellenos.call_args_list + trazos.call_args_list
+                toColor(llamada.args[1]).hexval() for llamada in rellenos.call_args_list + trazos.call_args_list
             },
             'parrafos': {str(llamada.args[0]): llamada.args[1] for llamada in parrafos.call_args_list},
             'lineas': [llamada.kwargs for llamada in lineas.call_args_list],
@@ -2050,19 +2267,28 @@ class PdfInformeTests(APITestCase):
 
     def test_los_titulos_van_en_negrita_y_en_negro(self):
         from reportlab.lib.colors import black
+
         informe_id = self.crear()
         self.finalizar(informe_id)
         self.agregar_adenda(informe_id, timezone.make_aware(datetime(2026, 10, 5, 9, 15)))
         parrafos = self.dibujo(informe_id)['parrafos']
         from django.conf import settings
-        for titulo in (settings.LABORATORIO_NOMBRE, 'INFORME DE ANATOMÍA PATOLÓGICA', 'DESCRIPCIÓN MACROSCÓPICA',
-                       'DIAGNÓSTICOS', 'ADENDAS', 'Adenda N.º 1 — 05/10/2026 09:15'):
+
+        for titulo in (
+            settings.LABORATORIO_NOMBRE,
+            'INFORME DE ANATOMÍA PATOLÓGICA',
+            'DESCRIPCIÓN MACROSCÓPICA',
+            'DIAGNÓSTICOS',
+            'ADENDAS',
+            'Adenda N.º 1 — 05/10/2026 09:15',
+        ):
             with self.subTest(titulo=titulo):
                 self.assertEqual(parrafos[titulo].fontName, 'Helvetica-Bold')
                 self.assertEqual(parrafos[titulo].textColor, black)
 
     def test_el_encabezado_lleva_una_linea_fina_negra(self):
         from reportlab.lib.colors import black
+
         informe_id = self.crear()
         primera_linea = self.dibujo(informe_id)['lineas'][0]
         self.assertLessEqual(primera_linea['thickness'], 0.75)
@@ -2087,12 +2313,18 @@ class AdendaTests(APITestCase):
             return Usuario.objects.create_user(username=username, password='ClaveSegura-2026', rol=rol, **extra)
 
         self.autor = usuario(
-            'patologo_adenda', Usuario.Rol.PATOLOGO, nombre_completo='Dra. Ficticia Firma',
-            especialidad='Patología Quirúrgica', registro_medico='RM-PRUEBA-0001',
+            'patologo_adenda',
+            Usuario.Rol.PATOLOGO,
+            nombre_completo='Dra. Ficticia Firma',
+            especialidad='Patología Quirúrgica',
+            registro_medico='RM-PRUEBA-0001',
         )
         self.otro = usuario('otro_adenda', Usuario.Rol.PATOLOGO, registro_medico='RM-PRUEBA-0002')
         self.admin = usuario(
-            'admin_adenda', Usuario.Rol.ADMIN, nombre_completo='Admin Ficticio', registro_medico='RM-PRUEBA-9999',
+            'admin_adenda',
+            Usuario.Rol.ADMIN,
+            nombre_completo='Admin Ficticio',
+            registro_medico='RM-PRUEBA-9999',
         )
         self.admin_sin_registro = usuario('admin_sin_rm', Usuario.Rol.ADMIN)
         self.auditor = usuario('auditor_adenda', Usuario.Rol.AUDITOR)
@@ -2102,11 +2334,17 @@ class AdendaTests(APITestCase):
 
     def crear(self, finalizar=True):
         self.client.force_authenticate(self.autor)
-        respuesta = self.client.post(self.URL, {
-            'patologia': self.patologia.id, 'paciente': self.paciente.id, 'datos_ingresados': {},
-            'descripcion_microscopica': 'Proliferación de células basaloides.',
-            'diagnosticos': [{'descripcion': 'Carcinoma basocelular nodular', 'codigo_cie10': 'C44.3'}],
-        }, format='json')
+        respuesta = self.client.post(
+            self.URL,
+            {
+                'patologia': self.patologia.id,
+                'paciente': self.paciente.id,
+                'datos_ingresados': {},
+                'descripcion_microscopica': 'Proliferación de células basaloides.',
+                'diagnosticos': [{'descripcion': 'Carcinoma basocelular nodular', 'codigo_cie10': 'C44.3'}],
+            },
+            format='json',
+        )
         self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED, respuesta.data)
         informe_id = respuesta.data['id']
         if finalizar:
@@ -2125,6 +2363,7 @@ class AdendaTests(APITestCase):
 
     def total_adendas(self):
         from .models import Adenda
+
         return Adenda.objects.count()
 
     # --- Crear ---
@@ -2140,9 +2379,14 @@ class AdendaTests(APITestCase):
         self.assertEqual(respuesta.data['texto'], 'Se aclara el diagnóstico.')
         self.assertEqual(respuesta.data['autor'], self.autor.id)
         self.assertEqual(datetime.fromisoformat(respuesta.data['fecha']), momento)
-        self.assertEqual(respuesta.data['firma'], {
-            'nombre': 'Dra. Ficticia Firma', 'especialidad': 'Patología Quirúrgica', 'registro_medico': 'RM-PRUEBA-0001',
-        })
+        self.assertEqual(
+            respuesta.data['firma'],
+            {
+                'nombre': 'Dra. Ficticia Firma',
+                'especialidad': 'Patología Quirúrgica',
+                'registro_medico': 'RM-PRUEBA-0001',
+            },
+        )
 
     def test_un_borrador_no_admite_adendas(self):
         # Un borrador se corrige editándolo.
@@ -2246,6 +2490,7 @@ class AdendaTests(APITestCase):
     def test_el_numero_no_se_repite_en_la_base_de_datos(self):
         # Respaldo del bloqueo con select_for_update (sección 3.8).
         from .models import Adenda
+
         informe = Informe.objects.get(id=self.crear())
         datos = {'informe': informe, 'numero': 1, 'motivo': 'M', 'texto': 'T', 'autor': self.autor, 'firma': {}}
         Adenda.objects.create(**datos)
@@ -2254,6 +2499,7 @@ class AdendaTests(APITestCase):
 
     def test_un_informe_con_adendas_no_se_borra_desde_el_orm(self):
         from django.db.models import ProtectedError
+
         informe_id = self.crear()
         self.agregar(informe_id)
         with self.assertRaises(ProtectedError):
@@ -2263,10 +2509,13 @@ class AdendaTests(APITestCase):
         from django.contrib import admin as admin_django
         from django.test import RequestFactory
         from .models import Adenda
+
         modelo_admin = admin_django.site._registry[Informe]
         peticion = RequestFactory().get('/admin/')
         peticion.user = Usuario.objects.create_superuser(
-            username='super_adenda', password='ClaveSegura-2026', rol=Usuario.Rol.ADMIN,
+            username='super_adenda',
+            password='ClaveSegura-2026',
+            rol=Usuario.Rol.ADMIN,
         )
         informe = Informe.objects.get(id=self.crear())
         inlines = [i for i in modelo_admin.get_inline_instances(peticion, informe) if i.model is Adenda]
@@ -2287,6 +2536,7 @@ class AdendaTests(APITestCase):
     def test_el_detalle_no_hace_una_consulta_por_adenda(self):
         # Auditoría M-4: las consultas del detalle no crecen con las adendas.
         from django.test.utils import CaptureQueriesContext
+
         una, cinco = self.crear(), self.crear()
         self.agregar(una)
         for _ in range(5):
@@ -2323,8 +2573,10 @@ class PdfBorradorTests(APITestCase):
         self.admin = usuario('admin_borrador', Usuario.Rol.ADMIN)
         self.auditor = usuario('auditor_borrador', Usuario.Rol.AUDITOR)
         self.informe = Informe.objects.create(
-            patologia=Patologia.objects.create(nombre='Patología borrador'), autor=self.autor,
-            paciente=paciente_ficticio(), descripcion_microscopica='Párrafo largo de prueba. ' * 1500,
+            patologia=Patologia.objects.create(nombre='Patología borrador'),
+            autor=self.autor,
+            paciente=paciente_ficticio(),
+            descripcion_microscopica='Párrafo largo de prueba. ' * 1500,
         )
         self.url = f'/api/informes/{self.informe.id}/pdf/'
 
@@ -2339,8 +2591,10 @@ class PdfBorradorTests(APITestCase):
         """Descarga como el autor y devuelve cuántas marcas "BORRADOR" se dibujan y cuántas páginas hay."""
         import re
         from reportlab.pdfgen.canvas import Canvas
-        with mock.patch.object(Canvas, 'drawCentredString', autospec=True,
-                               side_effect=Canvas.drawCentredString) as centrados:
+
+        with mock.patch.object(
+            Canvas, 'drawCentredString', autospec=True, side_effect=Canvas.drawCentredString
+        ) as centrados:
             respuesta = self.descargar(self.autor)
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         marcas = [llamada for llamada in centrados.call_args_list if llamada.args[3] == 'BORRADOR']

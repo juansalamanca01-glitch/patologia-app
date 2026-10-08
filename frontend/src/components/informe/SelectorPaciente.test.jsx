@@ -11,13 +11,23 @@ vi.mock('../../api/client', async (importOriginal) => ({
 
 // Solo datos ficticios (docs/propuesta-informe-v2.md, sección 8).
 const PACIENTE = {
-  id: 1, tipo_documento: 'CC', numero_documento: 'PRUEBA0001', nombres: 'Paciente Ficticio',
-  apellidos: 'Uno', fecha_nacimiento: '1980-10-05', edad: '45 años', sexo: 'femenino',
-  eps: 3, eps_nombre: 'Particular',
+  id: 1,
+  tipo_documento: 'CC',
+  numero_documento: 'PRUEBA0001',
+  nombres: 'Paciente Ficticio',
+  apellidos: 'Uno',
+  fecha_nacimiento: '1980-10-05',
+  edad: '45 años',
+  sexo: 'femenino',
+  eps: 3,
+  eps_nombre: 'Particular',
 };
 
 const OPCIONES = {
-  sexos: [{ valor: 'femenino', etiqueta: 'Femenino' }, { valor: 'masculino', etiqueta: 'Masculino' }],
+  sexos: [
+    { valor: 'femenino', etiqueta: 'Femenino' },
+    { valor: 'masculino', etiqueta: 'Masculino' },
+  ],
   tipos_documento: [{ valor: 'CC', etiqueta: 'Cédula de ciudadanía' }],
   tipos_estudio: [],
 };
@@ -46,14 +56,23 @@ describe('SelectorPaciente', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Buscar' }));
     await vi.waitFor(() => expect(client.get).toHaveBeenCalledWith('/pacientes/', { params: { q: 'PRUEBA0001' } }));
     fireEvent.click(await screen.findByRole('button', { name: /Seleccionar/ }));
-    expect(onSeleccionar).toHaveBeenCalledWith(expect.objectContaining({
-      id: 1, nombre_completo: 'Paciente Ficticio Uno', numero_documento: 'PRUEBA0001', eps: 3,
-    }));
+    expect(onSeleccionar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 1,
+        nombre_completo: 'Paciente Ficticio Uno',
+        numero_documento: 'PRUEBA0001',
+        eps: 3,
+      }),
+    );
   });
 
   it('Enter en la búsqueda busca y no envía el formulario del informe', async () => {
     const enviar = vi.fn((e) => e.preventDefault());
-    render(<form onSubmit={enviar}><SelectorPaciente paciente={null} onSeleccionar={onSeleccionar} /></form>);
+    render(
+      <form onSubmit={enviar}>
+        <SelectorPaciente paciente={null} onSeleccionar={onSeleccionar} />
+      </form>,
+    );
     fireEvent.change(screen.getByLabelText('Buscar paciente'), { target: { value: 'ficticio' } });
     fireEvent.keyDown(screen.getByLabelText('Buscar paciente'), { key: 'Enter' });
     await vi.waitFor(() => expect(client.get).toHaveBeenCalledWith('/pacientes/', { params: { q: 'ficticio' } }));
@@ -85,8 +104,12 @@ describe('SelectorPaciente', () => {
 
   it('muestra el paciente seleccionado y permite cambiarlo', async () => {
     const seleccionado = {
-      id: 1, nombre_completo: 'Paciente Ficticio Uno', tipo_documento: 'CC',
-      numero_documento: 'PRUEBA0001', sexo: 'femenino', edad: '45 años',
+      id: 1,
+      nombre_completo: 'Paciente Ficticio Uno',
+      tipo_documento: 'CC',
+      numero_documento: 'PRUEBA0001',
+      sexo: 'femenino',
+      edad: '45 años',
     };
     render(<SelectorPaciente paciente={seleccionado} onSeleccionar={onSeleccionar} />);
     expect(screen.getByText('Paciente Ficticio Uno')).toBeInTheDocument();
@@ -98,7 +121,12 @@ describe('SelectorPaciente', () => {
   });
 
   it('en solo lectura no permite cambiar el paciente', () => {
-    const seleccionado = { id: 1, nombre_completo: 'Paciente Ficticio Uno', tipo_documento: 'CC', numero_documento: 'PRUEBA0001' };
+    const seleccionado = {
+      id: 1,
+      nombre_completo: 'Paciente Ficticio Uno',
+      tipo_documento: 'CC',
+      numero_documento: 'PRUEBA0001',
+    };
     render(<SelectorPaciente paciente={seleccionado} onSeleccionar={onSeleccionar} disabled />);
     expect(screen.queryByRole('button', { name: 'Cambiar' })).not.toBeInTheDocument();
   });
@@ -117,18 +145,26 @@ describe('SelectorPaciente: datos del paciente seleccionado', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     reiniciarOpciones();
-    client.get.mockImplementation((url) => (
-      url === '/opciones/' ? Promise.resolve({ data: OPCIONES }) : Promise.resolve(pagina([]))
-    ));
+    client.get.mockImplementation((url) =>
+      url === '/opciones/' ? Promise.resolve({ data: OPCIONES }) : Promise.resolve(pagina([])),
+    );
   });
 
   it('cada dato va separado de su etiqueta', async () => {
     const seleccionado = { ...PACIENTE, nombre_completo: 'Paciente Ficticio Uno' };
     render(<SelectorPaciente paciente={seleccionado} onSeleccionar={vi.fn()} />);
     await screen.findByText('Femenino');
-    expect(screen.getAllByRole('term').map((t) => t.textContent)).toEqual(['Paciente', 'Identificación', 'Edad', 'Sexo']);
+    expect(screen.getAllByRole('term').map((t) => t.textContent)).toEqual([
+      'Paciente',
+      'Identificación',
+      'Edad',
+      'Sexo',
+    ]);
     expect(screen.getAllByRole('definition').map((d) => d.textContent)).toEqual([
-      'Paciente Ficticio Uno', 'CC PRUEBA0001', '45 años', 'Femenino',
+      'Paciente Ficticio Uno',
+      'CC PRUEBA0001',
+      '45 años',
+      'Femenino',
     ]);
   });
 });

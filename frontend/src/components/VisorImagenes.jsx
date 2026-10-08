@@ -48,21 +48,41 @@ export default function VisorImagenes({ imagenes }) {
           role="dialog"
           aria-modal="true"
           aria-label={`Imagen ampliada ${abierta + 1} de ${total}`}
-          onClick={(e) => { if (e.target === e.currentTarget) cerrar(); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) cerrar();
+          }}
         >
-          <button type="button" className="visor-cerrar" onClick={cerrar}>Cerrar</button>
+          <button type="button" className="visor-cerrar" onClick={cerrar}>
+            Cerrar
+          </button>
           {total > 1 && (
-            <button type="button" className="visor-flecha visor-anterior" onClick={() => mover(-1)} aria-label="Imagen anterior">‹</button>
+            <button
+              type="button"
+              className="visor-flecha visor-anterior"
+              onClick={() => mover(-1)}
+              aria-label="Imagen anterior"
+            >
+              ‹
+            </button>
           )}
           <figure>
             <img src={actual.imagen} alt={actual.descripcion || `Imagen ${abierta + 1} de ${total}`} />
             <figcaption>
               {actual.descripcion && <span>{actual.descripcion}</span>}
-              <span>{abierta + 1} de {total}</span>
+              <span>
+                {abierta + 1} de {total}
+              </span>
             </figcaption>
           </figure>
           {total > 1 && (
-            <button type="button" className="visor-flecha visor-siguiente" onClick={() => mover(1)} aria-label="Imagen siguiente">›</button>
+            <button
+              type="button"
+              className="visor-flecha visor-siguiente"
+              onClick={() => mover(1)}
+              aria-label="Imagen siguiente"
+            >
+              ›
+            </button>
           )}
         </div>
       )}

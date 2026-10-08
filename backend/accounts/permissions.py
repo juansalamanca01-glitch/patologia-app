@@ -3,12 +3,14 @@ from rest_framework import permissions
 
 class EsAdmin(permissions.BasePermission):
     """Solo los administradores tienen acceso."""
+
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.rol == 'admin'
 
 
 class EsPatologoOAdmin(permissions.BasePermission):
     """Todos leen; solo patólogos y administradores escriben (el auditor solo lee)."""
+
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
@@ -19,6 +21,7 @@ class EsPatologoOAdmin(permissions.BasePermission):
 
 class EsPatologoOAdminYSoloAdminBorra(EsPatologoOAdmin):
     """Como EsPatologoOAdmin, pero borrar (DELETE) es solo del admin. Pacientes (decisión D-11)."""
+
     def has_permission(self, request, view):
         if request.method == 'DELETE':
             return request.user.is_authenticated and request.user.rol == 'admin'

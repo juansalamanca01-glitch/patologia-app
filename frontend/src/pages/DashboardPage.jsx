@@ -32,7 +32,9 @@ export default function DashboardPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleDelete = async (id) => {
     if (confirmDeleteId !== id) {
@@ -50,7 +52,6 @@ export default function DashboardPage() {
     }
   };
 
-
   return (
     <div className="dashboard">
       {/* Los errores se muestran en pantalla, no solo en la consola (auditoría M-9). */}
@@ -63,7 +64,8 @@ export default function DashboardPage() {
         {canWrite && (
           <Link to="/informes/nuevo" className="btn btn-primary">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             Nuevo Informe
           </Link>
@@ -75,8 +77,8 @@ export default function DashboardPage() {
         <div className="stat-card">
           <div className="stat-icon stat-icon-blue">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-              <polyline points="14,2 14,8 20,8"/>
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14,2 14,8 20,8" />
             </svg>
           </div>
           <div className="stat-info">
@@ -87,8 +89,8 @@ export default function DashboardPage() {
         <div className="stat-card">
           <div className="stat-icon stat-icon-yellow">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
-              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
             </svg>
           </div>
           <div className="stat-info">
@@ -99,8 +101,8 @@ export default function DashboardPage() {
         <div className="stat-card">
           <div className="stat-icon stat-icon-green">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
-              <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
-              <polyline points="22,4 12,14.01 9,11.01"/>
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+              <polyline points="22,4 12,14.01 9,11.01" />
             </svg>
           </div>
           <div className="stat-info">
@@ -114,15 +116,23 @@ export default function DashboardPage() {
       <div className="card">
         <div className="card-header">
           <h2>Informes Recientes</h2>
-          <Link to="/buscar" className="btn btn-outline btn-sm">Ver todos</Link>
+          <Link to="/buscar" className="btn btn-outline btn-sm">
+            Ver todos
+          </Link>
         </div>
         <div className="card-body">
           {loading ? (
-            <div className="loading-center"><span className="spinner"></span></div>
+            <div className="loading-center">
+              <span className="spinner"></span>
+            </div>
           ) : recientes.length === 0 ? (
             <div className="empty-state">
               <p>No hay informes registrados aún.</p>
-              {canWrite && <Link to="/informes/nuevo" className="btn btn-primary btn-sm">Crear primer informe</Link>}
+              {canWrite && (
+                <Link to="/informes/nuevo" className="btn btn-primary btn-sm">
+                  Crear primer informe
+                </Link>
+              )}
             </div>
           ) : (
             <div className="table-responsive">
@@ -140,8 +150,12 @@ export default function DashboardPage() {
                 <tbody>
                   {recientes.map((inf) => (
                     <tr key={inf.id}>
-                      <td><strong>{inf.numero_peticion}</strong></td>
-                      <td><CeldaPaciente informe={inf} /></td>
+                      <td>
+                        <strong>{inf.numero_peticion}</strong>
+                      </td>
+                      <td>
+                        <CeldaPaciente informe={inf} />
+                      </td>
                       <td>{inf.patologia_nombre}</td>
                       <td>{inf.fecha}</td>
                       <td>
@@ -149,9 +163,13 @@ export default function DashboardPage() {
                       </td>
                       <td>
                         <div className="table-actions">
-                          <Link to={`/informes/${inf.id}`} className="btn btn-outline btn-xs">Ver</Link>
-                          {canWrite && (isAdmin || inf.autor === user?.id) && inf.estado === 'borrador' && (
-                            confirmDeleteId === inf.id ? (
+                          <Link to={`/informes/${inf.id}`} className="btn btn-outline btn-xs">
+                            Ver
+                          </Link>
+                          {canWrite &&
+                            (isAdmin || inf.autor === user?.id) &&
+                            inf.estado === 'borrador' &&
+                            (confirmDeleteId === inf.id ? (
                               <>
                                 <button className="btn btn-danger btn-xs" onClick={() => handleDelete(inf.id)}>
                                   Confirmar
@@ -166,13 +184,19 @@ export default function DashboardPage() {
                                 onClick={() => handleDelete(inf.id)}
                                 title="Eliminar borrador"
                               >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-                                  <polyline points="3,6 5,6 21,6"/>
-                                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  width="14"
+                                  height="14"
+                                >
+                                  <polyline points="3,6 5,6 21,6" />
+                                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
                                 </svg>
                               </button>
-                            )
-                          )}
+                            ))}
                         </div>
                       </td>
                     </tr>
@@ -186,4 +210,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

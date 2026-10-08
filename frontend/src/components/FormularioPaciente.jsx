@@ -5,8 +5,13 @@ import useOpciones from '../hooks/useOpciones';
 import { conOpcionActual, hoyISO } from '../utils/formularios';
 
 const PACIENTE_VACIO = {
-  tipo_documento: 'CC', numero_documento: '', nombres: '', apellidos: '',
-  fecha_nacimiento: '', sexo: '', eps: '',
+  tipo_documento: 'CC',
+  numero_documento: '',
+  nombres: '',
+  apellidos: '',
+  fecha_nacimiento: '',
+  sexo: '',
+  eps: '',
 };
 
 // Ventana para crear o editar un paciente. La usan PacientesPage y el selector de
@@ -14,14 +19,13 @@ const PACIENTE_VACIO = {
 // es un <form> y un formulario no puede ir dentro de otro.
 export default function FormularioPaciente({ paciente, onGuardado, onCancelar }) {
   const { opciones } = useOpciones();
-  const [form, setForm] = useState(() => (
-    paciente ? { ...paciente, eps: paciente.eps ?? '' } : { ...PACIENTE_VACIO }
-  ));
+  const [form, setForm] = useState(() => (paciente ? { ...paciente, eps: paciente.eps ?? '' } : { ...PACIENTE_VACIO }));
   const [errores, setErrores] = useState({});
   const [epsActivas, setEpsActivas] = useState([]);
 
   useEffect(() => {
-    client.get('/pacientes/eps/', { params: { ...LISTA_COMPLETA, activa: true } })
+    client
+      .get('/pacientes/eps/', { params: { ...LISTA_COMPLETA, activa: true } })
       .then(({ data }) => setEpsActivas(resultados(data)))
       .catch(() => setErrores({ detail: 'No se pudo cargar la lista de EPS.' }));
   }, []);
@@ -76,35 +80,67 @@ export default function FormularioPaciente({ paciente, onGuardado, onCancelar })
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="paciente-tipo-documento">Tipo de documento</label>
-              <select id="paciente-tipo-documento" value={form.tipo_documento} onChange={cambiar('tipo_documento')} required>
+              <select
+                id="paciente-tipo-documento"
+                value={form.tipo_documento}
+                onChange={cambiar('tipo_documento')}
+                required
+              >
                 {opciones.tipos_documento.map((o) => (
-                  <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
+                  <option key={o.valor} value={o.valor}>
+                    {o.etiqueta}
+                  </option>
                 ))}
               </select>
               {errorDe('tipo_documento')}
             </div>
             <div className="form-group">
               <label htmlFor="paciente-numero-documento">Número de documento</label>
-              <input id="paciente-numero-documento" value={form.numero_documento} onChange={cambiar('numero_documento')} maxLength={20} required />
+              <input
+                id="paciente-numero-documento"
+                value={form.numero_documento}
+                onChange={cambiar('numero_documento')}
+                maxLength={20}
+                required
+              />
               {errorDe('numero_documento')}
             </div>
           </div>
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="paciente-nombres">Nombres</label>
-              <input id="paciente-nombres" value={form.nombres} onChange={cambiar('nombres')} maxLength={150} required />
+              <input
+                id="paciente-nombres"
+                value={form.nombres}
+                onChange={cambiar('nombres')}
+                maxLength={150}
+                required
+              />
               {errorDe('nombres')}
             </div>
             <div className="form-group">
               <label htmlFor="paciente-apellidos">Apellidos</label>
-              <input id="paciente-apellidos" value={form.apellidos} onChange={cambiar('apellidos')} maxLength={150} required />
+              <input
+                id="paciente-apellidos"
+                value={form.apellidos}
+                onChange={cambiar('apellidos')}
+                maxLength={150}
+                required
+              />
               {errorDe('apellidos')}
             </div>
           </div>
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="paciente-fecha-nacimiento">Fecha de nacimiento</label>
-              <input id="paciente-fecha-nacimiento" type="date" value={form.fecha_nacimiento} onChange={cambiar('fecha_nacimiento')} max={hoyISO()} required />
+              <input
+                id="paciente-fecha-nacimiento"
+                type="date"
+                value={form.fecha_nacimiento}
+                onChange={cambiar('fecha_nacimiento')}
+                max={hoyISO()}
+                required
+              />
               {errorDe('fecha_nacimiento')}
             </div>
             <div className="form-group">
@@ -112,7 +148,9 @@ export default function FormularioPaciente({ paciente, onGuardado, onCancelar })
               <select id="paciente-sexo" value={form.sexo} onChange={cambiar('sexo')} required>
                 <option value="">Seleccione...</option>
                 {opciones.sexos.map((o) => (
-                  <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
+                  <option key={o.valor} value={o.valor}>
+                    {o.etiqueta}
+                  </option>
                 ))}
               </select>
               {errorDe('sexo')}
@@ -123,14 +161,20 @@ export default function FormularioPaciente({ paciente, onGuardado, onCancelar })
             <select id="paciente-eps" value={form.eps} onChange={cambiar('eps')}>
               <option value="">Sin EPS</option>
               {opcionesEps.map((e) => (
-                <option key={e.id} value={e.id}>{e.nombre}</option>
+                <option key={e.id} value={e.id}>
+                  {e.nombre}
+                </option>
               ))}
             </select>
             {errorDe('eps')}
           </div>
           <div className="form-actions">
-            <button type="button" className="btn btn-outline" onClick={onCancelar}>Cancelar</button>
-            <button type="submit" className="btn btn-primary">Guardar</button>
+            <button type="button" className="btn btn-outline" onClick={onCancelar}>
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary">
+              Guardar
+            </button>
           </div>
         </form>
       </div>

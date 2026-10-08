@@ -7,5 +7,6 @@ class PaginacionEstandar(PageNumberPagination):
     Con ?page_size= se puede pedir una página más grande, hasta 1000 elementos. Lo usan
     los menús desplegables del frontend, que necesitan la lista completa.
     """
+
     page_size_query_param = 'page_size'
     max_page_size = 1000

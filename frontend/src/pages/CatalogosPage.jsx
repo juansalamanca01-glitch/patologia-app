@@ -6,7 +6,7 @@ import client, { LISTA_COMPLETA, resultados } from '../api/client';
 function mensajeDeError(err, porDefecto) {
   const datos = err.response?.data;
   const nombre = datos?.nombre;
-  return { nombre: Array.isArray(nombre) ? nombre[0] : nombre, general: nombre ? '' : (datos?.detail || porDefecto) };
+  return { nombre: Array.isArray(nombre) ? nombre[0] : nombre, general: nombre ? '' : datos?.detail || porDefecto };
 }
 
 // Tabla de un catálogo editable (EPS o servicios). `campoActivo` es el nombre del
@@ -32,7 +32,9 @@ function TablaCatalogo({ titulo, url, campoActivo, etiquetaNuevo, etiquetaActivo
     }
   };
 
-  useEffect(() => { cargar(); }, []);
+  useEffect(() => {
+    cargar();
+  }, []);
 
   const agregar = async (e) => {
     e.preventDefault();
@@ -87,7 +89,11 @@ function TablaCatalogo({ titulo, url, campoActivo, etiquetaNuevo, etiquetaActivo
 
   return (
     <div className="card">
-      <div className="card-header"><h2>{titulo} ({elementos.length})</h2></div>
+      <div className="card-header">
+        <h2>
+          {titulo} ({elementos.length})
+        </h2>
+      </div>
       <div className="card-body">
         {error && <div className="alert alert-error">{error}</div>}
 
@@ -106,17 +112,25 @@ function TablaCatalogo({ titulo, url, campoActivo, etiquetaNuevo, etiquetaActivo
                 {errorNuevo && <span className="field-error">{errorNuevo}</span>}
               </div>
             </div>
-            <button type="submit" className="btn btn-primary btn-sm">Agregar</button>
+            <button type="submit" className="btn btn-primary btn-sm">
+              Agregar
+            </button>
           </form>
         )}
 
         {cargando ? (
-          <div className="loading-center"><span className="spinner"></span></div>
+          <div className="loading-center">
+            <span className="spinner"></span>
+          </div>
         ) : (
           <div className="table-responsive">
             <table>
               <thead>
-                <tr><th>Nombre</th><th>Estado</th>{canWrite && <th>Acciones</th>}</tr>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Estado</th>
+                  {canWrite && <th>Acciones</th>}
+                </tr>
               </thead>
               <tbody>
                 {elementos.map((el) => (
@@ -131,13 +145,17 @@ function TablaCatalogo({ titulo, url, campoActivo, etiquetaNuevo, etiquetaActivo
                             maxLength={150}
                             required
                           />
-                          <button type="submit" className="btn btn-primary btn-xs">Guardar</button>
+                          <button type="submit" className="btn btn-primary btn-xs">
+                            Guardar
+                          </button>
                           <button type="button" className="btn btn-outline btn-xs" onClick={() => setRenombrando(null)}>
                             Cancelar
                           </button>
                           {renombrando.error && <span className="field-error">{renombrando.error}</span>}
                         </form>
-                      ) : el.nombre}
+                      ) : (
+                        el.nombre
+                      )}
                     </td>
                     <td>
                       <span className={`badge ${el[campoActivo] ? 'badge-success' : 'badge-warning'}`}>
@@ -163,8 +181,12 @@ function TablaCatalogo({ titulo, url, campoActivo, etiquetaNuevo, etiquetaActivo
                           </button>
                           {confirmarBorrar === el.id ? (
                             <>
-                              <button className="btn btn-danger btn-xs" onClick={() => borrar(el.id)}>Confirmar</button>
-                              <button className="btn btn-outline btn-xs" onClick={() => setConfirmarBorrar(null)}>No</button>
+                              <button className="btn btn-danger btn-xs" onClick={() => borrar(el.id)}>
+                                Confirmar
+                              </button>
+                              <button className="btn btn-outline btn-xs" onClick={() => setConfirmarBorrar(null)}>
+                                No
+                              </button>
                             </>
                           ) : (
                             <button
@@ -199,17 +221,26 @@ export default function CatalogosPage() {
         <div>
           <h1>Catálogos</h1>
           <p className="text-muted">
-            EPS y servicios que se eligen en pacientes e informes. Lo que ya no se use se desactiva en lugar de borrarse.
+            EPS y servicios que se eligen en pacientes e informes. Lo que ya no se use se desactiva en lugar de
+            borrarse.
           </p>
         </div>
       </div>
       <TablaCatalogo
-        titulo="EPS" url="/pacientes/eps/" campoActivo="activa"
-        etiquetaNuevo="Nueva EPS" etiquetaActivo="Activa" etiquetaInactivo="Inactiva"
+        titulo="EPS"
+        url="/pacientes/eps/"
+        campoActivo="activa"
+        etiquetaNuevo="Nueva EPS"
+        etiquetaActivo="Activa"
+        etiquetaInactivo="Inactiva"
       />
       <TablaCatalogo
-        titulo="Servicios" url="/servicios/" campoActivo="activo"
-        etiquetaNuevo="Nuevo servicio" etiquetaActivo="Activo" etiquetaInactivo="Inactivo"
+        titulo="Servicios"
+        url="/servicios/"
+        campoActivo="activo"
+        etiquetaNuevo="Nuevo servicio"
+        etiquetaActivo="Activo"
+        etiquetaInactivo="Inactivo"
       />
     </div>
   );

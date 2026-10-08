@@ -26,6 +26,7 @@ class UsuarioAdmin(UserAdmin):
     mostraba el hash en un campo editable (hallazgo del 2026-10-05).
     El registro médico solo lo asigna un admin (decisión D-8): aquí o con /api/auth/registro/.
     """
+
     form = UsuarioChangeForm
     add_form = UsuarioCreationForm
     list_display = ['username', 'nombre_completo', 'email', 'rol', 'registro_medico', 'activo', 'fecha_creacion']
@@ -33,16 +34,27 @@ class UsuarioAdmin(UserAdmin):
     search_fields = ['username', 'nombre_completo', 'email', 'registro_medico']
     ordering = ['-fecha_creacion']
     fieldsets = UserAdmin.fieldsets + (
-        ('Datos de PathoLab', {
-            'fields': ('rol', 'nombre_completo', 'telefono', 'especialidad', 'registro_medico', 'activo'),
-        }),
+        (
+            'Datos de PathoLab',
+            {
+                'fields': ('rol', 'nombre_completo', 'telefono', 'especialidad', 'registro_medico', 'activo'),
+            },
+        ),
     )
     add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': (
-                'username', 'password1', 'password2',
-                'rol', 'nombre_completo', 'especialidad', 'registro_medico',
-            ),
-        }),
+        (
+            None,
+            {
+                'classes': ('wide',),
+                'fields': (
+                    'username',
+                    'password1',
+                    'password2',
+                    'rol',
+                    'nombre_completo',
+                    'especialidad',
+                    'registro_medico',
+                ),
+            },
+        ),
     )

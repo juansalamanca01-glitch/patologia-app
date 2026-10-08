@@ -6,13 +6,18 @@ let siguienteClave = 1;
 
 // Cada fila lleva una `clave` propia para que React no confunda las filas al
 // reordenarlas. La clave no se envía a la API.
-export const conClaves = (diagnosticos = []) => diagnosticos.map(({ descripcion, codigo_cie10 }) => ({
-  clave: siguienteClave++, descripcion, codigo_cie10: codigo_cie10 || '',
-}));
+export const conClaves = (diagnosticos = []) =>
+  diagnosticos.map(({ descripcion, codigo_cie10 }) => ({
+    clave: siguienteClave++,
+    descripcion,
+    codigo_cie10: codigo_cie10 || '',
+  }));
 
-export const sinClaves = (diagnosticos) => diagnosticos.map(({ descripcion, codigo_cie10 }) => ({
-  descripcion, codigo_cie10,
-}));
+export const sinClaves = (diagnosticos) =>
+  diagnosticos.map(({ descripcion, codigo_cie10 }) => ({
+    descripcion,
+    codigo_cie10,
+  }));
 
 // `error` es un texto (error de toda la lista) o un arreglo con los errores de
 // cada fila, como los devuelve DRF: [{}, { codigo_cie10: ['...'] }].
@@ -20,9 +25,8 @@ export default function ListaDiagnosticos({ diagnosticos, onCambiar, disabled = 
   const erroresFila = Array.isArray(error) ? error : [];
   const errorGeneral = typeof error === 'string' ? error : '';
 
-  const cambiar = (indice, campo, valor) => onCambiar(
-    diagnosticos.map((d, i) => (i === indice ? { ...d, [campo]: valor } : d)),
-  );
+  const cambiar = (indice, campo, valor) =>
+    onCambiar(diagnosticos.map((d, i) => (i === indice ? { ...d, [campo]: valor } : d)));
 
   const mover = (indice, destino) => {
     const nueva = [...diagnosticos];
@@ -41,7 +45,9 @@ export default function ListaDiagnosticos({ diagnosticos, onCambiar, disabled = 
 
   return (
     <div className="card">
-      <div className="card-header"><h2>Diagnósticos</h2></div>
+      <div className="card-header">
+        <h2>Diagnósticos</h2>
+      </div>
       <div className="card-body">
         {diagnosticos.length === 0 && (
           <p className="text-muted">Todavía no hay diagnósticos. Para finalizar el informe se necesita al menos uno.</p>
@@ -84,20 +90,31 @@ export default function ListaDiagnosticos({ diagnosticos, onCambiar, disabled = 
                 {!disabled && (
                   <div className="diagnostico-acciones">
                     <button
-                      type="button" className="btn btn-outline btn-xs"
-                      onClick={() => mover(i, i - 1)} disabled={i === 0}
+                      type="button"
+                      className="btn btn-outline btn-xs"
+                      onClick={() => mover(i, i - 1)}
+                      disabled={i === 0}
                       aria-label={`Subir diagnóstico ${numero}`}
-                    >↑ Subir</button>
+                    >
+                      ↑ Subir
+                    </button>
                     <button
-                      type="button" className="btn btn-outline btn-xs"
-                      onClick={() => mover(i, i + 1)} disabled={i === diagnosticos.length - 1}
+                      type="button"
+                      className="btn btn-outline btn-xs"
+                      onClick={() => mover(i, i + 1)}
+                      disabled={i === diagnosticos.length - 1}
                       aria-label={`Bajar diagnóstico ${numero}`}
-                    >↓ Bajar</button>
+                    >
+                      ↓ Bajar
+                    </button>
                     <button
-                      type="button" className="btn btn-danger-outline btn-xs"
+                      type="button"
+                      className="btn btn-danger-outline btn-xs"
                       onClick={() => quitar(i)}
                       aria-label={`Quitar diagnóstico ${numero}`}
-                    >Quitar</button>
+                    >
+                      Quitar
+                    </button>
                   </div>
                 )}
               </li>

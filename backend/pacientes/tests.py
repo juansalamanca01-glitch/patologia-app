@@ -61,6 +61,7 @@ class CatalogoEPSTests(APITestCase):
         # Lista corta de EPS reales más "Particular" y "Otra" (P-8).
         from io import StringIO
         from django.core.management import call_command
+
         call_command('seed_data', stdout=StringIO())
         call_command('seed_data', stdout=StringIO())  # dos veces: no duplica
         self.client.force_authenticate(self.auditor)
@@ -125,9 +126,13 @@ class PacienteAPITests(APITestCase):
 
     def datos(self, **extra):
         return {
-            'tipo_documento': 'CC', 'numero_documento': 'PRUEBA0001',
-            'nombres': 'Paciente Ficticio', 'apellidos': 'Uno',
-            'fecha_nacimiento': '1980-10-05', 'sexo': 'femenino', 'eps': self.eps.id,
+            'tipo_documento': 'CC',
+            'numero_documento': 'PRUEBA0001',
+            'nombres': 'Paciente Ficticio',
+            'apellidos': 'Uno',
+            'fecha_nacimiento': '1980-10-05',
+            'sexo': 'femenino',
+            'eps': self.eps.id,
             **extra,
         }
 
@@ -253,6 +258,7 @@ class PacienteAPITests(APITestCase):
     def test_seed_data_crea_dos_pacientes_ficticios(self):
         from io import StringIO
         from django.core.management import call_command
+
         call_command('seed_data', stdout=StringIO())
         call_command('seed_data', stdout=StringIO())  # dos veces: no duplica
         documentos = list(Paciente.objects.values_list('numero_documento', flat=True))
@@ -271,8 +277,13 @@ class BorrarEPSConPacientesTests(APITestCase):
     def test_borrar_eps_en_uso_responde_400(self):
         eps = EPS.objects.create(nombre='Particular')
         Paciente.objects.create(
-            tipo_documento='CC', numero_documento='PRUEBA0001', nombres='Paciente Ficticio',
-            apellidos='Uno', fecha_nacimiento=date(1980, 10, 5), sexo='femenino', eps=eps,
+            tipo_documento='CC',
+            numero_documento='PRUEBA0001',
+            nombres='Paciente Ficticio',
+            apellidos='Uno',
+            fecha_nacimiento=date(1980, 10, 5),
+            sexo='femenino',
+            eps=eps,
         )
         respuesta = self.client.delete(f'/api/pacientes/eps/{eps.id}/')
         self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
@@ -293,6 +304,7 @@ class HistorialYBorradoConInformesTests(APITestCase):
 
     def setUp(self):
         from informes.models import Informe, Patologia
+
         self.Informe = Informe
         self.admin = Usuario.objects.create_user(username='hist_admin', password='x', rol=Usuario.Rol.ADMIN)
         self.auditor = Usuario.objects.create_user(username='hist_aud', password='x', rol=Usuario.Rol.AUDITOR)
@@ -302,8 +314,12 @@ class HistorialYBorradoConInformesTests(APITestCase):
 
     def nuevo_paciente(self, numero):
         return Paciente.objects.create(
-            tipo_documento='CC', numero_documento=numero, nombres='Paciente Ficticio',
-            apellidos='Uno', fecha_nacimiento=date(1980, 10, 5), sexo='femenino',
+            tipo_documento='CC',
+            numero_documento=numero,
+            nombres='Paciente Ficticio',
+            apellidos='Uno',
+            fecha_nacimiento=date(1980, 10, 5),
+            sexo='femenino',
         )
 
     def informe_de(self, paciente):

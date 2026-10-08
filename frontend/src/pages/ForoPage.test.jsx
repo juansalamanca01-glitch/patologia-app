@@ -42,14 +42,22 @@ describe('ForoPage: imágenes de una nueva publicación', () => {
   });
 
   it('no publica nada si una imagen supera los 10 MB', async () => {
-    const { container } = render(<MemoryRouter><ForoPage /></MemoryRouter>);
+    const { container } = render(
+      <MemoryRouter>
+        <ForoPage />
+      </MemoryRouter>,
+    );
     await abrirFormularioYPublicar(container, [archivo('grande.png', 'image/png', 11 * MB)]);
     expect(await screen.findByText(/supera el tamaño máximo de 10 MB/i)).toBeInTheDocument();
     expect(client.post).not.toHaveBeenCalled();
   });
 
   it('no publica nada si un archivo no es una imagen', async () => {
-    const { container } = render(<MemoryRouter><ForoPage /></MemoryRouter>);
+    const { container } = render(
+      <MemoryRouter>
+        <ForoPage />
+      </MemoryRouter>,
+    );
     await abrirFormularioYPublicar(container, [archivo('notas.pdf', 'application/pdf', 1000)]);
     expect(await screen.findByText(/no es una imagen/i)).toBeInTheDocument();
     expect(client.post).not.toHaveBeenCalled();
@@ -59,14 +67,24 @@ describe('ForoPage: imágenes de una nueva publicación', () => {
     client.post
       .mockResolvedValueOnce({ data: { id: 7 } })
       .mockRejectedValueOnce({ response: { data: { detail: '«foto.png» no es una imagen válida.' } } });
-    const { container } = render(<MemoryRouter><ForoPage /></MemoryRouter>);
+    const { container } = render(
+      <MemoryRouter>
+        <ForoPage />
+      </MemoryRouter>,
+    );
     await abrirFormularioYPublicar(container, [archivo('foto.png', 'image/png', 2 * MB)]);
-    expect(await screen.findByText(/La publicación se creó, pero las imágenes no se pudieron subir/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/La publicación se creó, pero las imágenes no se pudieron subir/i),
+    ).toBeInTheDocument();
     expect(container.querySelector('.modal-card')).toBeNull();
   });
 
   it('publica y sube las imágenes cuando son válidas', async () => {
-    const { container } = render(<MemoryRouter><ForoPage /></MemoryRouter>);
+    const { container } = render(
+      <MemoryRouter>
+        <ForoPage />
+      </MemoryRouter>,
+    );
     await abrirFormularioYPublicar(container, [archivo('foto.png', 'image/png', 2 * MB)]);
     await vi.waitFor(() => expect(client.post).toHaveBeenCalledTimes(2));
     expect(client.post.mock.calls[0][0]).toBe('/foro/publicaciones/');
@@ -83,7 +101,11 @@ describe('ForoPage: crear temas', () => {
   });
 
   it('el botón "+ Tema" crea un tema nuevo', async () => {
-    const { container } = render(<MemoryRouter><ForoPage /></MemoryRouter>);
+    const { container } = render(
+      <MemoryRouter>
+        <ForoPage />
+      </MemoryRouter>,
+    );
     fireEvent.click(await screen.findByRole('button', { name: /\+ Tema/i }));
     fireEvent.change(container.querySelector('.modal-card input'), { target: { value: 'Citología' } });
     fireEvent.submit(container.querySelector('.modal-card form'));

@@ -62,11 +62,13 @@ class CambiarPasswordView(APIView):
             BlacklistedToken.objects.get_or_create(token=token)
         # La sesión desde la que se cambió la contraseña sigue abierta con tokens nuevos.
         nuevo = RefreshToken.for_user(usuario)
-        return Response({
-            'detail': 'Contraseña actualizada correctamente.',
-            'access': str(nuevo.access_token),
-            'refresh': str(nuevo),
-        })
+        return Response(
+            {
+                'detail': 'Contraseña actualizada correctamente.',
+                'access': str(nuevo.access_token),
+                'refresh': str(nuevo),
+            }
+        )
 
 
 # ── Cerrar sesión ──────────────────────────────────────────────────
@@ -76,6 +78,7 @@ class LogoutView(APIView):
     acceso: quien tiene el token de renovación puede anularlo, aunque el de acceso
     ya haya vencido.
     """
+
     permission_classes = [permissions.AllowAny]
     # Sin autenticación: un token de acceso vencido en la cabecera haría que DRF
     # respondiera 401 antes de llegar aquí, y la sesión no se cerraría.

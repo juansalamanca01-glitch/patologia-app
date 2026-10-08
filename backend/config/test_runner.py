@@ -7,6 +7,7 @@ prueba a otra, así que todas las peticiones de un minuto se sumaban al mismo
 usuario y las pruebas fallaban con 429 según cuántas hubiera. Durante las
 pruebas se usa una caché que no guarda nada (DummyCache): los límites no cuentan.
 """
+
 from django.test.runner import DiscoverRunner
 from django.test.utils import override_settings
 

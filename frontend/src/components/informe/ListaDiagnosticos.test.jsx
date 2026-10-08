@@ -57,9 +57,7 @@ describe('ListaDiagnosticos', () => {
   });
 
   it('muestra los errores de cada fila y el error general', () => {
-    const { rerender } = render(
-      <Prueba inicial={DOS} error={[{}, { codigo_cie10: ['Código CIE-10 no válido.'] }]} />,
-    );
+    const { rerender } = render(<Prueba inicial={DOS} error={[{}, { codigo_cie10: ['Código CIE-10 no válido.'] }]} />);
     expect(screen.getByText('Código CIE-10 no válido.')).toBeInTheDocument();
     rerender(<Prueba inicial={DOS} error="Un informe admite como máximo 20 diagnósticos." />);
     expect(screen.getByText('Un informe admite como máximo 20 diagnósticos.')).toBeInTheDocument();

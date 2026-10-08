@@ -13,7 +13,11 @@ function MostrarPermisos() {
 function renderConRol(rol) {
   localStorage.setItem('access_token', 'token');
   localStorage.setItem('user_data', JSON.stringify({ id: 1, username: 'prueba', rol }));
-  render(<AuthProvider><MostrarPermisos /></AuthProvider>);
+  render(
+    <AuthProvider>
+      <MostrarPermisos />
+    </AuthProvider>,
+  );
 }
 
 // Las páginas deciden qué botones mostrar con isAdmin y canWrite.
@@ -57,7 +61,11 @@ describe('AuthContext: cerrar sesión', () => {
     localStorage.setItem('access_token', 'access');
     localStorage.setItem('refresh_token', 'refresh-de-la-sesion');
     localStorage.setItem('user_data', JSON.stringify({ id: 1, rol: 'patologo' }));
-    render(<AuthProvider><BotonSalir /></AuthProvider>);
+    render(
+      <AuthProvider>
+        <BotonSalir />
+      </AuthProvider>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Salir' }));
     expect(client.post).toHaveBeenCalledWith('/auth/logout/', { refresh: 'refresh-de-la-sesion' });
     expect(localStorage.getItem('access_token')).toBeNull();

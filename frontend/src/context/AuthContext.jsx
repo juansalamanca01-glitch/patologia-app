@@ -44,9 +44,7 @@ export function AuthProvider({ children }) {
   const canWrite = isAdmin || user?.rol === 'patologo';
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, canWrite }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, canWrite }}>{children}</AuthContext.Provider>
   );
 }
 

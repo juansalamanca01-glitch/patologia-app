@@ -58,7 +58,9 @@ export default function SelectorPaciente({ paciente, onSeleccionar, disabled = f
 
   return (
     <div className="card">
-      <div className="card-header"><h2>Paciente</h2></div>
+      <div className="card-header">
+        <h2>Paciente</h2>
+      </div>
       <div className="card-body">
         {paciente && !cambiando && (
           <div className="paciente-seleccionado">
@@ -67,11 +69,15 @@ export default function SelectorPaciente({ paciente, onSeleccionar, disabled = f
             <dl className="datos-paciente">
               <div>
                 <dt>Paciente</dt>
-                <dd><strong>{paciente.nombre_completo}</strong></dd>
+                <dd>
+                  <strong>{paciente.nombre_completo}</strong>
+                </dd>
               </div>
               <div>
                 <dt>Identificación</dt>
-                <dd>{paciente.tipo_documento} {paciente.numero_documento}</dd>
+                <dd>
+                  {paciente.tipo_documento} {paciente.numero_documento}
+                </dd>
               </div>
               <div>
                 <dt>Edad</dt>
@@ -136,13 +142,22 @@ export default function SelectorPaciente({ paciente, onSeleccionar, disabled = f
               <div className="table-responsive">
                 <table>
                   <thead>
-                    <tr><th>Documento</th><th>Paciente</th><th>Edad</th><th></th></tr>
+                    <tr>
+                      <th>Documento</th>
+                      <th>Paciente</th>
+                      <th>Edad</th>
+                      <th></th>
+                    </tr>
                   </thead>
                   <tbody>
                     {encontrados.map((p) => (
                       <tr key={p.id}>
-                        <td>{p.tipo_documento} {p.numero_documento}</td>
-                        <td>{p.nombres} {p.apellidos}</td>
+                        <td>
+                          {p.tipo_documento} {p.numero_documento}
+                        </td>
+                        <td>
+                          {p.nombres} {p.apellidos}
+                        </td>
                         <td>{p.edad}</td>
                         <td>
                           <button type="button" className="btn btn-outline btn-xs" onClick={() => seleccionar(p)}>
@@ -161,7 +176,10 @@ export default function SelectorPaciente({ paciente, onSeleccionar, disabled = f
         {creando && (
           <FormularioPaciente
             paciente={null}
-            onGuardado={(nuevo) => { setCreando(false); seleccionar(nuevo); }}
+            onGuardado={(nuevo) => {
+              setCreando(false);
+              seleccionar(nuevo);
+            }}
             onCancelar={() => setCreando(false)}
           />
         )}

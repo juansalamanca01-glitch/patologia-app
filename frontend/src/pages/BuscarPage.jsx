@@ -71,7 +71,6 @@ export default function BuscarPage() {
     handleSearch();
   }, []);
 
-
   return (
     <div className="buscar-page">
       <div className="page-header">
@@ -112,11 +111,7 @@ export default function BuscarPage() {
               </div>
               <div className="form-group">
                 <label htmlFor="estado-filter">Estado</label>
-                <select
-                  id="estado-filter"
-                  value={estado}
-                  onChange={(e) => setEstado(e.target.value)}
-                >
+                <select id="estado-filter" value={estado} onChange={(e) => setEstado(e.target.value)}>
                   <option value="">Todos</option>
                   <option value="borrador">Borrador</option>
                   <option value="finalizado">Finalizado</option>
@@ -136,7 +131,9 @@ export default function BuscarPage() {
         </div>
         <div className="card-body">
           {loading ? (
-            <div className="loading-center"><span className="spinner"></span></div>
+            <div className="loading-center">
+              <span className="spinner"></span>
+            </div>
           ) : results.length === 0 ? (
             <div className="empty-state">
               <p>{searched ? 'No se encontraron informes con esos criterios.' : 'Ingrese criterios de búsqueda.'}</p>
@@ -159,8 +156,12 @@ export default function BuscarPage() {
                 <tbody>
                   {results.map((inf) => (
                     <tr key={inf.id}>
-                      <td><strong>{inf.numero_peticion}</strong></td>
-                      <td><CeldaPaciente informe={inf} /></td>
+                      <td>
+                        <strong>{inf.numero_peticion}</strong>
+                      </td>
+                      <td>
+                        <CeldaPaciente informe={inf} />
+                      </td>
                       <td>{etiquetaDe(opciones.tipos_estudio, inf.tipo_estudio)}</td>
                       <td>{inf.patologia_nombre}</td>
                       <td>{inf.autor_nombre}</td>
@@ -169,7 +170,9 @@ export default function BuscarPage() {
                         <EstadoBadge estado={inf.estado} />
                       </td>
                       <td>
-                        <Link to={`/informes/${inf.id}`} className="btn btn-outline btn-xs">Ver</Link>
+                        <Link to={`/informes/${inf.id}`} className="btn btn-outline btn-xs">
+                          Ver
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -187,7 +190,9 @@ export default function BuscarPage() {
               >
                 ← Anterior
               </button>
-              <span className="text-muted">Mostrando {desde}–{hasta} de {total}</span>
+              <span className="text-muted">
+                Mostrando {desde}–{hasta} de {total}
+              </span>
               <button
                 className="btn btn-outline btn-sm"
                 onClick={() => cambiarPagina(pagina + 1)}

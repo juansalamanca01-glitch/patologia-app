@@ -30,8 +30,15 @@ export default function LoginPage() {
       <div className="login-container">
         <div className="login-header">
           <div className="login-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
             </svg>
           </div>
           <h1>PathoLab</h1>
@@ -67,11 +74,7 @@ export default function LoginPage() {
           </div>
 
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-            {loading ? (
-              <span className="spinner"></span>
-            ) : (
-              'Iniciar Sesión'
-            )}
+            {loading ? <span className="spinner"></span> : 'Iniciar Sesión'}
           </button>
         </form>
 

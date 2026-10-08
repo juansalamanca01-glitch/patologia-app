@@ -29,7 +29,8 @@ class Publicacion(models.Model):
     tema = models.ForeignKey(
         TemaForo,
         on_delete=models.SET_NULL,
-        null=True, blank=True,
+        null=True,
+        blank=True,
         related_name='publicaciones',
         verbose_name='Tema',
     )
@@ -42,7 +43,8 @@ class Publicacion(models.Model):
     titulo = models.CharField(max_length=250, verbose_name='Título')
     contenido = models.TextField(verbose_name='Contenido')
     fijado = models.BooleanField(
-        default=False, verbose_name='Fijado',
+        default=False,
+        verbose_name='Fijado',
         help_text='Los administradores pueden fijar publicaciones importantes.',
     )
     fecha_creacion = models.DateTimeField(auto_now_add=True)

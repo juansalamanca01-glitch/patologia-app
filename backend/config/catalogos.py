@@ -3,6 +3,7 @@ Piezas comunes de los catálogos editables (EPS y servicios, informe v2 etapa 2)
 Se desactivan en lugar de borrarse (decisión D-4) y los administran patólogos y
 admin (D-11).
 """
+
 from rest_framework import serializers
 
 

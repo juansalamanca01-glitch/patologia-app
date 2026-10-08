@@ -35,7 +35,9 @@ export default function PatologiasPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, [filtroCategoria]);
+  useEffect(() => {
+    fetchData();
+  }, [filtroCategoria]);
 
   const guardarCategoria = async (e) => {
     e.preventDefault();
@@ -114,7 +116,9 @@ export default function PatologiasPage() {
 
       {/* Categorías */}
       <div className="card">
-        <div className="card-header"><h2>Categorías</h2></div>
+        <div className="card-header">
+          <h2>Categorías</h2>
+        </div>
         <div className="card-body">
           {categorias.length === 0 ? (
             <p className="text-muted">Aún no hay categorías registradas.</p>
@@ -137,8 +141,22 @@ export default function PatologiasPage() {
                   {c.nombre} <span className="text-muted">({c.total_patologias})</span>
                   {canWrite && (
                     <span className="categoria-chip-actions">
-                      <span onClick={(e) => { e.stopPropagation(); setFormCategoria(c); }}>✎</span>
-                      <span onClick={(e) => { e.stopPropagation(); setConfirmDelete({ tipo: 'categorias', id: c.id }); }}>✕</span>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFormCategoria(c);
+                        }}
+                      >
+                        ✎
+                      </span>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmDelete({ tipo: 'categorias', id: c.id });
+                        }}
+                      >
+                        ✕
+                      </span>
                     </span>
                   )}
                 </button>
@@ -150,22 +168,35 @@ export default function PatologiasPage() {
 
       {/* Patologías */}
       <div className="card">
-        <div className="card-header"><h2>Patologías</h2></div>
+        <div className="card-header">
+          <h2>Patologías</h2>
+        </div>
         <div className="card-body">
           {loading ? (
-            <div className="loading-center"><span className="spinner"></span></div>
+            <div className="loading-center">
+              <span className="spinner"></span>
+            </div>
           ) : patologias.length === 0 ? (
-            <div className="empty-state"><p>No hay patologías registradas.</p></div>
+            <div className="empty-state">
+              <p>No hay patologías registradas.</p>
+            </div>
           ) : (
             <div className="table-responsive">
               <table>
                 <thead>
-                  <tr><th>Nombre</th><th>Categoría</th><th>Estado</th>{canWrite && <th>Acciones</th>}</tr>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Estado</th>
+                    {canWrite && <th>Acciones</th>}
+                  </tr>
                 </thead>
                 <tbody>
                   {patologias.map((p) => (
                     <tr key={p.id}>
-                      <td><strong>{p.nombre}</strong></td>
+                      <td>
+                        <strong>{p.nombre}</strong>
+                      </td>
                       <td>{p.categoria_nombre || <span className="text-muted">Sin categoría</span>}</td>
                       <td>
                         <span className={`badge ${p.activa ? 'badge-success' : 'badge-warning'}`}>
@@ -175,7 +206,9 @@ export default function PatologiasPage() {
                       {canWrite && (
                         <td>
                           <div className="table-actions">
-                            <button className="btn btn-outline btn-xs" onClick={() => editarPatologia(p.id)}>Editar</button>
+                            <button className="btn btn-outline btn-xs" onClick={() => editarPatologia(p.id)}>
+                              Editar
+                            </button>
                             <button
                               className="btn btn-danger-outline btn-xs"
                               onClick={() => setConfirmDelete({ tipo: 'patologias', id: p.id })}
@@ -225,8 +258,12 @@ export default function PatologiasPage() {
                 />
               </div>
               <div className="form-actions">
-                <button type="button" className="btn btn-outline" onClick={() => setFormCategoria(null)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary">Guardar</button>
+                <button type="button" className="btn btn-outline" onClick={() => setFormCategoria(null)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Guardar
+                </button>
               </div>
             </form>
           </div>
@@ -255,7 +292,9 @@ export default function PatologiasPage() {
                 >
                   <option value="">Sin categoría</option>
                   {categorias.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.nombre}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -287,8 +326,12 @@ export default function PatologiasPage() {
                 </label>
               </div>
               <div className="form-actions">
-                <button type="button" className="btn btn-outline" onClick={() => setFormPatologia(null)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary">Guardar</button>
+                <button type="button" className="btn btn-outline" onClick={() => setFormPatologia(null)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Guardar
+                </button>
               </div>
             </form>
           </div>
@@ -302,8 +345,12 @@ export default function PatologiasPage() {
             <h2>¿Eliminar?</h2>
             <p className="text-muted">Esta acción no se puede deshacer.</p>
             <div className="form-actions">
-              <button className="btn btn-outline" onClick={() => setConfirmDelete(null)}>Cancelar</button>
-              <button className="btn btn-danger" onClick={eliminar}>Eliminar</button>
+              <button className="btn btn-outline" onClick={() => setConfirmDelete(null)}>
+                Cancelar
+              </button>
+              <button className="btn btn-danger" onClick={eliminar}>
+                Eliminar
+              </button>
             </div>
           </div>
         </div>

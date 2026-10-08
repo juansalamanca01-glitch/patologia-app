@@ -67,12 +67,14 @@ class EncabezadoLaboratorioTests(SimpleTestCase):
         self.assertEqual(settings.LABORATORIO_TELEFONO, '')
 
     def test_usa_las_variables_definidas(self):
-        settings = cargar_settings({
-            **self.CLAVE,
-            'LABORATORIO_NOMBRE': 'Laboratorio Ficticio de Prueba',
-            'LABORATORIO_DIRECCION': 'Calle Falsa 123, Ciudad Ficticia',
-            'LABORATORIO_TELEFONO': '000 000 0000',
-        })
+        settings = cargar_settings(
+            {
+                **self.CLAVE,
+                'LABORATORIO_NOMBRE': 'Laboratorio Ficticio de Prueba',
+                'LABORATORIO_DIRECCION': 'Calle Falsa 123, Ciudad Ficticia',
+                'LABORATORIO_TELEFONO': '000 000 0000',
+            }
+        )
         self.assertEqual(settings.LABORATORIO_NOMBRE, 'Laboratorio Ficticio de Prueba')
         self.assertEqual(settings.LABORATORIO_DIRECCION, 'Calle Falsa 123, Ciudad Ficticia')
         self.assertEqual(settings.LABORATORIO_TELEFONO, '000 000 0000')
@@ -80,6 +82,7 @@ class EncabezadoLaboratorioTests(SimpleTestCase):
     def test_lee_tildes_y_raya_del_archivo_env(self):
         # El .env se escribe a mano: las tildes y la raya (—) deben llegar intactas al PDF.
         import tempfile
+
         with tempfile.TemporaryDirectory() as carpeta:
             ruta = Path(carpeta) / '.env'
             ruta.write_text(

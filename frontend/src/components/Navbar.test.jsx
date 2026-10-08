@@ -12,10 +12,13 @@ vi.mock('../context/AuthContext', () => ({
 // sin guardar en un informe, el aviso aparece mientras la sesión sigue abierta.
 describe('Navbar: cerrar sesión', () => {
   it('"Salir" lleva a /salir sin cerrar todavía la sesión', async () => {
-    const router = createMemoryRouter([
-      { path: '/', element: <Navbar /> },
-      { path: '/salir', element: <h1>Pantalla de salida</h1> },
-    ], { initialEntries: ['/'] });
+    const router = createMemoryRouter(
+      [
+        { path: '/', element: <Navbar /> },
+        { path: '/salir', element: <h1>Pantalla de salida</h1> },
+      ],
+      { initialEntries: ['/'] },
+    );
     render(<RouterProvider router={router} />);
     fireEvent.click(screen.getByRole('button', { name: 'Salir' }));
     expect(await screen.findByRole('heading', { name: 'Pantalla de salida' })).toBeInTheDocument();

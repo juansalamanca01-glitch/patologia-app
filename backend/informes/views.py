@@ -16,17 +16,20 @@ from pacientes.models import Sexo, TipoDocumento
 from .models import Categoria, Patologia, Plantilla, Informe, Servicio, firma_de
 from .serializers import (
     CategoriaSerializer,
-    PatologiaSerializer, PatologiaListSerializer,
+    PatologiaSerializer,
+    PatologiaListSerializer,
     PlantillaSerializer,
     ServicioSerializer,
     AdendaSerializer,
-    InformeSerializer, InformeListSerializer,
+    InformeSerializer,
+    InformeListSerializer,
 )
 from .utils import generar_descripcion_macroscopica, generar_pdf_informe
 
 
 class CategoriaViewSet(viewsets.ModelViewSet):
     """Categorías de patologías. Todos leen; crear, editar o borrar requiere patólogo o admin."""
+
     # El total de patologías se cuenta en la misma consulta (auditoría M-4).
     # Con annotate(Count), Django ignora Meta.ordering: el orden se indica aquí.
     queryset = Categoria.objects.annotate(num_patologias=Count('patologias')).order_by('nombre')
@@ -47,6 +50,7 @@ class CategoriaViewSet(viewsets.ModelViewSet):
 
 class PatologiaViewSet(viewsets.ModelViewSet):
     """Tipos de patología. Todos leen; crear, editar o borrar requiere patólogo o admin."""
+
     queryset = Patologia.objects.select_related('categoria').prefetch_related('plantillas').all()
     permission_classes = [EsPatologoOAdmin]
     filter_backends = [filters.SearchFilter]
@@ -84,6 +88,7 @@ class PatologiaViewSet(viewsets.ModelViewSet):
 
 class PlantillaViewSet(viewsets.ModelViewSet):
     """Campos de los formularios dinámicos (plantillas)."""
+
     queryset = Plantilla.objects.select_related('patologia').all()
     serializer_class = PlantillaSerializer
     permission_classes = [EsPatologoOAdmin]
@@ -98,6 +103,7 @@ class PlantillaViewSet(viewsets.ModelViewSet):
 
 class ServicioViewSet(viewsets.ModelViewSet):
     """Catálogo de servicios. Todos leen; patólogo o admin lo administran (decisión D-11)."""
+
     queryset = Servicio.objects.all()
     serializer_class = ServicioSerializer
     permission_classes = [EsPatologoOAdmin]
@@ -116,8 +122,10 @@ class ServicioViewSet(viewsets.ModelViewSet):
         except ProtectedError:
             total = servicio.informes.count()
             return Response(
-                {'detail': f'No se puede eliminar: este servicio tiene {total} informe(s) asociado(s). '
-                           'Desactívelo en su lugar.'},
+                {
+                    'detail': f'No se puede eliminar: este servicio tiene {total} informe(s) asociado(s). '
+                    'Desactívelo en su lugar.'
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -134,11 +142,13 @@ class OpcionesView(APIView):
     """
 
     def get(self, request):
-        return Response({
-            'sexos': _opciones(Sexo),
-            'tipos_documento': _opciones(TipoDocumento),
-            'tipos_estudio': _opciones(Informe.TipoEstudio),
-        })
+        return Response(
+            {
+                'sexos': _opciones(Sexo),
+                'tipos_documento': _opciones(TipoDocumento),
+                'tipos_estudio': _opciones(Informe.TipoEstudio),
+            }
+        )
 
 
 class InformeViewSet(viewsets.ModelViewSet):
@@ -152,6 +162,7 @@ class InformeViewSet(viewsets.ModelViewSet):
     - solo el autor o un admin puede editar, borrar o finalizar un informe;
     - un informe finalizado no se puede editar ni borrar, ni siquiera un admin.
     """
+
     queryset = Informe.objects.select_related('patologia', 'autor', 'paciente', 'eps', 'servicio').all()
     permission_classes = [EsAutorOAdminOSoloLectura]
 
@@ -190,14 +201,15 @@ class InformeViewSet(viewsets.ModelViewSet):
         # encuentra a "Paciente Ficticio Uno" aunque esté repartido en nombres y apellidos.
         for palabra in params.get('q', '').split():
             qs = qs.filter(
-                Q(numero_peticion__icontains=palabra) |
-                Q(numero_orden_externa__icontains=palabra) |
-                Q(patologia__nombre__icontains=palabra) |
-                Q(tipo_muestra__icontains=palabra) |
+                Q(numero_peticion__icontains=palabra)
+                | Q(numero_orden_externa__icontains=palabra)
+                | Q(patologia__nombre__icontains=palabra)
+                | Q(tipo_muestra__icontains=palabra)
+                |
                 # El documento se guarda sin puntos: "1.234" también encuentra "1234".
-                Q(paciente__numero_documento__icontains=palabra.replace('.', '')) |
-                Q(paciente__nombres__icontains=palabra) |
-                Q(paciente__apellidos__icontains=palabra)
+                Q(paciente__numero_documento__icontains=palabra.replace('.', ''))
+                | Q(paciente__nombres__icontains=palabra)
+                | Q(paciente__apellidos__icontains=palabra)
             )
 
         fecha_desde = params.get('fecha_desde')
@@ -225,18 +237,14 @@ class InformeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         informe = serializer.save(autor=self.request.user)
         # Genera la descripción macroscópica
-        texto = generar_descripcion_macroscopica(
-            informe.patologia, informe.datos_ingresados
-        )
+        texto = generar_descripcion_macroscopica(informe.patologia, informe.datos_ingresados)
         informe.texto_generado = texto
         informe.save(update_fields=['texto_generado'])
 
     def perform_update(self, serializer):
         informe = serializer.save()
         # Vuelve a generar la descripción al editar
-        texto = generar_descripcion_macroscopica(
-            informe.patologia, informe.datos_ingresados
-        )
+        texto = generar_descripcion_macroscopica(informe.patologia, informe.datos_ingresados)
         informe.texto_generado = texto
         informe.save(update_fields=['texto_generado'])
 
@@ -253,11 +261,13 @@ class InformeViewSet(viewsets.ModelViewSet):
             .values_list('estado')
             .annotate(total=Count('id'))
         )
-        return Response({
-            'total': sum(por_estado.values()),
-            'borradores': por_estado.get(Informe.Estado.BORRADOR, 0),
-            'finalizados': por_estado.get(Informe.Estado.FINALIZADO, 0),
-        })
+        return Response(
+            {
+                'total': sum(por_estado.values()),
+                'borradores': por_estado.get(Informe.Estado.BORRADOR, 0),
+                'finalizados': por_estado.get(Informe.Estado.FINALIZADO, 0),
+            }
+        )
 
     @action(detail=True, methods=['get'], url_path='pdf')
     def exportar_pdf(self, request, pk=None):
@@ -268,9 +278,7 @@ class InformeViewSet(viewsets.ModelViewSet):
         """
         informe = self.get_object()
         if not informe.esta_finalizado and not (request.user.es_admin or informe.autor_id == request.user.id):
-            raise PermissionDenied(
-                'El PDF de un borrador es una vista previa solo para su autor o un administrador.'
-            )
+            raise PermissionDenied('El PDF de un borrador es una vista previa solo para su autor o un administrador.')
         buffer = generar_pdf_informe(informe)
         # El número de petición lo genera el sistema (D-7), pero se sigue limpiando:
         # unas comillas o un punto y coma romperían la cabecera Content-Disposition (I-5).
@@ -343,7 +351,10 @@ class InformeViewSet(viewsets.ModelViewSet):
                 bloqueado = Informe.objects.select_for_update().get(pk=informe.pk)
                 numero = (bloqueado.adendas.aggregate(ultimo=Max('numero'))['ultimo'] or 0) + 1
                 serializer.save(
-                    informe=bloqueado, numero=numero, autor=request.user, firma=firma_de(request.user),
+                    informe=bloqueado,
+                    numero=numero,
+                    autor=request.user,
+                    firma=firma_de(request.user),
                 )
         except IntegrityError:
             return Response(

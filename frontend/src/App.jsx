@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import {
-  createBrowserRouter, createRoutesFromElements, RouterProvider, Route, Navigate, Link,
-} from 'react-router-dom';
+import { createBrowserRouter, createRoutesFromElements, RouterProvider, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -21,7 +19,12 @@ import CerrarSesionPage from './pages/CerrarSesionPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="loading-center"><span className="spinner"></span></div>;
+  if (loading)
+    return (
+      <div className="loading-center">
+        <span className="spinner"></span>
+      </div>
+    );
   if (!user) return <Navigate to="/login" replace />;
   return (
     <>
@@ -48,7 +51,9 @@ function LegalRoute({ children }) {
     return (
       <>
         <main className="main-content">
-          <p className="legal-volver"><Link to="/login">← Volver al inicio de sesión</Link></p>
+          <p className="legal-volver">
+            <Link to="/login">← Volver al inicio de sesión</Link>
+          </p>
           {children}
         </main>
         <Footer />
@@ -68,20 +73,111 @@ function LegalRoute({ children }) {
 // avisa antes de salir si hay cambios sin guardar (decisión D-13).
 const rutas = createRoutesFromElements(
   <>
-    <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+    <Route
+      path="/login"
+      element={
+        <PublicRoute>
+          <LoginPage />
+        </PublicRoute>
+      }
+    />
     <Route path="/salir" element={<CerrarSesionPage />} />
-    <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-    <Route path="/informes/nuevo" element={<ProtectedRoute><InformePage /></ProtectedRoute>} />
-    <Route path="/informes/:id" element={<ProtectedRoute><InformePage /></ProtectedRoute>} />
-    <Route path="/buscar" element={<ProtectedRoute><BuscarPage /></ProtectedRoute>} />
-    <Route path="/patologias" element={<ProtectedRoute><PatologiasPage /></ProtectedRoute>} />
-    <Route path="/pacientes" element={<ProtectedRoute><PacientesPage /></ProtectedRoute>} />
-    <Route path="/catalogos" element={<ProtectedRoute><CatalogosPage /></ProtectedRoute>} />
-    <Route path="/foro" element={<ProtectedRoute><ForoPage /></ProtectedRoute>} />
-    <Route path="/foro/:id" element={<ProtectedRoute><PublicacionDetallePage /></ProtectedRoute>} />
-    <Route path="/perfil" element={<ProtectedRoute><PerfilPage /></ProtectedRoute>} />
-    <Route path="/politica-privacidad" element={<LegalRoute><PoliticaPrivacidadPage /></LegalRoute>} />
-    <Route path="/terminos-condiciones" element={<LegalRoute><TerminosCondicionesPage /></LegalRoute>} />
+    <Route
+      path="/"
+      element={
+        <ProtectedRoute>
+          <DashboardPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/informes/nuevo"
+      element={
+        <ProtectedRoute>
+          <InformePage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/informes/:id"
+      element={
+        <ProtectedRoute>
+          <InformePage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/buscar"
+      element={
+        <ProtectedRoute>
+          <BuscarPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/patologias"
+      element={
+        <ProtectedRoute>
+          <PatologiasPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/pacientes"
+      element={
+        <ProtectedRoute>
+          <PacientesPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/catalogos"
+      element={
+        <ProtectedRoute>
+          <CatalogosPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/foro"
+      element={
+        <ProtectedRoute>
+          <ForoPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/foro/:id"
+      element={
+        <ProtectedRoute>
+          <PublicacionDetallePage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/perfil"
+      element={
+        <ProtectedRoute>
+          <PerfilPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/politica-privacidad"
+      element={
+        <LegalRoute>
+          <PoliticaPrivacidadPage />
+        </LegalRoute>
+      }
+    />
+    <Route
+      path="/terminos-condiciones"
+      element={
+        <LegalRoute>
+          <TerminosCondicionesPage />
+        </LegalRoute>
+      }
+    />
     <Route path="*" element={<Navigate to="/" replace />} />
   </>,
 );

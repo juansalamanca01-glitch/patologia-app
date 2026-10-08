@@ -17,8 +17,16 @@ vi.mock('../api/client', async (importOriginal) => ({
 }));
 
 const PUBLICACION = {
-  id: 4, titulo: 'Caso interesante', contenido: 'Texto', autor: 9, autor_nombre: 'Dr. X',
-  fijado: false, tema_nombre: null, imagenes: [], comentarios: [], fecha_creacion: '2026-10-04T10:00:00Z',
+  id: 4,
+  titulo: 'Caso interesante',
+  contenido: 'Texto',
+  autor: 9,
+  autor_nombre: 'Dr. X',
+  fijado: false,
+  tema_nombre: null,
+  imagenes: [],
+  comentarios: [],
+  fecha_creacion: '2026-10-04T10:00:00Z',
 };
 
 function renderPublicacion() {

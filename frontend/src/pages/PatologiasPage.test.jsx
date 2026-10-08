@@ -12,17 +12,27 @@ vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({ canWrite: true }),
 }));
 
-const PIEL = { id: 1, nombre: 'Biopsia de Piel', categoria: null, categoria_nombre: null, activa: true, descripcion: '', protocolo_medico: '' };
+const PIEL = {
+  id: 1,
+  nombre: 'Biopsia de Piel',
+  categoria: null,
+  categoria_nombre: null,
+  activa: true,
+  descripcion: '',
+  protocolo_medico: '',
+};
 
 // Decisión D-4 (auditoría M-5): una patología se puede desactivar desde la
 // pantalla Patologías, en lugar de borrarla.
 describe('PatologiasPage: activar y desactivar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    client.get.mockImplementation((url) => Promise.resolve({
-      // "Editar" pide la patología completa (/patologias/1/); el resto son listados.
-      data: url === '/patologias/1/' ? PIEL : { results: url === '/patologias/' ? [PIEL] : [] },
-    }));
+    client.get.mockImplementation((url) =>
+      Promise.resolve({
+        // "Editar" pide la patología completa (/patologias/1/); el resto son listados.
+        data: url === '/patologias/1/' ? PIEL : { results: url === '/patologias/' ? [PIEL] : [] },
+      }),
+    );
     client.patch.mockResolvedValue({ data: {} });
     client.post.mockResolvedValue({ data: {} });
   });
@@ -43,7 +53,9 @@ describe('PatologiasPage: activar y desactivar', () => {
     const { container } = render(<PatologiasPage />);
     fireEvent.click(await screen.findByRole('button', { name: /\+ Patología/i }));
     expect(screen.getByRole('checkbox', { name: /Activa/i })).toBeChecked();
-    fireEvent.change(container.querySelector('.modal-card input:not([type="checkbox"])'), { target: { value: 'Nueva' } });
+    fireEvent.change(container.querySelector('.modal-card input:not([type="checkbox"])'), {
+      target: { value: 'Nueva' },
+    });
     fireEvent.submit(container.querySelector('.modal-card form'));
     await vi.waitFor(() => expect(client.post).toHaveBeenCalled());
     expect(client.post.mock.calls[0][1]).toMatchObject({ nombre: 'Nueva', activa: true });
@@ -58,7 +70,9 @@ describe('PatologiasPage: editar muestra todos los datos', () => {
     vi.clearAllMocks();
     client.get.mockImplementation((url) => {
       if (url === '/patologias/1/') {
-        return Promise.resolve({ data: { ...PIEL, descripcion: 'Estudio de tejido cutáneo.', protocolo_medico: 'Fijar en formol al 10%.' } });
+        return Promise.resolve({
+          data: { ...PIEL, descripcion: 'Estudio de tejido cutáneo.', protocolo_medico: 'Fijar en formol al 10%.' },
+        });
       }
       return Promise.resolve({ data: { results: url === '/patologias/' ? [PIEL] : [] } });
     });

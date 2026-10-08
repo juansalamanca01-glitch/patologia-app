@@ -19,14 +19,27 @@ const AUDITOR = { canWrite: false, isAdmin: false };
 
 // Solo datos ficticios (docs/propuesta-informe-v2.md, sección 8).
 const PACIENTE = {
-  id: 1, tipo_documento: 'CC', numero_documento: 'PRUEBA0001', nombres: 'Paciente Ficticio',
-  apellidos: 'Uno', fecha_nacimiento: '1980-10-05', edad: '45 años', sexo: 'femenino',
-  eps: 3, eps_nombre: 'Particular',
+  id: 1,
+  tipo_documento: 'CC',
+  numero_documento: 'PRUEBA0001',
+  nombres: 'Paciente Ficticio',
+  apellidos: 'Uno',
+  fecha_nacimiento: '1980-10-05',
+  edad: '45 años',
+  sexo: 'femenino',
+  eps: 3,
+  eps_nombre: 'Particular',
 };
 
 const OPCIONES = {
-  sexos: [{ valor: 'femenino', etiqueta: 'Femenino' }, { valor: 'masculino', etiqueta: 'Masculino' }],
-  tipos_documento: [{ valor: 'CC', etiqueta: 'Cédula de ciudadanía' }, { valor: 'TI', etiqueta: 'Tarjeta de identidad' }],
+  sexos: [
+    { valor: 'femenino', etiqueta: 'Femenino' },
+    { valor: 'masculino', etiqueta: 'Masculino' },
+  ],
+  tipos_documento: [
+    { valor: 'CC', etiqueta: 'Cédula de ciudadanía' },
+    { valor: 'TI', etiqueta: 'Tarjeta de identidad' },
+  ],
   tipos_estudio: [{ valor: 'histologia', etiqueta: 'Histología' }],
 };
 
@@ -78,8 +91,13 @@ describe('PacientesPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await vi.waitFor(() => expect(client.post).toHaveBeenCalled());
     expect(client.post).toHaveBeenCalledWith('/pacientes/', {
-      tipo_documento: 'CC', numero_documento: 'PRUEBA0002', nombres: 'Prueba', apellidos: 'Apellido Dos',
-      fecha_nacimiento: '1962-11-03', sexo: 'masculino', eps: 3,
+      tipo_documento: 'CC',
+      numero_documento: 'PRUEBA0002',
+      nombres: 'Prueba',
+      apellidos: 'Apellido Dos',
+      fecha_nacimiento: '1962-11-03',
+      sexo: 'masculino',
+      eps: 3,
     });
   });
 
@@ -98,7 +116,7 @@ describe('PacientesPage', () => {
   it('al editar, conserva la EPS desactivada que ya tenía el paciente', async () => {
     client.get.mockImplementation((url) => {
       if (url === '/opciones/') return Promise.resolve({ data: OPCIONES });
-      if (url === '/pacientes/eps/') return Promise.resolve(pagina([]));  // "Particular" ya no está activa
+      if (url === '/pacientes/eps/') return Promise.resolve(pagina([])); // "Particular" ya no está activa
       return Promise.resolve(pagina([PACIENTE]));
     });
     render(<PacientesPage />);
@@ -137,8 +155,12 @@ describe('PacientesPage', () => {
 // (GET /api/pacientes/{id}/informes/).
 describe('PacientesPage: historial de informes', () => {
   const INFORME = {
-    id: 5, numero_peticion: 'P-2026-00001', tipo_estudio: 'histologia', patologia_nombre: 'Piel',
-    fecha: '2026-10-04', estado: 'finalizado',
+    id: 5,
+    numero_peticion: 'P-2026-00001',
+    tipo_estudio: 'histologia',
+    patologia_nombre: 'Piel',
+    fecha: '2026-10-04',
+    estado: 'finalizado',
   };
 
   beforeEach(() => {
@@ -153,7 +175,11 @@ describe('PacientesPage: historial de informes', () => {
   });
 
   it('cualquier usuario ve los informes de un paciente, con enlace a cada uno', async () => {
-    render(<MemoryRouter><PacientesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <PacientesPage />
+      </MemoryRouter>,
+    );
     fireEvent.click(await screen.findByRole('button', { name: 'Informes' }));
     const enlace = await screen.findByRole('link', { name: 'P-2026-00001' });
     expect(enlace).toHaveAttribute('href', '/informes/5');
@@ -170,7 +196,11 @@ describe('PacientesPage: historial de informes', () => {
       if (url === '/pacientes/1/informes/') return Promise.resolve(pagina([]));
       return Promise.resolve(pagina([PACIENTE]));
     });
-    render(<MemoryRouter><PacientesPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <PacientesPage />
+      </MemoryRouter>,
+    );
     fireEvent.click(await screen.findByRole('button', { name: 'Informes' }));
     expect(await screen.findByText(/no tiene informes/)).toBeInTheDocument();
   });

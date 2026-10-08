@@ -14,8 +14,11 @@ class Categoria(models.Model):
     nombre = models.CharField(max_length=150, unique=True, verbose_name='Nombre')
     descripcion = models.TextField(blank=True, verbose_name='Descripción')
     color = models.CharField(
-        max_length=7, blank=True, default='#2563eb',
-        verbose_name='Color', help_text='Color hexadecimal para distinguirla en la interfaz.',
+        max_length=7,
+        blank=True,
+        default='#2563eb',
+        verbose_name='Color',
+        help_text='Color hexadecimal para distinguirla en la interfaz.',
     )
     activa = models.BooleanField(default=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
@@ -36,7 +39,8 @@ class Patologia(models.Model):
     categoria = models.ForeignKey(
         Categoria,
         on_delete=models.SET_NULL,
-        null=True, blank=True,
+        null=True,
+        blank=True,
         related_name='patologias',
         verbose_name='Categoría',
     )
@@ -85,7 +89,8 @@ class Plantilla(models.Model):
     )
     obligatorio = models.BooleanField(default=False, verbose_name='Obligatorio')
     opciones = models.JSONField(
-        default=list, blank=True,
+        default=list,
+        blank=True,
         verbose_name='Opciones',
         help_text='Lista de opciones para campos de tipo lista.',
     )
@@ -178,10 +183,14 @@ class Informe(models.Model):
 
     # Lo asigna save() al crear el informe; no se puede cambiar (decisión D-7).
     numero_peticion = models.CharField(
-        max_length=20, unique=True, editable=False, verbose_name='Número de petición',
+        max_length=20,
+        unique=True,
+        editable=False,
+        verbose_name='Número de petición',
     )
     numero_orden_externa = models.CharField(
-        max_length=50, blank=True,
+        max_length=50,
+        blank=True,
         verbose_name='Número de orden externa',
         help_text='Número de orden de la institución remitente (opcional).',
     )
@@ -190,7 +199,8 @@ class Informe(models.Model):
     paciente = models.ForeignKey(
         'pacientes.Paciente',
         on_delete=models.PROTECT,
-        null=True, blank=True,
+        null=True,
+        blank=True,
         related_name='informes',
         verbose_name='Paciente',
     )
@@ -200,14 +210,16 @@ class Informe(models.Model):
     eps = models.ForeignKey(
         'pacientes.EPS',
         on_delete=models.PROTECT,
-        null=True, blank=True,
+        null=True,
+        blank=True,
         related_name='informes',
         verbose_name='EPS',
     )
     servicio = models.ForeignKey(
         Servicio,
         on_delete=models.PROTECT,
-        null=True, blank=True,
+        null=True,
+        blank=True,
         related_name='informes',
         verbose_name='Servicio',
     )
@@ -255,7 +267,10 @@ class Informe(models.Model):
     fecha_informe = models.DateTimeField(null=True, blank=True, editable=False, verbose_name='Fecha de informe')
     # Paciente, EPS, servicio, firma (D-10) y encabezado del laboratorio (D-15) tal como estaban al finalizar.
     datos_finalizacion = models.JSONField(
-        null=True, blank=True, editable=False, verbose_name='Datos congelados al finalizar',
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name='Datos congelados al finalizar',
     )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
@@ -309,7 +324,9 @@ class Informe(models.Model):
         """
         paciente = self.paciente
         return {
-            'paciente': None if paciente is None else {
+            'paciente': None
+            if paciente is None
+            else {
                 'id': paciente.id,
                 'nombre_completo': paciente.nombre_completo,
                 'tipo_documento': paciente.tipo_documento,

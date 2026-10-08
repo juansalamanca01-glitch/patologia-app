@@ -57,9 +57,19 @@ class PublicacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Publicacion
         fields = [
-            'id', 'tema', 'tema_nombre', 'autor', 'autor_nombre', 'titulo', 'contenido',
-            'fijado', 'imagenes', 'comentarios', 'total_comentarios',
-            'fecha_creacion', 'fecha_actualizacion',
+            'id',
+            'tema',
+            'tema_nombre',
+            'autor',
+            'autor_nombre',
+            'titulo',
+            'contenido',
+            'fijado',
+            'imagenes',
+            'comentarios',
+            'total_comentarios',
+            'fecha_creacion',
+            'fecha_actualizacion',
         ]
         read_only_fields = ['id', 'autor', 'fecha_creacion', 'fecha_actualizacion']
 
@@ -85,6 +95,7 @@ class PublicacionSerializer(serializers.ModelSerializer):
 
 class PublicacionListSerializer(serializers.ModelSerializer):
     """Versión resumida para el listado del foro."""
+
     autor_nombre = serializers.CharField(source='autor.nombre_visible', read_only=True)
     tema_nombre = serializers.CharField(source='tema.nombre', read_only=True, default=None)
     # Contados en la misma consulta del listado (annotate en PublicacionViewSet, auditoría M-4).
@@ -95,8 +106,16 @@ class PublicacionListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Publicacion
         fields = [
-            'id', 'tema', 'tema_nombre', 'autor_nombre', 'titulo', 'fijado',
-            'total_comentarios', 'total_imagenes', 'portada', 'fecha_creacion',
+            'id',
+            'tema',
+            'tema_nombre',
+            'autor_nombre',
+            'titulo',
+            'fijado',
+            'total_comentarios',
+            'total_imagenes',
+            'portada',
+            'fecha_creacion',
         ]
 
     def get_portada(self, obj):

@@ -55,7 +55,9 @@ export default function ForoPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, [filtroTema]);
+  useEffect(() => {
+    fetchData();
+  }, [filtroTema]);
 
   const crearPublicacion = async (e) => {
     e.preventDefault();
@@ -87,9 +89,8 @@ export default function ForoPage() {
       cerrarFormulario();
       fetchData();
     } catch (err) {
-      const detalle = err.response?.data?.titulo?.[0] ||
-        err.response?.data?.contenido?.[0] ||
-        err.response?.data?.detail;
+      const detalle =
+        err.response?.data?.titulo?.[0] || err.response?.data?.contenido?.[0] || err.response?.data?.detail;
       if (publicacionCreada) {
         // La publicación ya existe: se cierra el formulario para que reintentar
         // no cree una publicación duplicada.
@@ -132,10 +133,22 @@ export default function ForoPage() {
         </div>
         {canWrite && (
           <div className="header-actions">
-            <button className="btn btn-outline" onClick={() => { setErrorTema(''); setNuevoTema({ nombre: '', descripcion: '' }); }}>
+            <button
+              className="btn btn-outline"
+              onClick={() => {
+                setErrorTema('');
+                setNuevoTema({ nombre: '', descripcion: '' });
+              }}
+            >
               + Tema
             </button>
-            <button className="btn btn-primary" onClick={() => { setErrorFormulario(''); setMostrarForm(true); }}>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setErrorFormulario('');
+                setMostrarForm(true);
+              }}
+            >
               + Nueva publicación
             </button>
           </div>
@@ -163,9 +176,13 @@ export default function ForoPage() {
       </div>
 
       {loading ? (
-        <div className="loading-center"><span className="spinner"></span></div>
+        <div className="loading-center">
+          <span className="spinner"></span>
+        </div>
       ) : publicaciones.length === 0 ? (
-        <div className="empty-state"><p>Aún no hay publicaciones en el foro.</p></div>
+        <div className="empty-state">
+          <p>Aún no hay publicaciones en el foro.</p>
+        </div>
       ) : (
         <div className="foro-feed">
           {publicaciones.map((p) => (
@@ -214,8 +231,12 @@ export default function ForoPage() {
                 />
               </div>
               <div className="form-actions">
-                <button type="button" className="btn btn-outline" onClick={() => setNuevoTema(null)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary">Crear tema</button>
+                <button type="button" className="btn btn-outline" onClick={() => setNuevoTema(null)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Crear tema
+                </button>
               </div>
             </form>
           </div>
@@ -232,7 +253,11 @@ export default function ForoPage() {
                 <label>Tema</label>
                 <select value={nuevo.tema} onChange={(e) => setNuevo({ ...nuevo, tema: e.target.value })}>
                   <option value="">Sin tema</option>
-                  {temas.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+                  {temas.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.nombre}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="form-group">
@@ -263,7 +288,9 @@ export default function ForoPage() {
                 />
               </div>
               <div className="form-actions">
-                <button type="button" className="btn btn-outline" onClick={() => setMostrarForm(false)}>Cancelar</button>
+                <button type="button" className="btn btn-outline" onClick={() => setMostrarForm(false)}>
+                  Cancelar
+                </button>
                 <button type="submit" className="btn btn-primary" disabled={guardando}>
                   {guardando ? <span className="spinner"></span> : 'Publicar'}
                 </button>

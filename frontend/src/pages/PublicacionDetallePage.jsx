@@ -27,7 +27,9 @@ export default function PublicacionDetallePage() {
     }
   };
 
-  useEffect(() => { fetchPublicacion(); }, [id]);
+  useEffect(() => {
+    fetchPublicacion();
+  }, [id]);
 
   const enviarComentario = async (e) => {
     e.preventDefault();
@@ -55,12 +57,19 @@ export default function PublicacionDetallePage() {
 
   const puedeModerar = (autorId) => user?.rol === 'admin' || user?.id === autorId;
 
-  if (loading) return <div className="loading-center"><span className="spinner"></span></div>;
+  if (loading)
+    return (
+      <div className="loading-center">
+        <span className="spinner"></span>
+      </div>
+    );
   if (!publicacion) return <div className="alert alert-error">{error || 'Publicación no encontrada.'}</div>;
 
   return (
     <div className="publicacion-detalle">
-      <Link to="/foro" className="text-muted">← Volver al foro</Link>
+      <Link to="/foro" className="text-muted">
+        ← Volver al foro
+      </Link>
 
       {error && <div className="alert alert-error">{error}</div>}
 
@@ -84,8 +93,12 @@ export default function PublicacionDetallePage() {
               {confirmDelete ? (
                 <>
                   <span className="text-muted">¿Seguro?</span>
-                  <button className="btn btn-outline btn-sm" onClick={() => setConfirmDelete(false)}>No</button>
-                  <button className="btn btn-danger btn-sm" onClick={eliminarPublicacion}>Sí, eliminar</button>
+                  <button className="btn btn-outline btn-sm" onClick={() => setConfirmDelete(false)}>
+                    No
+                  </button>
+                  <button className="btn btn-danger btn-sm" onClick={eliminarPublicacion}>
+                    Sí, eliminar
+                  </button>
                 </>
               ) : (
                 <button className="btn btn-danger-outline btn-sm" onClick={() => setConfirmDelete(true)}>
@@ -98,7 +111,9 @@ export default function PublicacionDetallePage() {
       </div>
 
       <div className="card">
-        <div className="card-header"><h2>Comentarios ({publicacion.comentarios?.length || 0})</h2></div>
+        <div className="card-header">
+          <h2>Comentarios ({publicacion.comentarios?.length || 0})</h2>
+        </div>
         <div className="card-body">
           {/* El auditor solo lee: la API le rechaza los comentarios (auditoría M-7). */}
           {canWrite && (
