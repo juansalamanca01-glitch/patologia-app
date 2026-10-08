@@ -303,6 +303,8 @@ Para **guardar un borrador** solo se exigen la patología, el paciente (en infor
 
 1. **Encabezado del laboratorio:** sale de `settings` y `.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION` y `LABORATORIO_TELEFONO`, opcional). Valores por defecto (P-9): "PathoLab — Laboratorio de Patología (demostración)", "Santiago de Cali, Colombia" y sin teléfono. Si el teléfono está vacío, no se imprime.
 
+   **Actualización del 2026-10-08:** el encabezado ya se lee de `settings` y `.env`, como proponía este punto (tarea previa 2 de `docs/plan-calidad-y-diseno.md`). `LABORATORIO_DIRECCION` es una sola línea, con la dirección completa y la ciudad, y el teléfono va en una línea aparte, "Teléfono: …".
+
    **Hecho en la etapa 7 (decisión del usuario del 2026-10-04):** por ahora el encabezado es **fijo**, con los valores de P-9 y sin teléfono (`ENCABEZADO_LABORATORIO` y `ENCABEZADO_CIUDAD` en `informes/utils.py`). Leerlo de `settings` y `.env` queda como **propuesta futura** (hoja de ruta del README).
 2. **Tabla de datos en dos columnas**, como el formato real:
 

@@ -192,6 +192,15 @@ FORO_MAX_TAMANO_IMAGEN = 10 * 1024 * 1024
 # lleguen a Django (por ejemplo, en Nginx: client_max_body_size 60m;).
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 
+# ---------- Encabezado del PDF de los informes ----------
+# Datos del laboratorio que imprime el encabezado del PDF. Sin .env queda el
+# encabezado de demostración (respuesta P-9), que no copia los datos de ningún
+# laboratorio real. La dirección es una sola línea (dirección completa y ciudad);
+# si el teléfono está vacío, el PDF no imprime su línea.
+LABORATORIO_NOMBRE = config('LABORATORIO_NOMBRE', default='PathoLab — Laboratorio de Patología (demostración)')
+LABORATORIO_DIRECCION = config('LABORATORIO_DIRECCION', default='Santiago de Cali, Colombia')
+LABORATORIO_TELEFONO = config('LABORATORIO_TELEFONO', default='')
+
 # ---------- i18n ----------
 LANGUAGE_CODE = 'es'
 TIME_ZONE = 'America/Bogota'

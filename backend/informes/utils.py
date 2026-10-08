@@ -5,6 +5,7 @@ import io
 from functools import partial
 from xml.sax.saxutils import escape
 
+from django.conf import settings
 from django.utils import timezone
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -81,11 +82,6 @@ def generar_descripcion_macroscopica(patologia, datos: dict) -> str:
 
 # ── Exportación a PDF ───────────────────────────────────────────────────
 # Estructura del informe real (docs/propuesta-informe-v2.md, sección 5).
-
-# Encabezado fijo de demostración (respuesta P-9): no copia los datos de ningún
-# laboratorio real. Leerlo de la configuración (.env) queda como propuesta futura.
-ENCABEZADO_LABORATORIO = 'PathoLab — Laboratorio de Patología (demostración)'
-ENCABEZADO_CIUDAD = 'Santiago de Cali, Colombia'
 
 SIN_DATO = '—'
 AVISO_BORRADOR = 'BORRADOR — SIN VALIDEZ'
@@ -177,9 +173,17 @@ def _estilos():
 
 
 def _encabezado(estilos):
-    return [
-        Paragraph(ENCABEZADO_LABORATORIO, estilos['Laboratorio']),
-        Paragraph(ENCABEZADO_CIUDAD, estilos['Ciudad']),
+    """
+    Nombre, dirección y teléfono del laboratorio, desde settings (backend/.env).
+    Se escapan como el texto del usuario (I-3): un & o un < del .env no debe romper el PDF.
+    """
+    bloque = [
+        Paragraph(texto_seguro(settings.LABORATORIO_NOMBRE), estilos['Laboratorio']),
+        Paragraph(texto_seguro(settings.LABORATORIO_DIRECCION), estilos['Ciudad']),
+    ]
+    if settings.LABORATORIO_TELEFONO:
+        bloque.append(Paragraph(f'Teléfono: {texto_seguro(settings.LABORATORIO_TELEFONO)}', estilos['Ciudad']))
+    return bloque + [
         Spacer(1, 6),
         HRFlowable(width='100%', thickness=0.75, color=NEGRO),
         Spacer(1, 10),

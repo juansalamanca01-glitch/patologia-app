@@ -4,7 +4,7 @@ from unittest import mock
 
 from django.db import IntegrityError, connection, transaction
 from django.db.migrations.executor import MigrationExecutor
-from django.test import TransactionTestCase
+from django.test import TransactionTestCase, override_settings
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
@@ -1775,11 +1775,40 @@ class PdfInformeTests(APITestCase):
     # --- Encabezado ---
 
     def test_el_encabezado_es_el_de_demostracion_sin_telefono(self):
-        # Respuesta P-9: sin datos de un laboratorio real. Por ahora es fijo; hacerlo
-        # configurable queda como propuesta futura (decisión del usuario en la etapa 7).
+        # Respuesta P-9: sin datos de un laboratorio real. Son los valores por defecto
+        # de settings.py cuando backend/.env no define LABORATORIO_* (tarea previa 2).
         textos = self.generar(self.crear())['textos']
         self.assertEqual(textos[:2], ['PathoLab — Laboratorio de Patología (demostración)', 'Santiago de Cali, Colombia'])
         self.assertFalse(any('Teléfono' in texto for texto in textos))
+
+    @override_settings(
+        LABORATORIO_NOMBRE='Laboratorio Ficticio de Prueba',
+        LABORATORIO_DIRECCION='Calle Falsa 123, Ciudad Ficticia',
+        LABORATORIO_TELEFONO='000 000 0000',
+    )
+    def test_el_encabezado_sale_de_la_configuracion_con_telefono_en_otra_linea(self):
+        textos = self.generar(self.crear())['textos']
+        self.assertEqual(textos[:3], [
+            'Laboratorio Ficticio de Prueba', 'Calle Falsa 123, Ciudad Ficticia', 'Teléfono: 000 000 0000',
+        ])
+
+    @override_settings(LABORATORIO_NOMBRE='Laboratorio Ficticio de Prueba', LABORATORIO_TELEFONO='')
+    def test_sin_telefono_no_hay_linea_de_telefono(self):
+        textos = self.generar(self.crear())['textos']
+        self.assertEqual(textos[0], 'Laboratorio Ficticio de Prueba')
+        self.assertFalse(any('Teléfono' in texto for texto in textos))
+
+    @override_settings(
+        LABORATORIO_NOMBRE='<b>Lab</b> & Cía', LABORATORIO_DIRECCION='Calle <font size=40>1',
+        LABORATORIO_TELEFONO='<i>000</i>',
+    )
+    def test_el_encabezado_sale_escapado(self):
+        # Auditoría I-3: ReportLab interpreta etiquetas; un & o un < del .env no debe
+        # romper el PDF ni cambiar su formato.
+        textos = self.generar(self.crear())['textos']
+        self.assertEqual(textos[:3], [
+            '&lt;b&gt;Lab&lt;/b&gt; &amp; Cía', 'Calle &lt;font size=40&gt;1', 'Teléfono: &lt;i&gt;000&lt;/i&gt;',
+        ])
 
     # --- Pie de página ---
 
@@ -1916,8 +1945,8 @@ class PdfInformeTests(APITestCase):
         self.finalizar(informe_id)
         self.agregar_adenda(informe_id, timezone.make_aware(datetime(2026, 10, 5, 9, 15)))
         parrafos = self.dibujo(informe_id)['parrafos']
-        from .utils import ENCABEZADO_LABORATORIO
-        for titulo in (ENCABEZADO_LABORATORIO, 'INFORME DE ANATOMÍA PATOLÓGICA', 'DESCRIPCIÓN MACROSCÓPICA',
+        from django.conf import settings
+        for titulo in (settings.LABORATORIO_NOMBRE, 'INFORME DE ANATOMÍA PATOLÓGICA', 'DESCRIPCIÓN MACROSCÓPICA',
                        'DIAGNÓSTICOS', 'ADENDAS', 'Adenda N.º 1 — 05/10/2026 09:15'):
             with self.subTest(titulo=titulo):
                 self.assertEqual(parrafos[titulo].fontName, 'Helvetica-Bold')

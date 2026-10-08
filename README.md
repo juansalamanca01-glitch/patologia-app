@@ -37,7 +37,7 @@
 - **Descripción macroscópica automática**: al guardar un informe, el backend convierte los datos del formulario en un párrafo redactado en lenguaje natural.
 - **Número de petición automático**: al crear un informe, el sistema le asigna un número `P-AÑO-NNNNN` (por ejemplo `P-2026-00045`). El consecutivo vuelve a 1 cada año, no se repite aunque varios usuarios guarden a la vez y no se reutiliza si se borra un borrador. Se puede anotar, de forma opcional, el número de orden de la institución remitente.
 - **Exportación a PDF**: genera con **ReportLab** un informe con la estructura de un informe real de anatomía patológica:
-  - encabezado de demostración ("PathoLab — Laboratorio de Patología (demostración)", "Santiago de Cali, Colombia");
+  - encabezado con el nombre, la dirección y el teléfono del laboratorio, que se configuran en `backend/.env` (por defecto, el de demostración: "PathoLab — Laboratorio de Patología (demostración)", "Santiago de Cali, Colombia", sin teléfono);
   - tabla de datos en dos columnas: paciente, identificación, edad (a la fecha de ingreso), sexo, médico tratante, EPS, servicio, número de petición, fechas de ingreso y de informe, orden externa (si existe) y estudios solicitados;
   - título "INFORME DE ANATOMÍA PATOLÓGICA", tipo de estudio, patología y tipo de muestra;
   - descripción macroscópica, descripción microscópica, diagnósticos numerados con su código CIE-10 y comentarios;
@@ -265,6 +265,16 @@ cd patologia-app
    python -c "import secrets; print(secrets.token_urlsafe(50))"
    ```
    > Sin `SECRET_KEY` el backend no arranca. Si no se define `DEBUG`, queda en `False` (modo producción). El `.env.example` trae `DEBUG=True` para desarrollo.
+
+   **Encabezado del PDF (opcional):** el nombre, la dirección y el teléfono del laboratorio se leen de `.env`:
+
+   | Variable | Qué imprime | Si no se define |
+   |---|---|---|
+   | `LABORATORIO_NOMBRE` | Primera línea, en negrita | "PathoLab — Laboratorio de Patología (demostración)" |
+   | `LABORATORIO_DIRECCION` | Segunda línea: dirección completa y ciudad | "Santiago de Cali, Colombia" |
+   | `LABORATORIO_TELEFONO` | Tercera línea, "Teléfono: …" | No se imprime la línea |
+
+   Después de cambiarlas, reinicia el backend. El `.env` se guarda en UTF-8, así que admite tildes y la raya (—).
 
 5. **Aplica las migraciones:**
    ```bash
@@ -584,7 +594,7 @@ Para publicar la app en un servidor:
 - [ ] **Plantillas microscópicas e IHQ**: textos predefinidos para la descripción microscópica y la inmunohistoquímica (la descripción microscópica libre ya existe).
 - [ ] **Catálogo CIE-10 y CIE-O**: autocompletado de los códigos de diagnóstico y de morfología tumoral.
 - [ ] **Imágenes en los informes**: adjuntar microfotografías al informe y al PDF (hoy solo el foro admite imágenes).
-- [ ] **Encabezado del PDF configurable**: leer el nombre, la dirección y el teléfono del laboratorio desde `backend/.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION`, `LABORATORIO_TELEFONO`). Hoy el encabezado es fijo, de demostración.
+- [x] **Encabezado del PDF configurable**: el nombre, la dirección y el teléfono del laboratorio se leen de `backend/.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION`, `LABORATORIO_TELEFONO`). Hecho el 2026-10-08.
 - [ ] **Imagen de la firma**: el administrador sube una imagen (PNG o JPG) de la firma del patólogo y el PDF la imprime sobre su nombre (etapa 10, opcional, de `docs/propuesta-informe-v2.md`).
 - [ ] **Firma digital**: firma electrónica del patólogo con certificado o trazo digital. Hoy el informe lleva el nombre, la especialidad y el registro médico del autor, pero no es una firma criptográfica.
 - [ ] **Integración HL7 / FHIR**: interoperabilidad con sistemas de información hospitalaria (HIS/LIS).

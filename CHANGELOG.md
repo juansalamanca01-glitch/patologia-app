@@ -5,6 +5,42 @@ Cada entrada indica la fecha, qué se cambió y por qué. Los códigos como "C-1
 
 ## 2026-10-08
 
+### Encabezado del PDF configurable (tarea previa 2 del plan)
+
+**Qué se cambió**
+- `backend/config/settings.py` lee de `backend/.env` tres variables nuevas, todas opcionales:
+
+  | Variable | Valor por defecto |
+  |---|---|
+  | `LABORATORIO_NOMBRE` | "PathoLab — Laboratorio de Patología (demostración)" |
+  | `LABORATORIO_DIRECCION` | "Santiago de Cali, Colombia" |
+  | `LABORATORIO_TELEFONO` | vacío |
+
+  Sin `.env`, el PDF queda igual que antes.
+- `backend/informes/utils.py`:
+  - se eliminan las constantes `ENCABEZADO_LABORATORIO` y `ENCABEZADO_CIUDAD`;
+  - `_encabezado()` imprime el nombre (en negrita) y la dirección, que es una sola línea con la dirección completa y la ciudad;
+  - si hay teléfono, imprime una tercera línea, "Teléfono: …";
+  - los tres valores pasan por `texto_seguro()` (I-3).
+- `backend/.env.example`: sección comentada con las tres variables y un ejemplo ficticio.
+- **Pruebas:** 6 nuevas.
+  - En `config/tests.py` (`EncabezadoLaboratorioTests`), 3:
+    - valores por defecto;
+    - valores del entorno;
+    - tildes y raya leídas de un archivo `.env` en UTF-8.
+  - En `PdfInformeTests`, 3:
+    - encabezado configurado, con el teléfono en su línea;
+    - sin teléfono no hay línea;
+    - valores con `<` y `&` escapados.
+  - Las 6 fallaban antes del cambio. `test_los_titulos_van_en_negrita_y_en_negro` ahora lee el nombre de `settings`. El backend pasa de 251 a 257 pruebas.
+- **Documentación:**
+  - README: "Características", tabla de las variables en la instalación y hoja de ruta (hecho);
+  - `CLAUDE.md`;
+  - `docs/propuesta-informe-v2.md`, sección 5.1;
+  - el plan y `docs/progreso.md`, también la lista de lugares con "PathoLab".
+
+**Por qué:** el usuario prevé que el encabezado de demostración no se quede así (2026-10-08), y ya estaba en la hoja de ruta. Así cada instalación pone los datos de su laboratorio en `.env`, sin tocar el código. Las opciones (teléfono en una línea aparte, una sola variable de dirección) las eligió el usuario.
+
 ### D-14 también impide borrar un informe finalizado desde `/admin/`
 
 **Qué se cambió** (solo documentación):

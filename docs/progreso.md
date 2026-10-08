@@ -13,7 +13,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 
 - **Proyecto:** `C:\Users\salam\Desktop\patolab-app-actualizado\patologia-app`.
 - **Plan vigente:** `docs/plan-calidad-y-diseno.md`, aprobado el 2026-10-08. Cada fase va en su propia rama desde `main`.
-- **Rama de trabajo:** `docs-d14-borrar`, creada el 2026-10-08 desde `main`. La siguiente será `encabezado-configurable` (tarea previa 2).
+- **Rama de trabajo:** `encabezado-configurable`, creada el 2026-10-08 desde `main` (tarea previa 2). La siguiente será `fase-2-herramientas-calidad`.
 - **Estado:**
   - Están terminados y en `main`:
     - la auditoría inicial (salvo I-9c);
@@ -27,7 +27,7 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
   3. Aplicar el arreglo y mostrar que la prueba pasa.
   4. Registrar el cambio en `CHANGELOG.md`, actualizar la documentación y hacer commit.
   5. Hacer `git push` de la rama de trabajo después de cada commit, como respaldo. El usuario lo autorizó el 2026-10-03. Unir la rama a `main` requiere preguntar aparte.
-- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 251 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 134 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
+- **Pruebas:** 8 de la raíz (`npm test`, comprobaciones de `npm run dev`), 257 del backend (`cd backend` y luego `python manage.py test`; con SQLite usan el archivo `backend/test_db.sqlite3`) y 134 del frontend (`cd frontend` y luego `npm test`). Todas pasan.
 
 ## Hecho
 
@@ -92,12 +92,13 @@ Este archivo dice **en qué quedamos**. Se actualiza al terminar cada tarea para
 | — | Tarea previa del plan: `seed_data` crea `patologo2` (`patologo2345`, `RM-PRUEBA-0002`) para probar D-2; si ya existe, no lo cambia | `7ea0125` |
 | — | Inventario de pendientes (sección "Pendientes"), tarea previa 2 en el plan, decisión D-14 (un finalizado tampoco se modifica en `/admin/`; se implementa en la fase 4) y corrección de las contradicciones entre documentos | `dd38439` |
 | — | `npm audit fix`: `shell-quote` (crítico, raíz) y `source-map-js` (alto, frontend), los dos de herramientas de desarrollo. Quedan solo las 2 moderadas de `react-router` (I-9c, fase 3) | `fadac1d` |
-| — | D-14 ampliada: un informe finalizado tampoco se borra desde `/admin/`, tenga o no adendas; idea futura de un estado "Anulado" | commit "docs: D-14 también impide borrar" |
+| — | D-14 ampliada: un informe finalizado tampoco se borra desde `/admin/`, tenga o no adendas; idea futura de un estado "Anulado" | `8c084e8` |
+| — | Tarea previa 2 del plan: el encabezado del PDF (nombre, dirección y teléfono del laboratorio) se lee de `backend/.env`, con el de demostración por defecto; el teléfono va en su propia línea y solo si existe | commit "feat: encabezado del PDF configurable" |
 
 ## Siguiente paso
 
-1. **Ahora: tarea previa 2** del plan (encabezado del PDF configurable), en la rama `encabezado-configurable`. Primero se explica y se espera confirmación.
-2. **Luego, las fases 2 a 8** del plan, en orden. Al terminar cada fase se actualizan esta sección y "Pendientes".
+1. **Ahora: fase 2** del plan (Prettier, ESLint y Ruff), en la rama `fase-2-herramientas-calidad` desde `main`. Primero se muestra la configuración propuesta y se espera confirmación.
+2. **Luego, las fases 3 a 8** del plan, en orden. Al terminar cada fase se actualizan esta sección y "Pendientes".
 3. **Para arrancar la aplicación:** `npm run dev` en la raíz y abrir http://localhost:5173. Se detiene con Ctrl + C (en Windows, responder `S` si pregunta "¿Desea terminar el trabajo por lotes?").
 
 Para unir una rama a `main` (con fast-forward desde la terminal, sin pull request, porque `gh` no está instalado):
@@ -115,7 +116,6 @@ Inventario del 2026-10-08: todo lo pendiente, sin terminar o anotado para despu�
 
 | # | Qué | Origen |
 |---|---|---|
-| 1 | **Tarea previa 2:** encabezado del PDF configurable desde `backend/.env` (`LABORATORIO_NOMBRE`, `LABORATORIO_DIRECCION`, `LABORATORIO_TELEFONO`), con el valor actual por defecto | Propuesta v2, 5.1 (P-9); hoja de ruta del README; `CLAUDE.md`; pedido del usuario del 2026-10-08 |
 | 2 | **Fase 2:** Prettier, ESLint y Ruff | Plan; auditoría inicial, sección 1 ("no hay linter") |
 | 3 | **Fase 3:** auditoría OWASP. Evalúa además estos puntos ya conocidos: | Plan |
 |   | • I-9c: 2 vulnerabilidades moderadas de `react-router` 6 (se cierran con React Router 7). Hay que revisar de nuevo el análisis de I-9a, porque desde D-13 la app usa `createBrowserRouter` | Auditoría inicial, I-9; `CHANGELOG.md`, I-9a |
@@ -140,7 +140,7 @@ Inventario del 2026-10-08: todo lo pendiente, sin terminar o anotado para despu�
   | Pantallas | `frontend/src/components/Navbar.jsx:20` (marca del menú), `frontend/src/components/Footer.jsx:6` ("© año PathoLab"), `frontend/src/pages/LoginPage.jsx:37` (título del login) |
   | Pestaña del navegador | `frontend/index.html:7-8` (`<meta name="description">` y `<title>`) |
   | Textos legales | `frontend/src/pages/PoliticaPrivacidadPage.jsx:23`, `frontend/src/pages/TerminosCondicionesPage.jsx:19` y `:66` |
-  | PDF | `backend/informes/utils.py:87` (`ENCABEZADO_LABORATORIO`; con la tarea previa 2 pasa a ser el valor por defecto en `settings.py`), y las pruebas que lo comprueban, `backend/informes/tests.py:1752` y `:1781` |
+  | PDF | el valor por defecto de `LABORATORIO_NOMBRE` en `backend/config/settings.py` (sección "Encabezado del PDF"); en una instalación basta con cambiarlo en `backend/.env`. Lo comprueban `backend/config/tests.py` (`EncabezadoLaboratorioTests`) y `backend/informes/tests.py` (`test_el_encabezado_es_el_de_demostracion_sin_telefono` y la lista de `test_las_partes_salen_en_el_orden_del_informe_real`) |
   | `/admin/` | `backend/accounts/admin.py:36` (sección "Datos de PathoLab") |
   | Código interno | `backend/config/settings.py:148` y `backend/config/test_runner.py:14` (`PathoLabTestRunner`), `backend/foro/tests.py:15` (prefijo `patolab-media-pruebas-`), `frontend/src/index.css:2` (comentario), `scripts/dev.mjs:16` y `:48` (mensajes de `npm run dev`) |
   | Nombres de paquete | `package.json` y `package-lock.json` de la raíz (`patolab` y la descripción), `frontend/package.json` y `frontend/package-lock.json` (`patholab-frontend`) |

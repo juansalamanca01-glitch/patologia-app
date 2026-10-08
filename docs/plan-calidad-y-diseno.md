@@ -77,7 +77,7 @@ Desde la fase 2 se suman las comprobaciones de formato y linter.
 
 ---
 
-## Tarea previa 2: encabezado del PDF configurable
+## Tarea previa 2: encabezado del PDF configurable (terminada)
 
 **Origen:**
 - Observación del usuario del 2026-10-08: el encabezado "PathoLab — Laboratorio de Patología (demostración)" probablemente no se quede así.
@@ -116,7 +116,7 @@ Desde la fase 2 se suman las comprobaciones de formato y linter.
   - `docs/propuesta-informe-v2.md`: nota en la sección 5.1;
   - `CHANGELOG.md` y `docs/progreso.md`.
 
-**Rama:** `encabezado-configurable`, desde `main`, después de la tarea previa 1 y antes de la fase 2. Pedida por el usuario el 2026-10-08. **Antes de implementarla, se explica y se espera confirmación.**
+**Rama:** `encabezado-configurable`, desde `main`, después de la tarea previa 1 y antes de la fase 2. Pedida por el usuario el 2026-10-08. **Aprobada y terminada el 2026-10-08**, con el teléfono en una línea aparte y una sola variable de dirección (dirección completa y ciudad).
 
 **Terminada cuando:**
 - las pruebas nuevas pasan;
